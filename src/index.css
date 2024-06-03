@@ -1,0 +1,90 @@
+/* src/index.css */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.sidebar {
+  height: 100vh;
+  position: fixed;
+  background-color: #1f2d3d;
+  color: white;
+}
+
+.sidebar .nav-link {
+  color: white;
+}
+
+.sidebar .nav-link.active {
+  background-color: #343a40;
+}
+
+.sidebar .nav-item {
+  padding: 10px 20px;
+}
+
+.content {
+  margin-left: 200px;
+  /* padding: 20px; */
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 8px;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  .content {
+    margin-left: 0;
+  }
+  .sidebar .nav-item {
+    padding: 10px 15px;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar {
+    width: 250px;
+  }
+  .content {
+    margin-left: 200px;
+  }
+}
+
+:root {
+  --color-green: #00a878;
+  --color-red: #fe5e41;
+  --color-button: #fdffff;
+  --color-black: #000;
+}
+/* src/index.css */
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
