@@ -49,8 +49,8 @@ const Personal = () => {
         axios.get('/roles'),
         axios.get('/sedes')
       ]);
-      setRoles(rolesResponse.data.map(rol => ({ value: rol.id_rol, label: rol.nombre })));
-      setSedes(sedesResponse.data.map(sede => ({ value: sede.id_sede, label: sede.nombre })));
+      setRoles(rolesResponse.data);
+      setSedes(sedesResponse.data);
     } catch (error) {
       console.error('Error al obtener roles y sedes', error);
     }

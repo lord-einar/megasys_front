@@ -1,14 +1,14 @@
 // src/components/SelectField.jsx
-import React from "react";
+const SelectField = ({ label, name, options, valueKey, register, errors, readOnly }) => {
 
-const SelectField = ({ label, name, options, register, valueKey, errors }) => {
-
+  console.log(options)
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <select
         {...register(name)}
         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        disabled={readOnly}
       >
         <option value="">--Seleccione {label.toLowerCase()}--</option>
         {options.map((option) => (

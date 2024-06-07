@@ -65,8 +65,8 @@ const PersonalModal = ({ isOpen, onClose, persona, roles, sedes }) => {
           <FormField label="Nombre" name="nombre" register={register} errors={errors} />
           <FormField label="Email" name="email" type="email" register={register} errors={errors} />
           <FormField label="Teléfono" name="telefono" register={register} errors={errors} />
-          <SelectField label="Rol" name="id_rol" options={roles} register={register} errors={errors} />
-          <SelectField label="Sede" name="id_sede" options={sedes} register={register} errors={errors} />
+          <SelectField label="Rol" name="id_rol" valueKey={'id_rol'} options={roles} register={register} errors={errors} />
+          <SelectField label="Sede" name="id_sede" valueKey={'id_sede'} options={sedes} register={register} errors={errors} />
           <div className="flex justify-end">
             <button type="button" onClick={onClose} className="bg-gray-500 text-white py-2 px-4 rounded mr-2">
               Cancelar

@@ -8,8 +8,8 @@ import { showLoadingAlert, showSuccessAlert, showErrorAlert } from '../utils/Ale
 import FormField from './FormField';
 import SelectField from './SelectField';
 
-const RemitoModal = ({ isOpen, onClose, remito }) => {
-  const { register, handleSubmit, formState: { errors }, reset, control } = useForm({
+const RemitoModal = ({ isOpen, onClose, remito, isViewMode }) => {
+  const { register, handleSubmit, formState: { errors }, reset, control, setValue } = useForm({
     resolver: yupResolver(remitoSchema),
     defaultValues: remito || {
       inventario: [{ id_inventario: '', es_prestamo: false }]
@@ -55,15 +55,18 @@ const RemitoModal = ({ isOpen, onClose, remito }) => {
   }, [remito, reset]);
 
   const onSubmit = async (data) => {
-
     showLoadingAlert();
     try {
       let remitoResponse;
-
+      if (remito) {
+        remitoResponse = await axios.put(`/remitos/${remito.id_remito}`, data);
+        showSuccessAlert('El remito ha sido modificado correctamente');
+      } else {
         remitoResponse = await axios.post('/remitos', data);
         showSuccessAlert('El remito ha sido creado correctamente');
+      }
 
-/*       const { id_remito } = remitoResponse.data;
+      const { id_remito } = remitoResponse.data;
       for (const equipo of data.inventario) {
         await axios.post('/remito_inventario', {
           id_remito,
@@ -77,7 +80,7 @@ const RemitoModal = ({ isOpen, onClose, remito }) => {
           id_remito,
           fecha_movimiento: new Date()
         });
-      } */
+      }
 
       reset();
       onClose();
@@ -90,13 +93,43 @@ const RemitoModal = ({ isOpen, onClose, remito }) => {
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${isOpen ? 'block' : 'hidden'}`}>
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl w-full">
-        <h2 className="text-2xl font-bold mb-4">{remito ? 'Modificar Remito' : 'Crear Remito'}</h2>
+        <h2 className="text-2xl font-bold mb-4">{remito ? (isViewMode ? 'Ver Remito' : 'Modificar Remito') : 'Crear Remito'}</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectField key={sedes.id_sede} label="Sede" register={register} name="id_sede" options={sedes} valueKey={'id_sede'} errors={errors} />
-            <FormField label="Solicitante" type="text" register={register} name="solicitante" errors={errors} />
-            <FormField label="Fecha" type="date" register={register} name="fecha_remito" errors={errors} />
-            <FormField label="Transportista" type="text" register={register} name="transportista" errors={errors} />
+            <SelectField
+              key={sedes.id_sede}
+              label="Sede"
+              register={register}
+              name="id_sede"
+              options={sedes}
+              valueKey={'id_sede'}
+              errors={errors}
+              readOnly={isViewMode}
+            />
+            <FormField
+              label="Solicitante"
+              type="text"
+              register={register}
+              name="solicitante"
+              errors={errors}
+              readOnly={isViewMode}
+            />
+            <FormField
+              label="Fecha"
+              type="date"
+              register={register}
+              name="fecha_remito"
+              errors={errors}
+              readOnly={isViewMode}
+            />
+            <FormField
+              label="Transportista"
+              type="text"
+              register={register}
+              name="transportista"
+              errors={errors}
+              readOnly={isViewMode}
+            />
           </div>
           <div>
             <h3 className="text-lg font-medium mb-2">Equipos</h3>
@@ -109,39 +142,47 @@ const RemitoModal = ({ isOpen, onClose, remito }) => {
                   valueKey={'id_inventario'}
                   options={inventarios}
                   errors={errors}
+                  readOnly={isViewMode}
                 />
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     {...register(`inventario[${index}].es_prestamo`)}
                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={isViewMode}
                   />
                   <label className="ml-2 block text-sm font-medium text-gray-700">Préstamo</label>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Eliminar
-                </button>
+                {!isViewMode && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Eliminar
+                  </button>
+                )}
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() => append({ id_inventario: '', es_prestamo: false })}
-              className="bg-blue-500 text-white py-2 px-4 rounded"
-            >
-              Añadir Equipo
-            </button>
+            {!isViewMode && (
+              <button
+                type="button"
+                onClick={() => append({ id_inventario: '', es_prestamo: false })}
+                className="bg-blue-500 text-white py-2 px-4 rounded"
+              >
+                Añadir Equipo
+              </button>
+            )}
           </div>
           <div className="flex justify-end">
             <button type="button" onClick={onClose} className="bg-gray-500 text-white py-2 px-4 rounded mr-2">
-              Cancelar
+              {isViewMode ? 'Cerrar' : 'Cancelar'}
             </button>
-            <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
-              {remito ? 'Modificar' : 'Crear'}
-            </button>
+            {!isViewMode && (
+              <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
+                {remito ? 'Modificar' : 'Crear'}
+              </button>
+            )}
           </div>
         </form>
       </div>
