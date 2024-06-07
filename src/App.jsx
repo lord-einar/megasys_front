@@ -1,62 +1,50 @@
 // src/App.jsx
-import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { Button, Col, Row } from "react-bootstrap";
-import Sidebar from "./components/Sidebar";
-import Dashboard from "./pages/Dashboard";
-import SedesListar from "./pages/SedesListar";
-import SedesCrear from "./pages/SedesCrear";
-import InventarioListar from "./pages/InventarioListar";
-import InventarioCrear from "./pages/InventarioCrear";
-import ProveedorListar from "./pages/ProveedorListar";
-import ProveedorCrear from "./pages/ProveedorCrear";
-import RemitoListar from "./pages/RemitoListar";
-import RemitoCrear from "./pages/RemitoCrear";
-import DetalleSede from "./pages/DetalleSede";
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import SedesListar from './pages/SedesListar';
+import SedesCrear from './pages/SedesCrear';
+import DetalleSede from './pages/DetalleSede';
+import ProveedorListar from './pages/ProveedorListar';
+import ProveedorCrear from './pages/ProveedorCrear';
+import PersonasCrear from './pages/PersonasCrear';
+import SedesModificar from './pages/SedesModificar';
+import Personal from './pages/Personal';
+import Sedes from './pages/Sedes';
+import Inventario from './pages/Inventario';
+import Remitos from './pages/Remitos';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <Router>
-      <Row>
-        <Button
-          className="d-md-none"
+      <div className="flex h-screen">
+        <button
+          className="md:hidden fixed top-4 left-4 z-50 text-white"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{
-            position: "fixed",
-            top: "10px",
-            left: "10px",
-            zIndex: 1000,
-          }}
         >
           ☰
-        </Button>
-
-        <Col lg={2}>
-          <div
-            className={`sidebar ${
-              sidebarOpen ? "d-block" : "d-none"
-            } d-md-block`}
-          >
-            <Sidebar />
-          </div>
-        </Col>
-        <Col lg={10}>
+        </button>
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 p-10 md:ml-6 bg-gray-100">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/sede/listar" element={<SedesListar />} />
             <Route path="/sede/crear" element={<SedesCrear />} />
+            <Route path="/sedes" element={<Sedes />} /> {/* Nueva ruta para Sedes */}
+            <Route path="/modificar-sede/:id" element={<SedesModificar />} />
             <Route path="/ver-sede/:id" element={<DetalleSede />} />
-            <Route path="/inventario/listar" element={<InventarioListar />} />
-            <Route path="/inventario/crear" element={<InventarioCrear />} />
+            <Route path="/inventario" element={<Inventario />} />
             <Route path="/proveedor/listar" element={<ProveedorListar />} />
             <Route path="/proveedor/crear" element={<ProveedorCrear />} />
-            <Route path="/remito/listar" element={<RemitoListar />} />
-            <Route path="/remito/crear" element={<RemitoCrear />} />
+            <Route path="/personal/crear" element={<PersonasCrear />} />
+            <Route path="/remitos" element={<Remitos />} />
+            <Route path="/personal" element={<Personal />} /> {/* Nueva ruta para Personal */}
           </Routes>
-        </Col>
-      </Row>
+        </div>
+      </div>
     </Router>
   );
 }

@@ -1,37 +1,39 @@
-// src/components/InventariosAsociados.jsx
-import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+// src/pages/InventarioListar.jsx
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from '../services/axiosConfig';
 
-const InventarioSede = ({ inventarios }) => (
-  <Card className="mb-3">
-    <Card.Header>Inventarios Asociados</Card.Header>
-    <Card.Body>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Marca</th>
-            <th>Modelo</th>
-            <th>Tipo de Artículo</th>
-            <th>Service Tag</th>
-            <th>Número de Serie</th>
-            <th>Es Préstamo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {inventarios.map((inventario, index) => (
-            <tr key={index}>
-              <td>{inventario.marca}</td>
-              <td>{inventario.modelo}</td>
-              <td>{inventario.tipo_articulo}</td>
-              <td>{inventario.service_tag}</td>
-              <td>{inventario.num_serie}</td>
-              <td>{inventario.es_prestamo ? 'Sí' : 'No'}</td>
+const InventarioSede = ({inventarios}) => {
+
+  return (
+    <div className="container mx-auto">
+    <h2 className="text-xl font-medium mb-2">Inventario de la sede</h2>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="py-2 px-4 border-b">Marca</th>
+              <th className="py-2 px-4 border-b">Modelo</th>
+              <th className="py-2 px-4 border-b">Tipo de Artículo</th>
+              <th className="py-2 px-4 border-b">Service Tag</th>
+              <th className="py-2 px-4 border-b">Número de Serie</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-    </Card.Body>
-  </Card>
-);
+          </thead>
+          <tbody>
+            {inventarios.map((inventario) => (
+              <tr key={inventario.id_inventario} className="even:bg-gray-100">
+                <td className="py-2 px-4 border-b">{inventario.marca}</td>
+                <td className="py-2 px-4 border-b">{inventario.modelo}</td>
+                <td className="py-2 px-4 border-b">{inventario.tipo_articulo}</td>
+                <td className="py-2 px-4 border-b">{inventario.service_tag}</td>
+                <td className="py-2 px-4 border-b">{inventario.num_serie}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 export default InventarioSede;

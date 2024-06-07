@@ -1,62 +1,56 @@
 // src/components/Sidebar.jsx
-import React from 'react';
-import { Nav } from 'react-bootstrap';
-import { LinkContainer } from 'react-router-bootstrap';
-import { FaBuilding, FaClipboardList, FaBox, FaTruck } from 'react-icons/fa';
+import React from "react";
+import { Link } from "react-router-dom";
 
-const Sidebar = () => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   return (
-    <Nav className="col-md-2 d-md-block bg-dark sidebar" activeKey="/home">
-      <div className="sidebar-sticky"></div>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaBuilding className="me-2" />
-        <LinkContainer to="/sede/listar">
-          <Nav.Link className="text-white p-0">Listar Sedes</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaBuilding className="me-2" />
-        <LinkContainer to="/sede/crear">
-          <Nav.Link className="text-white p-0">Crear Sede</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaClipboardList className="me-2" />
-        <LinkContainer to="/inventario/listar">
-          <Nav.Link className="text-white p-0">Listar Inventarios</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaClipboardList className="me-2" />
-        <LinkContainer to="/inventario/crear">
-          <Nav.Link className="text-white p-0">Crear Inventario</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaBox className="me-2" />
-        <LinkContainer to="/proveedor/listar">
-          <Nav.Link className="text-white p-0">Listar Proveedores</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaBox className="me-2" />
-        <LinkContainer to="/proveedor/crear">
-          <Nav.Link className="text-white p-0">Crear Proveedor</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaTruck className="me-2" />
-        <LinkContainer to="/remito/listar">
-          <Nav.Link className="text-white p-0">Listar Remitos</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-      <Nav.Item className="text-white py-2 d-flex align-items-center">
-        <FaTruck className="me-2" />
-        <LinkContainer to="/remito/crear">
-          <Nav.Link className="text-white p-0">Crear Remito</Nav.Link>
-        </LinkContainer>
-      </Nav.Item>
-    </Nav>
+    <div
+      className={`fixed inset-y-0 left-0 transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:relative md:translate-x-0 transition-transform duration-200 ease-in-out bg-gray-800 text-white w-64`}
+    >
+      <div className="p-4">
+        <h1 className="text-2xl font-bold">GRUPO MEGATLON</h1>
+      </div>
+      <nav className="mt-10">
+        <Link
+          to="/dashboard"
+          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+        >
+          Dashboard
+        </Link>
+        <Link
+          to="/sedes"
+          className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+        >
+          Sedes
+        </Link>
+        <Link
+          to="/personal"
+          className="block py-2 px-4 rounded hover:bg-gray-700"
+        >
+          Personal
+        </Link>
+        <Link
+          to="/inventario"
+          className="block py-2 px-4 rounded hover:bg-gray-700"
+        >
+          Inventario
+        </Link>
+        <Link
+          to="/remitos"
+          className="block py-2 px-4 rounded hover:bg-gray-700"
+        >
+          Remitos
+        </Link>
+      </nav>
+      <button
+        className="md:hidden absolute top-4 right-4 text-white"
+        onClick={() => setSidebarOpen(false)}
+      >
+        ✕
+      </button>
+    </div>
   );
 };
 

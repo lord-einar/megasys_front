@@ -1,76 +1,29 @@
 // src/pages/Dashboard.jsx
 import React from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
 
 const Dashboard = () => {
   return (
-    <Container fluid>
-      <h2>Bienvenido, [Nombre del Usuario]</h2>
-      <Row className="mb-3">
-        <Col xs={12} md={3}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Sedes</Card.Title>
-              <Card.Text>
-                10
-                <span className="text-success"> +5% Desde la semana pasada</span>
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xs={12} md={3}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Inventarios</Card.Title>
-              <Card.Text>
-                200
-                <span className="text-danger"> -2% Desde la semana pasada</span>
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xs={12} md={3}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Proveedores</Card.Title>
-              <Card.Text>
-                50
-                <span className="text-success"> +1% Desde la semana pasada</span>
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xs={12} md={3}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Remitos</Card.Title>
-              <Card.Text>
-                100
-                <span className="text-success"> +3% Desde la semana pasada</span>
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs={12} md={6}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Estadísticas de Inventario</Card.Title>
-              {/* Aquí puedes agregar un gráfico similar al de la imagen */}
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Estadísticas de Proveedores</Card.Title>
-              {/* Aquí puedes agregar un gráfico similar al de la imagen */}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+    <div className="container mx-auto">
+      <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-medium">Clientes</h2>
+          <p className="text-2xl">1456</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-medium">Ingresos</h2>
+          <p className="text-2xl">$3,345</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-medium">Ganancias</h2>
+          <p className="text-2xl">60%</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-medium">Facturas</h2>
+          <p className="text-2xl">1135</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,22 +1,40 @@
 // src/components/InfoSede.jsx
 import React from 'react';
-import { Card, ListGroup } from 'react-bootstrap';
+import { Card, CardContent, Typography, List, ListItem, ListItemText } from '@mui/material';
 
 const InfoSede = ({ sede }) => (
   <Card className="mb-3">
-    <Card.Header>Información de la Sede</Card.Header>
-    <Card.Body>
-      <ListGroup variant="flush">
-        <ListGroup.Item><strong>Dirección:</strong> {sede.direccion}</ListGroup.Item>
-        <ListGroup.Item><strong>Localidad:</strong> {sede.localidad}</ListGroup.Item>
-        <ListGroup.Item><strong>Provincia:</strong> {sede.provincia}</ListGroup.Item>
-        <ListGroup.Item><strong>País:</strong> {sede.pais}</ListGroup.Item>
-        <ListGroup.Item><strong>Teléfono:</strong> {sede.telefono}</ListGroup.Item>
-        <ListGroup.Item><strong>Email:</strong> {sede.email}</ListGroup.Item>
-        <ListGroup.Item><strong>IP Asignada:</strong> {sede.ip_asignada}</ListGroup.Item>
-        <ListGroup.Item><strong>Empresa:</strong> {sede.Empresa.nombre_empresa}</ListGroup.Item>
-      </ListGroup>
-    </Card.Body>
+    <CardContent>
+      <Typography variant="h5" component="div">
+        Información de la Sede
+      </Typography>
+      <List>
+        <ListItem>
+          <ListItemText primary="Dirección" secondary={sede.direccion} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Localidad" secondary={sede.localidad} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Provincia" secondary={sede.provincia} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="País" secondary={sede.pais} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Teléfono" secondary={sede.telefono} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Email" secondary={sede.email} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="IP Asignada" secondary={sede.ip_asignada} />
+        </ListItem>
+        <ListItem>
+          <ListItemText primary="Empresa" secondary={sede.Empresa.nombre} />
+        </ListItem>
+      </List>
+    </CardContent>
   </Card>
 );
 
