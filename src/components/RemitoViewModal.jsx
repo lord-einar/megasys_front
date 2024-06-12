@@ -48,6 +48,8 @@ const RemitoViewModal = ({ isOpen, onClose, remito = null, id_remito=null }) => 
                 <th className="py-2">Modelo</th>
                 <th className="py-2">Tipo de Artículo</th>
                 <th className="py-2">Préstamo</th>
+                <th className="py-2">fecha devolucion</th>
+                {/* <th className="py-2">Devuelto</th> */}
               </tr>
             </thead>
             <tbody>
@@ -57,6 +59,8 @@ const RemitoViewModal = ({ isOpen, onClose, remito = null, id_remito=null }) => 
                   <td className="py-2">{equipo.modelo}</td>
                   <td className="py-2">{equipo.tipo_articulo}</td>
                   <td className="py-2">{equipo.es_prestamo ? 'Sí' : 'No'}</td>
+                  <td className="py-2">{equipo.fecha_devolucion}</td>
+                  {/* <td className="py-2">{equipo.devolucion ? 'Sí' : 'No'}</td> */}
                 </tr>
               ))}
             </tbody>
