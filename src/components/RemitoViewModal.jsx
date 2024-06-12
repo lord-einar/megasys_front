@@ -1,15 +1,20 @@
 // src/components/RemitoViewModal.jsx
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 
-const RemitoViewModal = ({ isOpen, onClose, remito }) => {
+const RemitoViewModal = ({ isOpen, onClose, remito = null, id_remito=null }) => {
   const [equipos, setEquipos] = useState([]);
 
   console.log(remito)
 
+  const getRemito = async() => {
+    const remitofull = await axios.get(`/remitos/${id_remito}`)
+      console.log(remitofull)
+      setEquipos(remitofull.inventario);
+  }
+
   useEffect(() => {
-    if (remito) {
-      setEquipos(remito.Inventarios);
-    }
+    (!remito) ? getRemito() : setEquipos(remito)
   }, [remito]);
 
   return (
@@ -19,7 +24,7 @@ const RemitoViewModal = ({ isOpen, onClose, remito }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Sede</label>
-            <p>{remito.Sede.nombre}</p>
+            <p>{remito.sede_nombre}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Solicitante</label>
@@ -46,12 +51,12 @@ const RemitoViewModal = ({ isOpen, onClose, remito }) => {
               </tr>
             </thead>
             <tbody>
-              {equipos.map((equipo, index) => (
+              {(equipos.inventarios) && equipos.inventarios.map((equipo, index) => (
                 <tr key={index}>
                   <td className="py-2">{equipo.marca}</td>
                   <td className="py-2">{equipo.modelo}</td>
                   <td className="py-2">{equipo.tipo_articulo}</td>
-                  <td className="py-2">{equipo.RemitoInventario.es_prestamo ? 'Sí' : 'No'}</td>
+                  <td className="py-2">{equipo.es_prestamo ? 'Sí' : 'No'}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,7 +1,6 @@
 // src/pages/Remitos.jsx
 import React, { useEffect, useState } from 'react';
 import axios from '../services/axiosConfig';
-import { showLoadingAlert, showSuccessAlert, showErrorAlert } from '../utils/AlertUtils';
 import RemitoModal from '../components/RemitoModal';
 import RemitoViewModal from '../components/RemitoViewModal';
 import Pagination from '../components/Pagination';
@@ -18,6 +17,7 @@ const Remitos = () => {
     try {
       const response = await axios.get('/remitos');
       setRemitos(response.data);
+      console.log(response.data)
     } catch (error) {
       console.error('Error al obtener los remitos', error);
     }
@@ -64,7 +64,7 @@ const Remitos = () => {
           {paginatedRemitos.map((remito) => (
             <tr key={remito.id_remito}>
               <td className="py-2">{remito.id_remito}</td>
-              <td className="py-2">{remito.Sede.nombre}</td>
+              <td className="py-2">{remito.sede_nombre}</td>
               <td className="py-2">{remito.solicitante}</td>
               <td className="py-2">{new Date(remito.fecha_remito).toLocaleDateString()}</td>
               <td className="py-2">{remito.transportista}</td>

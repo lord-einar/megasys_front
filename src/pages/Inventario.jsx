@@ -1,9 +1,10 @@
-// src/pages/Inventario.jsx
 import React, { useEffect, useState } from 'react';
 import axios from '../services/axiosConfig';
+import InventarioDisponible from '../components/InventarioDisponible';
+import EquiposPrestamo from '../components/EquiposPrestamo';
+import Pagination from '../components/Pagination';
 import InventarioModal from '../components/InventarioModal';
 import RemitoViewModal from '../components/RemitoViewModal';
-import Pagination from '../components/Pagination';
 
 const Inventario = () => {
   const [inventarios, setInventarios] = useState([]);
@@ -21,21 +22,14 @@ const Inventario = () => {
   }, []);
 
   const fetchInventarioDeposito = async () => {
-    try {
-      const response = await axios.get('/inventario/bysede/d8bf1659-92d4-4d43-ba7f-e2b2d63e6fdc');
-      setInventarios(response.data);
-    } catch (error) {
-      console.error('Error al obtener los inventarios', error);
-    }
+    const response = await axios.get('/inventario/bysede/d8bf1659-92d4-4d43-ba7f-e2b2d63e6fdc');
+    setInventarios(response.data);
   };
 
   const fetchEquiposEnPrestamo = async () => {
-    try {
-      const response = await axios.get('/remitos/prestamos');
-      setPrestamos(response.data);
-    } catch (error) {
-      console.error('Error al obtener los equipos en préstamo', error);
-    }
+    const response = await axios.get('/remitos/prestamos');
+    setPrestamos(response.data);
+    console.log(response.data)
   };
 
   const handleOpenModal = () => {
@@ -47,8 +41,9 @@ const Inventario = () => {
     fetchInventarioDeposito();
   };
 
-  const handleViewRemito = (remito) => {
-    setSelectedRemito(remito);
+  const handleViewRemito = (item) => {
+    console.log(item)
+    setSelectedRemito(item);
     setViewModalOpen(true);
   };
 
@@ -81,57 +76,11 @@ const Inventario = () => {
           Agregar al Inventario
         </button>
       )}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded-lg shadow-md">
-          <thead className="bg-gray-800 text-white">
-            <tr>
-              <th className="w-1/12 py-2">Marca</th>
-              <th className="w-1/12 py-2">Modelo</th>
-              <th className="w-1/12 py-2">Tipo de Artículo</th>
-              <th className="w-1/12 py-2">Service Tag</th>
-              <th className="w-1/12 py-2">Número de Serie</th>
-              {showPrestamos ? (
-                <>
-                  <th className="w-1/12 py-2">Solicitante</th>
-                  <th className="w-1/12 py-2">Fecha Remito</th>
-                  <th className="w-1/12 py-2">Transportista</th>
-                  <th className="w-1/12 py-2">Acciones</th>
-                </>
-              ) : (
-                <th className="w-1/12 py-2">Activo</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {currentItems.map((item) => (
-              <tr key={item.id_inventario || item.id_remito} className="hover:bg-gray-100">
-                <td className="border px-4 py-2">{item.Inventario?.marca || item.marca}</td>
-                <td className="border px-4 py-2">{item.Inventario?.modelo || item.modelo}</td>
-                <td className="border px-4 py-2">{item.Inventario?.tipo_articulo || item.tipo_articulo}</td>
-                <td className="border px-4 py-2">{item.Inventario?.service_tag || item.service_tag}</td>
-                <td className="border px-4 py-2">{item.Inventario?.num_serie || item.num_serie}</td>
-                {showPrestamos ? (
-                  <>
-                    <td className="border px-4 py-2">{item.Remito.solicitante}</td>
-                    <td className="border px-4 py-2">{new Date(item.Remito.fecha_remito).toLocaleDateString()}</td>
-                    <td className="border px-4 py-2">{item.Remito.transportista}</td>
-                    <td className="border px-4 py-2">
-                      <button
-                        onClick={() => handleViewRemito(item.Remito)}
-                        className="bg-gray-500 text-white py-1 px-2 rounded"
-                      >
-                        Ver Remito
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <td className="border px-4 py-2">{item.activo ? 'Sí' : 'No'}</td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {!showPrestamos ? (
+        <InventarioDisponible inventarios={currentItems} />
+      ) : (
+        <EquiposPrestamo prestamos={currentItems} onViewRemito={handleViewRemito} />
+      )}
       <Pagination
         itemsPerPage={itemsPerPage}
         totalItems={showPrestamos ? prestamos.length : inventarios.length}

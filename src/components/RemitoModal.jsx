@@ -57,29 +57,12 @@ const RemitoModal = ({ isOpen, onClose, remito, isViewMode }) => {
   const onSubmit = async (data) => {
     showLoadingAlert();
     try {
-      let remitoResponse;
       if (remito) {
         remitoResponse = await axios.put(`/remitos/${remito.id_remito}`, data);
         showSuccessAlert('El remito ha sido modificado correctamente');
       } else {
         remitoResponse = await axios.post('/remitos', data);
         showSuccessAlert('El remito ha sido creado correctamente');
-      }
-
-      const { id_remito } = remitoResponse.data;
-      for (const equipo of data.inventario) {
-        await axios.post('/remito_inventario', {
-          id_remito,
-          id_inventario: equipo.id_inventario,
-          es_prestamo: equipo.es_prestamo
-        });
-
-        await axios.post('/historico_inventario', {
-          id_inventario: equipo.id_inventario,
-          id_sede: data.id_sede,
-          id_remito,
-          fecha_movimiento: new Date()
-        });
       }
 
       reset();
