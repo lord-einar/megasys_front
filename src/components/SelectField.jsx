@@ -1,7 +1,7 @@
 // src/components/SelectField.jsx
 const SelectField = ({ label, name, options, valueKey, register, errors, readOnly }) => {
 
-  console.log(options)
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -13,7 +13,7 @@ const SelectField = ({ label, name, options, valueKey, register, errors, readOnl
         <option value="">--Seleccione {label.toLowerCase()}--</option>
         {options.map((option) => (
           <option key={option[valueKey]} value={option[valueKey]}>
-            {option.nombre || `${option.tipo_articulo}-${option.marca}-${option.modelo}-${option.num_serie}`}
+            {option.nombre || `${option.modelo}-${option.num_serie}`}
           </option>
         ))}
       </select>

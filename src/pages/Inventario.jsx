@@ -24,6 +24,7 @@ const Inventario = () => {
   const fetchInventarioDeposito = async () => {
     const response = await axios.get('/inventario/bysede/d8bf1659-92d4-4d43-ba7f-e2b2d63e6fdc');
     setInventarios(response.data);
+    console.log(response.data)
   };
 
   const fetchEquiposEnPrestamo = async () => {

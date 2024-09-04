@@ -23,9 +23,9 @@ export const sedeSchema = yup.object().shape({
 });
 
 export const inventarioSchema = yup.object().shape({
-  marca: yup.string().required('La marca es obligatoria'),
+  id_marca: yup.string().required('La marca es obligatoria'),
   modelo: yup.string().required('El modelo es obligatorio'),
-  tipo_articulo: yup.string().required('El tipo de artículo es obligatorio'),
+  id_tipo_articulo: yup.string().required('El tipo de artículo es obligatorio'),
   service_tag: yup.string(),
   num_serie: yup.string(),
 });

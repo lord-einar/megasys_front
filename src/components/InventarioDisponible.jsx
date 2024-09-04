@@ -16,9 +16,9 @@ const InventarioDisponible = ({ inventarios }) => {
       <tbody>
         {inventarios.map((item) => (
           <tr key={item.id_inventario} className="hover:bg-gray-100">
-            <td className="border px-4 py-2">{item.marca}</td>
+            <td className="border px-4 py-2">{item.Marca.nombre}</td>
             <td className="border px-4 py-2">{item.modelo}</td>
-            <td className="border px-4 py-2">{item.tipo_articulo}</td>
+            <td className="border px-4 py-2">{item.tipo_articulo.nombre}</td>
             <td className="border px-4 py-2">{item.service_tag}</td>
             <td className="border px-4 py-2">{item.num_serie}</td>
             <td className="border px-4 py-2">{item.activo ? 'Sí' : 'No'}</td>
