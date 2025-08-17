@@ -1,26 +1,21 @@
-// ============================================
 // src/App.jsx
-// Componente principal de la aplicación
-// ============================================
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useApp } from './context/AppContext'
 import AppRouter from './router'
 
-function App() {
+export default function App() {
   const location = useLocation()
   const { setCurrentRoute } = useApp()
-  
-  // Actualizar ruta actual en el contexto
+
   useEffect(() => {
+    // solo depende del pathname; no incluyas la función
     setCurrentRoute(location.pathname)
-  }, [location.pathname, setCurrentRoute])
-  
+  }, [location.pathname])
+
   return (
     <div className="App">
       <AppRouter />
     </div>
   )
 }
-
-export default App
