@@ -250,4 +250,22 @@ export const rolesAPI = {
   delete: (id) => apiCall(`/roles/${id}`, { method: 'DELETE' }),
 }
 
+// TipoArticulo Endpoints
+export const tipoArticuloAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/tipo-articulo${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/tipo-articulo/${id}`),
+  create: (data) => apiCall('/tipo-articulo', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/tipo-articulo/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/tipo-articulo/${id}`, { method: 'DELETE' }),
+}
+
 export default apiCall

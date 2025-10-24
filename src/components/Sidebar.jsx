@@ -54,7 +54,7 @@ function Sidebar({ isOpen }) {
       submenu: [
         { label: 'Listar Inventario', href: '/inventario' },
         { label: 'Nuevo Artículo', href: '/inventario/crear' },
-        { label: 'Stock Disponible', href: '/inventario/disponibles' },
+        { label: 'Stock Disponible', href: '/inventario?estado=disponible' },
       ],
     },
     {

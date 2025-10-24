@@ -10,9 +10,15 @@ import Profile from './pages/Profile'
 import SedesPage from './pages/SedesPage'
 import SedeDetallePage from './pages/SedeDetallePage'
 import NuevaSede from './pages/NuevaSede'
+import EditSede from './pages/EditSede'
 import PersonalPage from './pages/PersonalPage'
+import PersonalDetailPage from './pages/PersonalDetailPage'
 import NuevoPersonal from './pages/NuevoPersonal'
+import EditPersonal from './pages/EditPersonal'
 import InventarioPage from './pages/InventarioPage'
+import CreateArticulo from './pages/CreateArticulo'
+import EditArticulo from './pages/EditArticulo'
+import InventarioDetailPage from './pages/InventarioDetailPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -63,14 +69,22 @@ function App() {
 
                   {/* Sedes routes - más específicas primero */}
                   <Route path="/sedes/nueva" element={<NuevaSede />} />
+                  <Route path="/sedes/:id/editar" element={<EditSede />} />
                   <Route path="/sedes/:id" element={<SedeDetallePage />} />
                   <Route path="/sedes" element={<SedesPage />} />
 
                   {/* Personal routes - más específicas primero */}
                   <Route path="/personal/crear" element={<NuevoPersonal />} />
+                  <Route path="/personal/:id/editar" element={<EditPersonal />} />
+                  <Route path="/personal/:id" element={<PersonalDetailPage />} />
                   <Route path="/personal" element={<PersonalPage />} />
 
+                  {/* Inventario routes - más específicas primero */}
+                  <Route path="/inventario/crear" element={<CreateArticulo />} />
+                  <Route path="/inventario/:id/editar" element={<EditArticulo />} />
+                  <Route path="/inventario/:id" element={<InventarioDetailPage />} />
                   <Route path="/inventario" element={<InventarioPage />} />
+
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </main>

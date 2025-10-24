@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -57,10 +57,13 @@ const personalSchema = yup.object().shape({
     .uuid('Debe seleccionar un rol válido')
 })
 
-export default function NuevoPersonal() {
+export default function EditPersonal() {
   const navigate = useNavigate()
+  const { id } = useParams()
+
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
+  const [personalData, setPersonalData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
@@ -84,7 +87,8 @@ export default function NuevoPersonal() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
+    reset
   } = useForm({
     resolver: yupResolver(personalSchema),
     defaultValues: {
@@ -97,7 +101,7 @@ export default function NuevoPersonal() {
     }
   })
 
-  // Cargar sedes y roles
+  // Cargar datos iniciales: sedes, roles y personal existente
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -112,6 +116,35 @@ export default function NuevoPersonal() {
         const responseR = await rolesAPI.list({ limit: 100 })
         const roleslista = responseR?.data || responseR || []
         setRoles(Array.isArray(roleslista) ? roleslista : [])
+
+        // Cargar datos del personal existente
+        const response = await personalAPI.getById(id)
+        const personal = response?.data || response
+
+        if (!personal) {
+          setError('No se pudo cargar los datos del personal')
+          return
+        }
+
+        setPersonalData(personal)
+
+        // Pre-llenar el formulario
+        const defaultValues = {
+          nombre: personal.nombre || '',
+          apellido: personal.apellido || '',
+          email: personal.email || '',
+          telefono: personal.telefono || '',
+          sedes: personal.sedesAsignadas?.map(s => s.sede_id) || [],
+          rol_id: personal.rol?.id || ''
+        }
+
+        reset(defaultValues)
+        setFormValues({
+          nombre: personal.nombre || '',
+          apellido: personal.apellido || '',
+          email: personal.email || '',
+          telefono: personal.telefono || ''
+        })
       } catch (err) {
         console.error('Error cargando datos:', err)
         setError('No se pudieron cargar los datos necesarios')
@@ -121,16 +154,16 @@ export default function NuevoPersonal() {
     }
 
     cargarDatos()
-  }, [])
+  }, [id, reset])
 
   const onSubmit = async (data) => {
     try {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Creando personal con datos:', data)
+      console.log('Actualizando personal con datos:', data)
 
-      // Preparar datos para crear personal con sedes y rol
+      // Preparar datos para actualizar personal
       const datosPersonal = {
         nombre: data.nombre,
         apellido: data.apellido,
@@ -140,13 +173,13 @@ export default function NuevoPersonal() {
         rol_id: data.rol_id
       }
 
-      // Crear personal
-      const response = await personalAPI.create(datosPersonal)
+      // Actualizar personal
+      const response = await personalAPI.update(id, datosPersonal)
       console.log('Respuesta del servidor:', response)
 
       if (response && (response.success || response.data || response.id)) {
-        console.log('Personal creado correctamente, redirigiendo a /personal')
-        const successMsg = getSuccessMessage('create', 'Personal')
+        console.log('Personal actualizado correctamente, redirigiendo a /personal')
+        const successMsg = getSuccessMessage('update', 'Personal')
         setToast({ message: successMsg, type: 'success' })
 
         // Esperar a que se muestre el toast antes de redirigir
@@ -160,14 +193,14 @@ export default function NuevoPersonal() {
         setSubmitError('Error inesperado: No se recibió confirmación del servidor')
       }
     } catch (err) {
-      console.error('Error creando personal:', err)
+      console.error('Error actualizando personal:', err)
 
       // Parsear errores del servidor
       const errorData = parseApiError(err)
       if (errorData.fields && Object.keys(errorData.fields).length > 0) {
         setServerFieldErrors(errorData.fields)
       }
-      setSubmitError(errorData.general || 'Error al crear el personal')
+      setSubmitError(errorData.general || 'Error al actualizar el personal')
     } finally {
       setIsLoading(false)
     }
@@ -186,8 +219,8 @@ export default function NuevoPersonal() {
   return (
     <div className="nueva-sede-container">
       <div className="nueva-sede-header">
-        <h1>Nuevo Personal</h1>
-        <p>Registrar un nuevo miembro del personal en el sistema</p>
+        <h1>Editar Personal</h1>
+        <p>Actualizar información del personal</p>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
@@ -349,9 +382,11 @@ export default function NuevoPersonal() {
                 </option>
               ))}
             </select>
-            {(errors.rol_id || hasFieldError('rol_id', serverFieldErrors)) && (
-              <div className="invalid-feedback">{getFieldError('rol_id', serverFieldErrors) || errors.rol_id?.message}</div>
-            )}
+            <FieldError
+              serverError={getFieldError('rol_id', serverFieldErrors)}
+              clientError={errors.rol_id}
+              fieldName="rol_id"
+            />
           </div>
 
           {/* Sedes */}
@@ -403,11 +438,11 @@ export default function NuevoPersonal() {
               </div>
             )}
 
-            {(errors.sedes || hasFieldError('sedes', serverFieldErrors)) && (
-              <div className="invalid-feedback" style={{ display: 'block' }}>
-                {getFieldError('sedes', serverFieldErrors) || errors.sedes?.message}
-              </div>
-            )}
+            <FieldError
+              serverError={getFieldError('sedes', serverFieldErrors)}
+              clientError={errors.sedes}
+              fieldName="sedes"
+            />
           </div>
         </div>
 
@@ -418,7 +453,7 @@ export default function NuevoPersonal() {
             disabled={isSubmitting || isLoading}
             className="btn btn-primary"
           >
-            {isLoading || isSubmitting ? 'Creando personal...' : 'Crear Personal'}
+            {isLoading || isSubmitting ? 'Actualizando personal...' : 'Actualizar Personal'}
           </button>
           <button
             type="button"
@@ -431,7 +466,7 @@ export default function NuevoPersonal() {
         </div>
       </form>
 
-      <LoadingOverlay isVisible={isLoading} message="Creando personal..." />
+      <LoadingOverlay isVisible={isLoading} message="Actualizando personal..." />
 
       {toast && (
         <Toast

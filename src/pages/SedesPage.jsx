@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sedesAPI, empresasAPI } from '../services/api'
+import Swal from 'sweetalert2'
 
 export default function SedesPage() {
   const navigate = useNavigate()
@@ -79,6 +80,54 @@ export default function SedesPage() {
   const cambiarEmpresa = (empresaId) => {
     setEmpresaSeleccionada(empresaId === empresaSeleccionada ? null : empresaId)
     setPage(1)
+  }
+
+  const eliminarSede = async (sede) => {
+    const result = await Swal.fire({
+      title: 'Confirmar eliminación',
+      html: `¿Está seguro de que desea eliminar la sede <strong>${sede.nombre_sede}</strong>?<br/><br/><span style="color: #ef4444; font-size: 0.875rem;">Esta acción no puede ser deshecha.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      backdrop: true,
+      allowOutsideClick: false
+    })
+
+    if (result.isConfirmed) {
+      try {
+        await Swal.fire({
+          title: 'Eliminando...',
+          html: 'Por favor espere',
+          allowOutsideClick: false,
+          didOpen: async () => {
+            Swal.showLoading()
+            try {
+              await sedesAPI.delete(sede.id)
+              await Swal.fire({
+                title: '¡Eliminado!',
+                text: 'La sede ha sido eliminada correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+              })
+              cargarSedes()
+            } catch (err) {
+              console.error('Error eliminando sede:', err)
+              await Swal.fire({
+                title: 'Error',
+                text: 'No se pudo eliminar la sede: ' + (err.message || 'Error desconocido'),
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+              })
+            }
+          }
+        })
+      } catch (err) {
+        console.error('Error inesperado:', err)
+      }
+    }
   }
 
   return (
@@ -252,8 +301,17 @@ export default function SedesPage() {
                   >
                     Ver Detalles
                   </button>
-                  <button className="flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm font-medium">
+                  <button
+                    onClick={() => navigate(`/sedes/${sede.id}/editar`)}
+                    className="flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm font-medium"
+                  >
                     Editar
+                  </button>
+                  <button
+                    onClick={() => eliminarSede(sede)}
+                    className="flex-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    Eliminar
                   </button>
                 </div>
               </div>

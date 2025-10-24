@@ -1,20 +1,35 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
+import Swal from 'sweetalert2'
 
 export default function InventarioPage() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [inventario, setInventario] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filtro, setFiltro] = useState('')
-  const [estado, setEstado] = useState('')
+  const [estado, setEstado] = useState(searchParams.get('estado') || '')
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalRecords, setTotalRecords] = useState(0)
+
+  useEffect(() => {
+    // Update estado when URL query params change
+    const estadoParam = searchParams.get('estado')
+    if (estadoParam) {
+      setEstado(estadoParam)
+      setPage(1)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     cargarInventario()
     cargarEstadisticas()
-  }, [page])
+  }, [page, estado])
 
   const cargarInventario = async () => {
     try {
@@ -22,8 +37,23 @@ export default function InventarioPage() {
       setError(null)
       const params = { page, limit, search: filtro }
       if (estado) params.estado = estado
-      const data = await inventarioAPI.list(params)
-      setInventario(data.data || [])
+      const response = await inventarioAPI.list(params)
+
+      // El backend devuelve { success, data: { rows, pagination } }
+      const datos = response?.data?.rows || response?.rows || response?.data || response || []
+      setInventario(Array.isArray(datos) ? datos : [])
+
+      // Calcular paginación desde la respuesta
+      if (response?.data?.pagination) {
+        setTotalRecords(response.data.pagination.total || 0)
+        setTotalPages(Math.ceil(response.data.pagination.total / limit) || 1)
+      } else if (response?.pagination) {
+        setTotalRecords(response.pagination.total || 0)
+        setTotalPages(Math.ceil(response.pagination.total / limit) || 1)
+      } else if (response?.meta) {
+        setTotalRecords(response.meta.total || 0)
+        setTotalPages(response.meta.pages || 1)
+      }
     } catch (err) {
       setError(err.message)
       console.error('Error cargando inventario:', err)
@@ -34,17 +64,70 @@ export default function InventarioPage() {
 
   const cargarEstadisticas = async () => {
     try {
-      const data = await inventarioAPI.getEstadisticas()
-      setEstadisticas(data)
+      const response = await inventarioAPI.getEstadisticas()
+      const datos = response?.data || response
+      setEstadisticas(datos)
     } catch (err) {
       console.error('Error cargando estadísticas:', err)
     }
+  }
+
+  const getPaginacionNumeros = () => {
+    const numeros = []
+    const maxVisible = 5
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        numeros.push(i)
+      }
+    } else {
+      numeros.push(1)
+
+      if (page > 3) numeros.push('...')
+
+      const inicio = Math.max(2, page - 1)
+      const fin = Math.min(totalPages - 1, page + 1)
+      for (let i = inicio; i <= fin; i++) {
+        if (!numeros.includes(i)) numeros.push(i)
+      }
+
+      if (page < totalPages - 2) numeros.push('...')
+
+      if (!numeros.includes(totalPages)) {
+        numeros.push(totalPages)
+      }
+    }
+
+    return numeros
   }
 
   const handleBuscar = (e) => {
     e.preventDefault()
     setPage(1)
     cargarInventario()
+  }
+
+  const eliminarItem = async (item) => {
+    const result = await Swal.fire({
+      title: 'Confirmar eliminación',
+      html: `¿Está seguro de que desea dar de baja <strong>${item.descripcionCompleta}</strong>?<br/><br/><span style="color: #ef4444; font-size: 0.875rem;">Esta acción no puede ser deshecha.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, dar de baja',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (result.isConfirmed) {
+      try {
+        await inventarioAPI.delete(item.id)
+        Swal.fire('Eliminado', 'El item ha sido dado de baja correctamente.', 'success')
+        cargarInventario()
+      } catch (err) {
+        Swal.fire('Error', err.message || 'Error al dar de baja el item.', 'error')
+      }
+    }
   }
 
   const estadoColor = (estado) => {
@@ -61,9 +144,17 @@ export default function InventarioPage() {
   return (
     <div className="p-6">
       {/* Encabezado */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gestión de Inventario</h1>
-        <p className="text-gray-600 mt-2">Administra los activos de la empresa</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Inventario</h1>
+          <p className="text-gray-600 mt-2">Administra los activos de la empresa</p>
+        </div>
+        <button
+          onClick={() => navigate('/inventario/crear')}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          + Nuevo Artículo
+        </button>
       </div>
 
       {/* Estadísticas */}
@@ -171,9 +262,6 @@ export default function InventarioPage() {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                    Valor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
@@ -191,22 +279,31 @@ export default function InventarioPage() {
                       {item.numero_serie || item.service_tag || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {item.sede?.nombre_sede || 'N/A'}
+                      {item.sedePrincipal?.nombre_sede || item.sede?.nombre_sede || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${estadoColor(item.estado)}`}>
                         {item.estado}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      ${item.valor_adquisicion?.toFixed(2) || '0.00'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2 flex">
+                      <button
+                        onClick={() => navigate(`/inventario/${item.id}`)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                      >
                         Ver
                       </button>
-                      <button className="text-yellow-600 hover:text-yellow-800 transition-colors">
+                      <button
+                        onClick={() => navigate(`/inventario/${item.id}/editar`)}
+                        className="text-yellow-600 hover:text-yellow-800 transition-colors font-medium"
+                      >
                         Editar
+                      </button>
+                      <button
+                        onClick={() => eliminarItem(item)}
+                        className="text-red-600 hover:text-red-800 transition-colors font-medium"
+                      >
+                        Eliminar
                       </button>
                     </td>
                   </tr>
@@ -216,6 +313,61 @@ export default function InventarioPage() {
           </div>
         )}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Mostrando <strong>{(page - 1) * limit + 1}</strong> a <strong>{Math.min(page * limit, totalRecords)}</strong> de <strong>{totalRecords}</strong> registros
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Primera
+            </button>
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Anterior
+            </button>
+
+            {getPaginacionNumeros().map((num, idx) => (
+              <button
+                key={idx}
+                onClick={() => typeof num === 'number' && setPage(num)}
+                disabled={typeof num !== 'number'}
+                className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                  num === page
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-gray-300 hover:bg-gray-50'
+                } disabled:cursor-not-allowed`}
+              >
+                {num}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Última
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

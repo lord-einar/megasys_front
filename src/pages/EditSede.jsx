@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -65,9 +65,12 @@ const sedeSchema = yup.object().shape({
     .trim()
 })
 
-export default function NuevaSede() {
+export default function EditSede() {
   const navigate = useNavigate()
+  const { id } = useParams()
+
   const [empresas, setEmpresas] = useState([])
+  const [sedeData, setSedeData] = useState(null)
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [error, setError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
@@ -112,11 +115,13 @@ export default function NuevaSede() {
     }
   })
 
-  // Cargar empresas activas
+  // Cargar empresas y datos de la sede existente
   useEffect(() => {
-    const cargarEmpresas = async () => {
+    const cargarDatos = async () => {
       try {
         setLoadingEmpresas(true)
+
+        // Cargar empresas activas
         const response = await empresasAPI.getActivas()
         if (response && Array.isArray(response)) {
           setEmpresas(response)
@@ -125,31 +130,66 @@ export default function NuevaSede() {
         } else {
           setEmpresas([])
         }
+
+        // Cargar datos de la sede existente
+        const sedeResponse = await sedesAPI.getById(id)
+        const sede = sedeResponse?.data || sedeResponse
+
+        if (!sede) {
+          setError('No se pudo cargar los datos de la sede')
+          return
+        }
+
+        setSedeData(sede)
+
+        // Pre-llenar el formulario
+        const defaultValues = {
+          empresa_id: sede.empresa_id || '',
+          nombre_sede: sede.nombre_sede || '',
+          direccion: sede.direccion || '',
+          localidad: sede.localidad || '',
+          provincia: sede.provincia || '',
+          pais: sede.pais || 'Argentina',
+          telefono: sede.telefono || '',
+          ip_sede: sede.ip_sede || ''
+        }
+
+        reset(defaultValues)
+        setFormValues({
+          nombre_sede: sede.nombre_sede || '',
+          direccion: sede.direccion || '',
+          localidad: sede.localidad || '',
+          provincia: sede.provincia || '',
+          pais: sede.pais || 'Argentina',
+          telefono: sede.telefono || '',
+          ip_sede: sede.ip_sede || ''
+        })
       } catch (err) {
-        console.error('Error cargando empresas:', err)
-        setError('No se pudieron cargar las empresas')
+        console.error('Error cargando datos:', err)
+        setError('No se pudieron cargar los datos necesarios')
       } finally {
         setLoadingEmpresas(false)
       }
     }
 
-    cargarEmpresas()
-  }, [])
+    cargarDatos()
+  }, [id, reset])
 
   const onSubmit = async (data) => {
     try {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Creando sede con datos:', data)
-      const response = await sedesAPI.create(data)
+      console.log('Actualizando sede con datos:', data)
+
+      const response = await sedesAPI.update(id, data)
 
       console.log('Respuesta del servidor:', response)
 
       // Si la respuesta indica éxito, redirigir
       if (response && (response.success || response.data || response.id)) {
-        console.log('Sede creada exitosamente, redirigiendo a /sedes')
-        const successMsg = getSuccessMessage('create', 'Sede')
+        console.log('Sede actualizada exitosamente, redirigiendo a /sedes')
+        const successMsg = getSuccessMessage('update', 'Sede')
         setToast({ message: successMsg, type: 'success' })
 
         // Esperar a que se muestre el toast antes de redirigir
@@ -163,14 +203,14 @@ export default function NuevaSede() {
         setSubmitError('Error inesperado: No se recibió confirmación del servidor')
       }
     } catch (err) {
-      console.error('Error creando sede:', err)
+      console.error('Error actualizando sede:', err)
 
       // Parsear errores del servidor
       const errorData = parseApiError(err)
       if (errorData.fields && Object.keys(errorData.fields).length > 0) {
         setServerFieldErrors(errorData.fields)
       }
-      setSubmitError(errorData.general || 'Error al crear la sede')
+      setSubmitError(errorData.general || 'Error al actualizar la sede')
     } finally {
       setIsLoading(false)
     }
@@ -180,7 +220,7 @@ export default function NuevaSede() {
     return (
       <div className="nueva-sede-container">
         <div className="loading-spinner">
-          <p>Cargando empresas...</p>
+          <p>Cargando datos...</p>
         </div>
       </div>
     )
@@ -189,18 +229,12 @@ export default function NuevaSede() {
   return (
     <div className="nueva-sede-container">
       <div className="nueva-sede-header">
-        <h1>Nueva Sede</h1>
-        <p>Registrar una nueva sede en el sistema</p>
+        <h1>Editar Sede</h1>
+        <p>Actualizar información de la sede</p>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
       {submitError && <div className="alert alert-danger">{submitError}</div>}
-
-      {empresas.length === 0 && (
-        <div className="alert alert-danger">
-          No hay empresas disponibles. Por favor crea una empresa primero.
-        </div>
-      )}
 
       {empresas.length > 0 && (
         <form className="nueva-sede-form" onSubmit={handleSubmit(onSubmit)}>
@@ -470,7 +504,7 @@ export default function NuevaSede() {
               disabled={isSubmitting || isLoading}
               className="btn btn-primary"
             >
-              {isLoading || isSubmitting ? 'Creando sede...' : 'Crear Sede'}
+              {isLoading || isSubmitting ? 'Actualizando sede...' : 'Actualizar Sede'}
             </button>
             <button
               type="button"
@@ -484,7 +518,7 @@ export default function NuevaSede() {
         </form>
       )}
 
-      <LoadingOverlay isVisible={isLoading} message="Creando sede..." />
+      <LoadingOverlay isVisible={isLoading} message="Actualizando sede..." />
 
       {toast && (
         <Toast

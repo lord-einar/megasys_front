@@ -1,0 +1,43 @@
+.character-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.counter-text {
+  color: #666;
+  font-weight: 500;
+}
+
+.counter-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.counter-fill {
+  height: 100%;
+  background-color: #28a745;
+  transition: background-color 0.2s, width 0.1s;
+}
+
+.character-counter.near-limit .counter-fill {
+  background-color: #ffc107;
+}
+
+.character-counter.near-limit .counter-text {
+  color: #ffc107;
+}
+
+.character-counter.at-limit .counter-fill {
+  background-color: #dc3545;
+}
+
+.character-counter.at-limit .counter-text {
+  color: #dc3545;
+  font-weight: 600;
+}

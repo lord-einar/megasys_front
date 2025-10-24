@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { personalAPI } from '../services/api'
+import Swal from 'sweetalert2'
 
 export default function PersonalPage() {
   const navigate = useNavigate()
@@ -88,6 +89,54 @@ export default function PersonalPage() {
     return numeros
   }
 
+  const eliminarPersona = async (persona) => {
+    const result = await Swal.fire({
+      title: 'Confirmar eliminación',
+      html: `¿Está seguro de que desea eliminar a <strong>${persona.nombre} ${persona.apellido}</strong>?<br/><br/><span style="color: #ef4444; font-size: 0.875rem;">Esta acción no puede ser deshecha.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      backdrop: true,
+      allowOutsideClick: false
+    })
+
+    if (result.isConfirmed) {
+      try {
+        await Swal.fire({
+          title: 'Eliminando...',
+          html: 'Por favor espere',
+          allowOutsideClick: false,
+          didOpen: async () => {
+            Swal.showLoading()
+            try {
+              await personalAPI.delete(persona.id)
+              await Swal.fire({
+                title: '¡Eliminado!',
+                text: 'El personal ha sido eliminado correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+              })
+              cargarPersonal()
+            } catch (err) {
+              console.error('Error eliminando personal:', err)
+              await Swal.fire({
+                title: 'Error',
+                text: 'No se pudo eliminar el personal: ' + (err.message || 'Error desconocido'),
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+              })
+            }
+          }
+        })
+      } catch (err) {
+        console.error('Error inesperado:', err)
+      }
+    }
+  }
+
   return (
     <div className="p-6">
       {/* Encabezado */}
@@ -108,15 +157,15 @@ export default function PersonalPage() {
       {estadisticas && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow p-6 border-l-4 border-blue-600">
-            <div className="text-2xl font-bold text-blue-600">{estadisticas.resumen?.totalPersonal || 0}</div>
+            <div className="text-2xl font-bold text-blue-600">{estadisticas.totalPersonal || estadisticas.resumen?.totalPersonal || 0}</div>
             <div className="text-sm text-gray-700">Personal Total</div>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow p-6 border-l-4 border-green-600">
-            <div className="text-2xl font-bold text-green-600">{estadisticas.resumen?.totalSedes || 0}</div>
+            <div className="text-2xl font-bold text-green-600">{estadisticas.totalSedesUnicas || estadisticas.resumen?.totalSedes || 0}</div>
             <div className="text-sm text-gray-700">Sedes Asignadas</div>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow p-6 border-l-4 border-purple-600">
-            <div className="text-2xl font-bold text-purple-600">{estadisticas.resumen?.totalRoles || 0}</div>
+            <div className="text-2xl font-bold text-purple-600">{estadisticas.totalRolesUnicos || estadisticas.resumen?.totalRoles || 0}</div>
             <div className="text-sm text-gray-700">Roles Diferentes</div>
           </div>
         </div>
@@ -219,11 +268,23 @@ export default function PersonalPage() {
                       {persona.estadisticas?.remitosAsignados || 0} asignados
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 transition-colors">
+                      <button
+                        onClick={() => navigate(`/personal/${persona.id}`)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                      >
                         Ver
                       </button>
-                      <button className="text-yellow-600 hover:text-yellow-800 transition-colors">
+                      <button
+                        onClick={() => navigate(`/personal/${persona.id}/editar`)}
+                        className="text-yellow-600 hover:text-yellow-800 transition-colors font-medium"
+                      >
                         Editar
+                      </button>
+                      <button
+                        onClick={() => eliminarPersona(persona)}
+                        className="text-red-600 hover:text-red-800 transition-colors font-medium"
+                      >
+                        Eliminar
                       </button>
                     </td>
                   </tr>
