@@ -281,7 +281,7 @@ export default function InventarioDetailPage() {
             <div className="space-y-2">
               <div>
                 <p className="text-gray-600 text-sm">Sede</p>
-                <p className="text-gray-900 font-semibold">{item.sede?.nombre_sede || 'N/A'}</p>
+                <p className="text-gray-900 font-semibold">{item.sedePrincipal?.nombre_sede || 'N/A'}</p>
               </div>
 
               <div>
