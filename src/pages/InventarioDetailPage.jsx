@@ -93,10 +93,28 @@ export default function InventarioDetailPage() {
     if (result.isConfirmed) {
       try {
         await inventarioAPI.delete(id)
-        Swal.fire('Eliminado', 'El artículo ha sido dado de baja correctamente.', 'success')
-        navigate('/inventario')
+        Swal.fire({
+          title: 'Eliminado',
+          text: 'El artículo ha sido dado de baja correctamente.',
+          icon: 'success',
+          timer: 1500,
+          timerProgressBar: true
+        }).then(() => {
+          navigate('/inventario')
+        })
       } catch (err) {
-        Swal.fire('Error', err.message || 'Error al dar de baja el artículo.', 'error')
+        // Verificar si es un error de autenticación
+        const isAuthError = err.message && err.message.includes('Token')
+        Swal.fire({
+          title: 'Error',
+          text: err.message || 'Error al dar de baja el artículo.',
+          icon: 'error',
+          didClose: () => {
+            if (isAuthError) {
+              // El redirect a login ocurrirá automáticamente en api.js después de 2 segundos
+            }
+          }
+        })
       }
     }
   }

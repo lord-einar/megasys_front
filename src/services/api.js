@@ -20,18 +20,21 @@ const apiCall = async (endpoint, options = {}) => {
       headers,
     })
 
-    // Si es 401, el token expiró
-    if (response.status === 401) {
-      localStorage.removeItem('authToken')
-      window.location.href = '/login'
-    }
-
     // Algunos endpoints pueden devolver solo headers sin body
     const contentType = response.headers.get('content-type')
     let data = null
 
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
+    }
+
+    // Si es 401, el token expiró
+    if (response.status === 401) {
+      localStorage.removeItem('authToken')
+      // Lanzar error para que la aplicación lo maneje, luego redirigir
+      const error = new Error(data?.message || 'Token expirado. Por favor, inicia sesión nuevamente.')
+      error.status = 401
+      throw error
     }
 
     if (!response.ok) {
@@ -41,6 +44,13 @@ const apiCall = async (endpoint, options = {}) => {
     return data || { success: response.ok }
   } catch (error) {
     console.error('API Error:', error)
+    // Si el error es 401, redirigir a login después de un pequeño delay
+    // para que el usuario pueda ver el mensaje de error
+    if (error.status === 401) {
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 2000)
+    }
     throw error
   }
 }
