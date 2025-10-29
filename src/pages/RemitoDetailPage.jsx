@@ -47,8 +47,12 @@ function RemitoDetailPage() {
         return `${baseClass} bg-blue-100 text-blue-800`
       case 'entregado':
         return `${baseClass} bg-green-100 text-green-800`
-      case 'confirmado':
+      case 'completado':
         return `${baseClass} bg-purple-100 text-purple-800`
+      case 'devuelto':
+        return `${baseClass} bg-indigo-100 text-indigo-800`
+      case 'cancelado':
+        return `${baseClass} bg-red-100 text-red-800`
       default:
         return baseClass
     }
@@ -59,7 +63,9 @@ function RemitoDetailPage() {
       preparado: 'Preparado',
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
-      confirmado: 'Confirmado'
+      completado: 'Completado',
+      devuelto: 'Devuelto',
+      cancelado: 'Cancelado'
     }
     return labels[estado] || estado
   }
@@ -67,10 +73,12 @@ function RemitoDetailPage() {
   const getTransicionesValidas = () => {
     if (!remito) return []
     const transiciones = {
-      'preparado': ['en_transito'],
-      'en_transito': ['entregado'],
-      'entregado': ['confirmado'],
-      'confirmado': []
+      'preparado': ['en_transito', 'cancelado'],
+      'en_transito': ['entregado', 'cancelado'],
+      'entregado': ['completado', 'devuelto', 'cancelado'],
+      'completado': ['devuelto'],
+      'devuelto': [],
+      'cancelado': []
     }
     return transiciones[remito.estado] || []
   }
