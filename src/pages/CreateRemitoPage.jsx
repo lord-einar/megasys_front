@@ -82,11 +82,6 @@ function CreateRemitoPage() {
         limit: 50
       })
 
-      console.log('Response from getArticulosDisponibles:', response)
-      console.log('response.rows:', response.rows)
-      console.log('response.data:', response.data)
-      console.log('response.data?.rows:', response.data?.rows)
-
       setModalArticulos(response.rows || response.data?.rows || [])
       setModalArticulosTotal(response.total || response.data?.total || 0)
       setModalPage(page)

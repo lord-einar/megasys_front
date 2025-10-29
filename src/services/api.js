@@ -234,6 +234,13 @@ export const remitosAPI = {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/remitos/articulos-disponibles${query ? '?' + query : ''}`)
   },
+  actualizarFechaDevolucion: (remitoId, detalleId, fecha_devolucion_esperada) => apiCall(
+    `/remitos/${remitoId}/detalles/${detalleId}/fecha-devolucion`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ fecha_devolucion_esperada })
+    }
+  ),
 }
 
 // Proveedores Endpoints

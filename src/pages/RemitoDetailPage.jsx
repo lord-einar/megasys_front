@@ -38,16 +38,14 @@ function RemitoDetailPage() {
   const getEstadoBadgeClass = (estado) => {
     const baseClass = 'px-3 py-1 rounded-full text-sm font-medium'
     switch (estado) {
-      case 'borrador':
+      case 'preparado':
         return `${baseClass} bg-yellow-100 text-yellow-800`
       case 'en_transito':
         return `${baseClass} bg-blue-100 text-blue-800`
       case 'entregado':
         return `${baseClass} bg-green-100 text-green-800`
-      case 'devuelto':
+      case 'confirmado':
         return `${baseClass} bg-purple-100 text-purple-800`
-      case 'cancelado':
-        return `${baseClass} bg-red-100 text-red-800`
       default:
         return baseClass
     }
@@ -55,11 +53,10 @@ function RemitoDetailPage() {
 
   const getEstadoLabel = (estado) => {
     const labels = {
-      borrador: 'Borrador',
+      preparado: 'Preparado',
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
-      devuelto: 'Devuelto',
-      cancelado: 'Cancelado'
+      confirmado: 'Confirmado'
     }
     return labels[estado] || estado
   }
@@ -67,11 +64,10 @@ function RemitoDetailPage() {
   const getTransicionesValidas = () => {
     if (!remito) return []
     const transiciones = {
-      'borrador': ['en_transito', 'cancelado'],
-      'en_transito': ['entregado', 'cancelado'],
-      'entregado': ['devuelto'],
-      'devuelto': [],
-      'cancelado': []
+      'preparado': ['en_transito'],
+      'en_transito': ['entregado'],
+      'entregado': ['confirmado'],
+      'confirmado': []
     }
     return transiciones[remito.estado] || []
   }
