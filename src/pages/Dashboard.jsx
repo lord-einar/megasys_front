@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { sedesAPI, personalAPI, inventarioAPI } from '../services/api'
 import StatCard from '../components/StatCard'
 import RecentActivityCard from '../components/RecentActivityCard'
+import LoansAboutToExpireCard from '../components/LoansAboutToExpireCard'
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -131,12 +132,13 @@ function Dashboard() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Recent Activity - Spans 2 columns */}
-        <div className="xl:col-span-2">
+        {/* Left column - Recent Activity & Loans */}
+        <div className="xl:col-span-2 space-y-8">
           <RecentActivityCard />
+          <LoansAboutToExpireCard />
         </div>
 
-        {/* Quick Actions & System Status */}
+        {/* Right column - Quick Actions & System Status */}
         <div className="space-y-6">
           {/* Quick Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-card">

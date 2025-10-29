@@ -241,6 +241,10 @@ export const remitosAPI = {
       body: JSON.stringify({ fecha_devolucion_esperada })
     }
   ),
+  // Loan endpoints
+  obtenerResumenPrestamos: () => apiCall('/remitos/prestamos/resumen'),
+  obtenerPrestamosProximosAVencer: (dias = 7) => apiCall(`/remitos/prestamos/proximos-a-vencer?dias=${dias}`),
+  obtenerPrestamosVencidos: () => apiCall('/remitos/prestamos/vencidos'),
 }
 
 // Proveedores Endpoints
