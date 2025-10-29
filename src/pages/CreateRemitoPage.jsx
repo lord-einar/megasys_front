@@ -77,7 +77,7 @@ function CreateRemitoPage() {
       const response = await inventarioAPI.list({
         tipo_articulo_id: selectedTipoArticulo,
         sede_id: formData.sede_origen_id,
-        estado: 'disponible,en_uso',
+        estado: 'disponible',
         page,
         limit: 50
       })
