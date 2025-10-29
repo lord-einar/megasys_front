@@ -15,6 +15,9 @@ function RemitoDetailPage() {
   const [selectedDetalles, setSelectedDetalles] = useState([])
   const [showDevolucionModal, setShowDevolucionModal] = useState(false)
   const [devolviendoArticulos, setDevolviendoArticulos] = useState(false)
+  const [editingLoanId, setEditingLoanId] = useState(null)
+  const [editingDate, setEditingDate] = useState('')
+  const [markingReturned, setMarkingReturned] = useState(false)
 
   useEffect(() => {
     cargarDetalle()
@@ -135,6 +138,56 @@ function RemitoDetailPage() {
   const getPrestamosNoDevueltos = () => {
     if (!remito || !remito.detalles) return []
     return remito.detalles.filter(d => d.es_prestamo && !d.devuelto)
+  }
+
+  const handleEditarFecha = (detalle) => {
+    setEditingLoanId(detalle.id)
+    setEditingDate(detalle.fecha_devolucion?.split('T')[0] || '')
+  }
+
+  const handleGuardarFecha = async () => {
+    if (!editingDate) {
+      Swal.fire('Error', 'Por favor selecciona una fecha', 'error')
+      return
+    }
+
+    try {
+      setMarkingReturned(true)
+      await remitosAPI.actualizarFechaDevolucion(id, editingLoanId, editingDate)
+      Swal.fire('Éxito', 'Fecha de devolución actualizada', 'success')
+      setEditingLoanId(null)
+      setEditingDate('')
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Error al actualizar la fecha', 'error')
+    } finally {
+      setMarkingReturned(false)
+    }
+  }
+
+  const handleMarcarDevuelto = async (detalleId) => {
+    const confirm = await Swal.fire({
+      title: '¿Marcar como devuelto?',
+      text: 'Esta acción marcará el artículo como devuelto',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, devolver',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!confirm.isConfirmed) return
+
+    try {
+      setMarkingReturned(true)
+      // Usar el endpoint de devolver con solo este detalle
+      await remitosAPI.devolver(id, [detalleId])
+      Swal.fire('Éxito', 'Artículo marcado como devuelto', 'success')
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Error al marcar como devuelto', 'error')
+    } finally {
+      setMarkingReturned(false)
+    }
   }
 
   if (loading) {
@@ -277,6 +330,7 @@ function RemitoDetailPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Préstamo</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Fecha Devolución</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Devuelto</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -310,6 +364,29 @@ function RemitoDetailPage() {
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Devuelto</span>
                       ) : (
                         <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {detalle.es_prestamo && !detalle.devuelto ? (
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={() => handleEditarFecha(detalle)}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            title="Editar fecha"
+                          >
+                            📅
+                          </button>
+                          <button
+                            onClick={() => handleMarcarDevuelto(detalle.id)}
+                            disabled={markingReturned}
+                            className="text-green-600 hover:text-green-800 text-sm font-medium disabled:opacity-50"
+                            title="Marcar como devuelto"
+                          >
+                            ✓
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
                       )}
                     </td>
                   </tr>
@@ -363,6 +440,47 @@ function RemitoDetailPage() {
           >
             Generar Remito de Devolución
           </button>
+        </div>
+      )}
+
+      {/* Modal de Editar Fecha */}
+      {editingLoanId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Editar Fecha de Devolución</h3>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nueva fecha de devolución
+              </label>
+              <input
+                type="date"
+                value={editingDate}
+                onChange={(e) => setEditingDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setEditingLoanId(null)
+                  setEditingDate('')
+                }}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGuardarFecha}
+                disabled={!editingDate || markingReturned}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded"
+              >
+                {markingReturned ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
