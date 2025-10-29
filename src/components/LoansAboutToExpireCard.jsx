@@ -22,12 +22,13 @@ function LoansAboutToExpireCard() {
       setError(null)
 
       // Cargar resumen de préstamos
-      const resumen = await remitosAPI.obtenerResumenPrestamos()
-      setLoansResumen(resumen)
+      const resumenResponse = await remitosAPI.obtenerResumenPrestamos()
+      setLoansResumen(resumenResponse.data || resumenResponse)
 
       // Cargar préstamos próximos a vencer (próximos 7 días)
-      const proximosAVencer = await remitosAPI.obtenerPrestamosProximosAVencer(7)
-      setLoans(proximosAVencer.slice(0, 5)) // Mostrar los 5 primeros
+      const proximosResponse = await remitosAPI.obtenerPrestamosProximosAVencer(7)
+      const prestamos = Array.isArray(proximosResponse.data) ? proximosResponse.data : proximosResponse
+      setLoans(prestamos.slice(0, 5)) // Mostrar los 5 primeros
     } catch (err) {
       console.error('Error cargando préstamos:', err)
       setError('Error al cargar los préstamos')
