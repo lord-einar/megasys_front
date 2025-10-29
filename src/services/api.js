@@ -230,6 +230,10 @@ export const remitosAPI = {
     method: 'POST',
     body: JSON.stringify({ detalleIds })
   }),
+  getArticulosDisponibles: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/remitos/articulos-disponibles${query ? '?' + query : ''}`)
+  },
 }
 
 // Proveedores Endpoints
