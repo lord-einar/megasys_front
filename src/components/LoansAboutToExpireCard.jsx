@@ -150,7 +150,7 @@ function LoansAboutToExpireCard() {
                       </span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {loan.inventario?.marca} {loan.inventario?.modelo}
+                      {loan.inventarioDetalle?.marca} {loan.inventarioDetalle?.modelo}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Vence: {formatDate(loan.fecha_devolucion_esperada)}
