@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { remitosAPI } from '../services/api'
+import LoanDetailModal from './LoanDetailModal'
 
 function LoansAboutToExpireCard() {
+  const navigate = useNavigate()
   const [loansResumen, setLoansResumen] = useState({
     proximosAVencer: 0,
     vencidos: 0,
@@ -11,6 +14,8 @@ function LoansAboutToExpireCard() {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedLoan, setSelectedLoan] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     cargarPrestamos()
@@ -134,7 +139,8 @@ function LoansAboutToExpireCard() {
             return (
               <div
                 key={loan.id}
-                className={`p-3 rounded-lg border ${getStatusColor(daysUntilDue)}`}
+                className={`p-3 rounded-lg border ${getStatusColor(daysUntilDue)} cursor-pointer hover:shadow-md transition-shadow`}
+                onClick={() => navigate(`/remitos/${loan.remito.id}`)}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -162,7 +168,15 @@ function LoansAboutToExpireCard() {
                       </p>
                     )}
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedLoan(loan)
+                      setModalOpen(true)
+                    }}
+                    className="text-primary-500 hover:text-primary-600 flex-shrink-0 transition-colors"
+                    title="Acción rápida"
+                  >
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -173,7 +187,7 @@ function LoansAboutToExpireCard() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5l7 7-7 7"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
                       />
                     </svg>
                   </button>
@@ -194,6 +208,14 @@ function LoansAboutToExpireCard() {
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
+
+      {/* Modal para acciones rápidas */}
+      <LoanDetailModal
+        loan={selectedLoan}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onLoanUpdated={cargarPrestamos}
+      />
     </div>
   )
 }
