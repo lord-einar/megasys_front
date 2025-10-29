@@ -41,9 +41,9 @@ function CreateRemitoPage() {
     try {
       setLoading(true)
       const [personalRes, sedesRes, tiposRes] = await Promise.all([
-        personalAPI.list({ activo: true, limit: 1000 }),
-        sedesAPI.list({ activo: true, limit: 1000 }),
-        tipoArticuloAPI.list({ activo: true, limit: 1000 })
+        personalAPI.list({ limit: 1000 }),
+        sedesAPI.list({ limit: 1000 }),
+        tipoArticuloAPI.list({ limit: 1000 })
       ])
 
       setPersonal(personalRes.data || [])
