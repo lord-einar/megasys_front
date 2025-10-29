@@ -10,17 +10,24 @@ function CreateRemitoPage() {
 
   const [personal, setPersonal] = useState([])
   const [sedes, setSedes] = useState([])
-  const [inventario, setInventario] = useState([])
+  const [tiposArticulo, setTiposArticulo] = useState([])
+  const [inventarioDisponible, setInventarioDisponible] = useState([])
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalArticulos, setModalArticulos] = useState([])
+  const [modalArticulosTotal, setModalArticulosTotal] = useState(0)
+  const [modalPage, setModalPage] = useState(1)
+  const [selectedTipoArticulo, setSelectedTipoArticulo] = useState('')
+
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false)
+  const [selectedArticuloIndex, setSelectedArticuloIndex] = useState(null)
 
   const [formData, setFormData] = useState({
-    numero_remito: '',
-    fecha: new Date().toISOString().split('T')[0],
     solicitante_id: '',
     tecnico_id: '',
     sede_origen_id: '',
     sede_destino_id: '',
-    es_prestamo: false,
-    fecha_devolucion_estimada: '',
+    fecha: new Date().toISOString().split('T')[0],
     observaciones: '',
     articulos: []
   })
@@ -32,15 +39,15 @@ function CreateRemitoPage() {
   const loadInitialData = async () => {
     try {
       setLoading(true)
-      const [personalRes, sedesRes, inventarioRes] = await Promise.all([
-        api.get('/personal?limit=1000'),
-        api.get('/sedes?limit=1000'),
-        api.get('/inventario?limit=1000&estado=disponible')
+      const [personalRes, sedesRes, tiposRes] = await Promise.all([
+        api.get('/personal?activo=true&limit=1000'),
+        api.get('/sedes?activo=true&limit=1000'),
+        api.get('/tipo-articulo?activo=true&limit=1000')
       ])
 
       setPersonal(personalRes.data.data || [])
       setSedes(sedesRes.data.data || [])
-      setInventario(inventarioRes.data.data || [])
+      setTiposArticulo(tiposRes.data.data || [])
       setError(null)
     } catch (err) {
       console.error('Error loading initial data:', err)
@@ -51,11 +58,103 @@ function CreateRemitoPage() {
   }
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }))
+  }
+
+  const fetchArticulosModal = async (page = 1) => {
+    if (!selectedTipoArticulo || !formData.sede_origen_id) {
+      setError('Selecciona Tipo de Artículo y Sede Origen primero')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await api.get('/inventario', {
+        params: {
+          tipo_articulo_id: selectedTipoArticulo,
+          sede_id: formData.sede_origen_id,
+          estado: 'disponible,en_uso',
+          page,
+          limit: 50
+        }
+      })
+
+      setModalArticulos(response.data.data || [])
+      setModalArticulosTotal(response.data.pagination?.total || 0)
+      setModalPage(page)
+      setModalOpen(true)
+      setError(null)
+    } catch (err) {
+      console.error('Error fetching articulos:', err)
+      setError('Error al cargar artículos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const selectArticuloFromModal = (articulo) => {
+    const newArticulo = {
+      inventario_id: articulo.id,
+      marca_modelo: `${articulo.marca} ${articulo.modelo}`,
+      estado_articulo: articulo.estado,
+      es_prestamo: false,
+      fecha_devolucion: null
+    }
+
+    // Validar que no esté ya en otro remito en tránsito
+    setFormData(prev => ({
+      ...prev,
+      articulos: [...prev.articulos, newArticulo]
+    }))
+
+    setModalOpen(false)
+  }
+
+  const removeArticulo = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      articulos: prev.articulos.filter((_, i) => i !== index)
+    }))
+  }
+
+  const toggleEsPrestamo = (index) => {
+    setFormData(prev => {
+      const updatedArticulos = [...prev.articulos]
+      updatedArticulos[index].es_prestamo = !updatedArticulos[index].es_prestamo
+
+      if (!updatedArticulos[index].es_prestamo) {
+        updatedArticulos[index].fecha_devolucion = null
+      }
+
+      return {
+        ...prev,
+        articulos: updatedArticulos
+      }
+    })
+  }
+
+  const openCalendarModal = (index) => {
+    setSelectedArticuloIndex(index)
+    setCalendarModalOpen(true)
+  }
+
+  const setFechaDevolucion = (fecha) => {
+    if (selectedArticuloIndex !== null) {
+      setFormData(prev => {
+        const updatedArticulos = [...prev.articulos]
+        updatedArticulos[selectedArticuloIndex].fecha_devolucion = fecha
+        return {
+          ...prev,
+          articulos: updatedArticulos
+        }
+      })
+    }
+    setCalendarModalOpen(false)
+    setSelectedArticuloIndex(null)
   }
 
   const handleSubmit = async (e) => {
@@ -69,6 +168,14 @@ function CreateRemitoPage() {
     if (formData.articulos.length === 0) {
       setError('Debes agregar al menos un artículo')
       return
+    }
+
+    // Validar préstamos con fecha de devolución
+    for (const art of formData.articulos) {
+      if (art.es_prestamo && !art.fecha_devolucion) {
+        setError('Debes indicar la fecha de devolución para todos los préstamos')
+        return
+      }
     }
 
     try {
@@ -89,30 +196,7 @@ function CreateRemitoPage() {
     }
   }
 
-  const addArticulo = (articuloId) => {
-    const articulo = inventario.find(a => a.id === articuloId)
-    if (articulo && !formData.articulos.some(a => a.inventario_id === articuloId)) {
-      setFormData(prev => ({
-        ...prev,
-        articulos: [
-          ...prev.articulos,
-          {
-            inventario_id: articuloId,
-            cantidad: 1,
-            estado_articulo: articulo.estado,
-            observaciones: ''
-          }
-        ]
-      }))
-    }
-  }
-
-  const removeArticulo = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      articulos: prev.articulos.filter((_, i) => i !== index)
-    }))
-  }
+  const modalPages = Math.ceil(modalArticulosTotal / 50)
 
   if (loading && personal.length === 0) {
     return (
@@ -143,9 +227,9 @@ function CreateRemitoPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-8">
         {/* Información Básica */}
-        <div className="mb-8">
+        <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">Información del Remito</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -161,43 +245,11 @@ function CreateRemitoPage() {
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ¿Es Préstamo?
-              </label>
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="checkbox"
-                  name="es_prestamo"
-                  checked={formData.es_prestamo}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <label className="text-sm text-gray-600">
-                  {formData.es_prestamo ? 'Sí, es un préstamo' : 'No, es una transferencia'}
-                </label>
-              </div>
-            </div>
           </div>
-
-          {formData.es_prestamo && (
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fecha Estimada de Devolución
-              </label>
-              <input
-                type="date"
-                name="fecha_devolucion_estimada"
-                value={formData.fecha_devolucion_estimada}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          )}
         </div>
 
-        {/* Personal */}
-        <div className="mb-8">
+        {/* Personal Involucrado */}
+        <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">Personal Involucrado</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -214,7 +266,7 @@ function CreateRemitoPage() {
                 <option value="">Selecciona un solicitante</option>
                 {personal.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido}
+                    {p.nombre} {p.apellido} ({p.rol?.nombre})
                   </option>
                 ))}
               </select>
@@ -242,7 +294,7 @@ function CreateRemitoPage() {
         </div>
 
         {/* Sedes */}
-        <div className="mb-8">
+        <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">Ubicaciones</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -287,61 +339,92 @@ function CreateRemitoPage() {
         </div>
 
         {/* Artículos */}
-        <div className="mb-8">
+        <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">Artículos</h2>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Agregar artículo *
-            </label>
-            <select
-              onChange={(e) => {
-                addArticulo(e.target.value)
-                e.target.value = ''
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Selecciona un artículo</option>
-              {inventario.map(a => (
-                <option key={a.id} value={a.id}>
-                  {a.marca} {a.modelo} (#{a.numero_serie || a.service_tag})
-                </option>
-              ))}
-            </select>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Artículo *
+              </label>
+              <select
+                value={selectedTipoArticulo}
+                onChange={(e) => setSelectedTipoArticulo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecciona un tipo</option>
+                {tiposArticulo.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => fetchArticulosModal(1)}
+                disabled={!selectedTipoArticulo || !formData.sede_origen_id}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Agregar Artículo
+              </button>
+            </div>
           </div>
 
           {formData.articulos.length > 0 && (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left">Artículo</th>
                     <th className="px-4 py-2 text-left">Estado</th>
-                    <th className="px-4 py-2 text-left">Cantidad</th>
+                    <th className="px-4 py-2 text-left">Préstamo</th>
+                    <th className="px-4 py-2 text-left">Fecha Devolución</th>
                     <th className="px-4 py-2 text-left">Acción</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {formData.articulos.map((art, index) => {
-                    const articulo = inventario.find(a => a.id === art.inventario_id)
-                    return (
-                      <tr key={index} className="border-b">
-                        <td className="px-4 py-2">
-                          {articulo?.marca} {articulo?.modelo}
-                        </td>
-                        <td className="px-4 py-2">{art.estado_articulo}</td>
-                        <td className="px-4 py-2">{art.cantidad}</td>
-                        <td className="px-4 py-2">
+                <tbody className="divide-y">
+                  {formData.articulos.map((art, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-2">{art.marca_modelo}</td>
+                      <td className="px-4 py-2">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                          {art.estado_articulo}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="checkbox"
+                          checked={art.es_prestamo}
+                          onChange={() => toggleEsPrestamo(index)}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        {art.es_prestamo ? (
                           <button
                             type="button"
-                            onClick={() => removeArticulo(index)}
-                            className="text-red-600 hover:text-red-900 text-sm"
+                            onClick={() => openCalendarModal(index)}
+                            className="text-blue-600 hover:text-blue-900 text-sm"
                           >
-                            Eliminar
+                            {art.fecha_devolucion || 'Seleccionar fecha'}
                           </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                        ) : (
+                          <span className="text-gray-400 text-sm">N/A</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        <button
+                          type="button"
+                          onClick={() => removeArticulo(index)}
+                          className="text-red-600 hover:text-red-900 text-sm font-medium"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -349,7 +432,7 @@ function CreateRemitoPage() {
         </div>
 
         {/* Observaciones */}
-        <div className="mb-8">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Observaciones
           </label>
@@ -357,14 +440,14 @@ function CreateRemitoPage() {
             name="observaciones"
             value={formData.observaciones}
             onChange={handleInputChange}
-            rows="4"
+            rows="3"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Notas adicionales sobre el remito"
           />
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-4">
           <button
             type="submit"
             disabled={loading}
@@ -381,6 +464,120 @@ function CreateRemitoPage() {
           </button>
         </div>
       </form>
+
+      {/* Modal de Artículos */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full max-h-96 flex flex-col">
+            <h3 className="text-lg font-bold mb-4">
+              Seleccionar Artículo ({modalArticulosTotal} disponibles)
+            </h3>
+
+            {modalArticulos.length > 0 ? (
+              <>
+                <div className="flex-1 overflow-y-auto mb-4">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Marca/Modelo</th>
+                        <th className="px-4 py-2 text-left">S/N</th>
+                        <th className="px-4 py-2 text-left">Estado</th>
+                        <th className="px-4 py-2 text-left">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {modalArticulos.map(art => (
+                        <tr key={art.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2">{art.marca} {art.modelo}</td>
+                          <td className="px-4 py-2 text-sm">{art.numero_serie || art.service_tag || '-'}</td>
+                          <td className="px-4 py-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              {art.estado}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() => selectArticuloFromModal(art)}
+                              className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                            >
+                              Seleccionar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Paginación */}
+                {modalPages > 1 && (
+                  <div className="flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => fetchArticulosModal(modalPage - 1)}
+                      disabled={modalPage === 1}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+                    >
+                      Anterior
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      Página {modalPage} de {modalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => fetchArticulosModal(modalPage + 1)}
+                      disabled={modalPage === modalPages}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-center text-gray-500 py-8">
+                No hay artículos disponibles para esta combinación de sede y tipo
+              </p>
+            )}
+
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Calendario para Préstamo */}
+      {calendarModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-bold mb-4">Seleccionar Fecha de Devolución</h3>
+            <input
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              defaultValue={formData.articulos[selectedArticuloIndex]?.fecha_devolucion || ''}
+              onChange={(e) => setFechaDevolucion(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+            />
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setCalendarModalOpen(false)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

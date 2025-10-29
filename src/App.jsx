@@ -21,6 +21,7 @@ import EditArticulo from './pages/EditArticulo'
 import InventarioDetailPage from './pages/InventarioDetailPage'
 import RemitoListPage from './pages/RemitoListPage'
 import CreateRemitoPage from './pages/CreateRemitoPage'
+import RemitoDetailPage from './pages/RemitoDetailPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -89,6 +90,7 @@ function App() {
 
                   {/* Remitos routes - más específicas primero */}
                   <Route path="/remitos/crear" element={<CreateRemitoPage />} />
+                  <Route path="/remitos/:id" element={<RemitoDetailPage />} />
                   <Route path="/remitos" element={<RemitoListPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -8,8 +8,7 @@ function RemitoListPage() {
   const [error, setError] = useState(null)
   const [filters, setFilters] = useState({
     estado: '',
-    solicitante_id: '',
-    tecnico_id: '',
+    es_prestamo: '',
     page: 1,
     limit: 10
   })
@@ -52,7 +51,7 @@ function RemitoListPage() {
     const baseClass = 'px-3 py-1 rounded-full text-sm font-medium'
     switch (estado) {
       case 'borrador':
-        return `${baseClass} bg-gray-100 text-gray-800`
+        return `${baseClass} bg-yellow-100 text-yellow-800`
       case 'en_transito':
         return `${baseClass} bg-blue-100 text-blue-800`
       case 'entregado':
@@ -127,6 +126,21 @@ function RemitoListPage() {
               <option value="cancelado">Cancelado</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo
+            </label>
+            <select
+              name="es_prestamo"
+              value={filters.es_prestamo}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              <option value="true">Préstamos</option>
+              <option value="false">Transferencias</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -150,10 +164,13 @@ function RemitoListPage() {
                   Estado
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Solicitante
+                  Tipo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Técnico
+                  Devolución
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Solicitante
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                   Acciones
@@ -175,18 +192,45 @@ function RemitoListPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {remito.solicitante?.nombre} {remito.solicitante?.apellido}
+                    {remito.es_prestamo ? (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                        Préstamo
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                        Transferencia
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {remito.tecnico?.nombre} {remito.tecnico?.apellido}
+                    {remito.es_prestamo && remito.fecha_devolucion_estimada ? (
+                      <span className="text-sm">
+                        {new Date(remito.fecha_devolucion_estimada).toLocaleDateString('es-AR')}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {remito.solicitante?.nombre} {remito.solicitante?.apellido}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => navigate(`/remitos/${remito.id}`)}
-                      className="text-blue-600 hover:text-blue-900 font-medium text-sm"
-                    >
-                      Ver detalles
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => navigate(`/remitos/${remito.id}`)}
+                        className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+                      >
+                        Ver
+                      </button>
+                      {remito.puedeDevolverse && (
+                        <button
+                          onClick={() => {/* Implementar después */}}
+                          className="text-green-600 hover:text-green-900 font-medium text-sm"
+                        >
+                          Devolver
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
