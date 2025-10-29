@@ -368,8 +368,12 @@ function RemitoDetailPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {detalle.devuelto ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Devuelto</span>
+                      {detalle.es_prestamo ? (
+                        detalle.devuelto ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Devuelto</span>
+                        ) : (
+                          <span className="text-gray-400">Pendiente</span>
+                        )
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
