@@ -150,7 +150,7 @@ function RemitoDetailPage() {
 
   const handleEditarFecha = (detalle) => {
     setEditingLoanId(detalle.id)
-    setEditingDate(detalle.fecha_devolucion?.split('T')[0] || '')
+    setEditingDate(detalle.fecha_devolucion_esperada?.split('T')[0] || '')
   }
 
   const handleGuardarFecha = async () => {
@@ -361,8 +361,8 @@ function RemitoDetailPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {detalle.es_prestamo && detalle.fecha_devolucion ? (
-                        new Date(detalle.fecha_devolucion).toLocaleDateString('es-AR')
+                      {detalle.es_prestamo && detalle.fecha_devolucion_esperada ? (
+                        new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR')
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
@@ -510,7 +510,7 @@ function RemitoDetailPage() {
                   <span className="flex-1">
                     <p className="font-medium">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
                     <p className="text-sm text-gray-600">
-                      Devolución esperada: {new Date(detalle.fecha_devolucion).toLocaleDateString('es-AR')}
+                      Devolución esperada: {new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR')}
                     </p>
                   </span>
                 </label>
