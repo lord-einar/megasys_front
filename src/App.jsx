@@ -19,6 +19,8 @@ import InventarioPage from './pages/InventarioPage'
 import CreateArticulo from './pages/CreateArticulo'
 import EditArticulo from './pages/EditArticulo'
 import InventarioDetailPage from './pages/InventarioDetailPage'
+import RemitoListPage from './pages/RemitoListPage'
+import CreateRemitoPage from './pages/CreateRemitoPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -84,6 +86,10 @@ function App() {
                   <Route path="/inventario/:id/editar" element={<EditArticulo />} />
                   <Route path="/inventario/:id" element={<InventarioDetailPage />} />
                   <Route path="/inventario" element={<InventarioPage />} />
+
+                  {/* Remitos routes - más específicas primero */}
+                  <Route path="/remitos/crear" element={<CreateRemitoPage />} />
+                  <Route path="/remitos" element={<RemitoListPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
