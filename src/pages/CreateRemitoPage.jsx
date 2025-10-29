@@ -82,7 +82,7 @@ function CreateRemitoPage() {
         limit: 50
       })
 
-      setModalArticulos(response.data || [])
+      setModalArticulos(response.rows || [])
       setModalArticulosTotal(response.total || 0)
       setModalPage(page)
       setModalOpen(true)
