@@ -162,9 +162,9 @@ function LoansAboutToExpireCard() {
                     <p className="text-xs text-gray-500 mt-1">
                       Vence: {formatDate(loan.fecha_devolucion_esperada)}
                     </p>
-                    {loan.remito?.solicitante_id && (
+                    {loan.remito?.solicitante && (
                       <p className="text-xs text-gray-500">
-                        ID Solicitante: {loan.remito.solicitante_id.substring(0, 8)}...
+                        {loan.remito.solicitante.nombre} {loan.remito.solicitante.apellido}
                       </p>
                     )}
                   </div>

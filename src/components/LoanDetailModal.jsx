@@ -78,9 +78,15 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <p className="text-sm text-gray-600">Prestado a</p>
             <p className="text-lg font-semibold text-gray-900">
-              {loan.remito?.solicitante_id || 'No disponible'}
+              {loan.remito?.solicitante?.nombre && loan.remito?.solicitante?.apellido
+                ? `${loan.remito.solicitante.nombre} ${loan.remito.solicitante.apellido}`
+                : loan.remito?.solicitante_id || 'No disponible'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">ID del solicitante</p>
+            {loan.remito?.solicitante && (
+              <p className="text-xs text-gray-500 mt-1">
+                {loan.remito.solicitante.id}
+              </p>
+            )}
           </div>
 
           {/* Artículo Info */}
