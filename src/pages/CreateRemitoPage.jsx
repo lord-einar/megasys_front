@@ -8,6 +8,7 @@ function CreateRemitoPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [numeroRemito, setNumeroRemito] = useState(null)
 
   const [personal, setPersonal] = useState([])
   const [sedes, setSedes] = useState([])
@@ -74,7 +75,7 @@ function CreateRemitoPage() {
 
     try {
       setLoading(true)
-      const response = await inventarioAPI.list({
+      const response = await remitosAPI.getArticulosDisponibles({
         tipo_articulo_id: selectedTipoArticulo,
         sede_id: formData.sede_origen_id,
         page,
@@ -82,7 +83,7 @@ function CreateRemitoPage() {
       })
 
       setModalArticulos(response.data || [])
-      setModalArticulosTotal(response.pagination?.total || 0)
+      setModalArticulosTotal(response.total || 0)
       setModalPage(page)
       setModalOpen(true)
       setError(null)
@@ -121,12 +122,16 @@ function CreateRemitoPage() {
 
   const toggleEsPrestamo = (index) => {
     setFormData(prev => {
-      const updatedArticulos = [...prev.articulos]
-      updatedArticulos[index].es_prestamo = !updatedArticulos[index].es_prestamo
-
-      if (!updatedArticulos[index].es_prestamo) {
-        updatedArticulos[index].fecha_devolucion = null
-      }
+      const updatedArticulos = prev.articulos.map((art, i) => {
+        if (i === index) {
+          return {
+            ...art,
+            es_prestamo: !art.es_prestamo,
+            fecha_devolucion: art.es_prestamo ? null : art.fecha_devolucion
+          }
+        }
+        return art
+      })
 
       return {
         ...prev,
@@ -181,11 +186,12 @@ function CreateRemitoPage() {
       setError(null)
 
       const response = await remitosAPI.create(formData)
+      setNumeroRemito(response.data?.numero_remito)
       setSuccess(true)
 
       setTimeout(() => {
         navigate(`/remitos/${response.data.id}`)
-      }, 1500)
+      }, 2500)
     } catch (err) {
       console.error('Error creating remito:', err)
       setError(err.message || 'Error al crear el remito')
@@ -221,7 +227,9 @@ function CreateRemitoPage() {
 
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-          ¡Remito creado exitosamente! Redirigiendo...
+          <div className="font-semibold mb-2">¡Remito creado exitosamente!</div>
+          {numeroRemito && <div className="text-sm mb-2">Número de remito: <span className="font-bold text-lg">{numeroRemito}</span></div>}
+          <div className="text-sm">Redirigiendo...</div>
         </div>
       )}
 
@@ -264,7 +272,7 @@ function CreateRemitoPage() {
                 <option value="">Selecciona un solicitante</option>
                 {personal.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido} ({p.rol?.nombre})
+                    {p.nombre} {p.apellido} - {p.sede?.nombre_sede || 'Sin sede'} ({p.rol?.nombre})
                   </option>
                 ))}
               </select>
@@ -384,7 +392,7 @@ function CreateRemitoPage() {
                 </thead>
                 <tbody className="divide-y">
                   {formData.articulos.map((art, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={`articulo-${index}-${art.inventario_id}`} className="hover:bg-gray-50">
                       <td className="px-4 py-2">{art.marca_modelo}</td>
                       <td className="px-4 py-2">
                         <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
@@ -392,12 +400,14 @@ function CreateRemitoPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2">
-                        <input
-                          type="checkbox"
-                          checked={art.es_prestamo}
-                          onChange={() => toggleEsPrestamo(index)}
-                          className="w-4 h-4 text-blue-600"
-                        />
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={art.es_prestamo}
+                            onChange={() => toggleEsPrestamo(index)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                        </label>
                       </td>
                       <td className="px-4 py-2">
                         {art.es_prestamo ? (
