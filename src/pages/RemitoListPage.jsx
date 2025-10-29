@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { remitosAPI } from '../services/api'
 
 function RemitoListPage() {
   const [remitos, setRemitos] = useState([])
@@ -26,13 +27,13 @@ function RemitoListPage() {
   const fetchRemitos = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/remitos', { params: filters })
-      setRemitos(response.data.data || [])
-      setPagination(response.data.pagination || {})
+      const response = await remitosAPI.list(filters)
+      setRemitos(response.data || [])
+      setPagination(response.pagination || {})
       setError(null)
     } catch (err) {
       console.error('Error fetching remitos:', err)
-      setError(err.response?.data?.message || 'Error al cargar remitos')
+      setError(err.message || 'Error al cargar remitos')
     } finally {
       setLoading(false)
     }

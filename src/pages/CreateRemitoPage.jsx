@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { personalAPI, sedesAPI, tipoArticuloAPI, inventarioAPI, remitosAPI } from '../services/api'
 
 function CreateRemitoPage() {
   const navigate = useNavigate()
@@ -40,14 +41,14 @@ function CreateRemitoPage() {
     try {
       setLoading(true)
       const [personalRes, sedesRes, tiposRes] = await Promise.all([
-        api.get('/personal?activo=true&limit=1000'),
-        api.get('/sedes?activo=true&limit=1000'),
-        api.get('/tipo-articulo?activo=true&limit=1000')
+        personalAPI.list({ activo: true, limit: 1000 }),
+        sedesAPI.list({ activo: true, limit: 1000 }),
+        tipoArticuloAPI.list({ activo: true, limit: 1000 })
       ])
 
-      setPersonal(personalRes.data.data || [])
-      setSedes(sedesRes.data.data || [])
-      setTiposArticulo(tiposRes.data.data || [])
+      setPersonal(personalRes.data || [])
+      setSedes(sedesRes.data || [])
+      setTiposArticulo(tiposRes.data || [])
       setError(null)
     } catch (err) {
       console.error('Error loading initial data:', err)
@@ -73,18 +74,16 @@ function CreateRemitoPage() {
 
     try {
       setLoading(true)
-      const response = await api.get('/inventario', {
-        params: {
-          tipo_articulo_id: selectedTipoArticulo,
-          sede_id: formData.sede_origen_id,
-          estado: 'disponible,en_uso',
-          page,
-          limit: 50
-        }
+      const response = await inventarioAPI.list({
+        tipo_articulo_id: selectedTipoArticulo,
+        sede_id: formData.sede_origen_id,
+        estado: 'disponible,en_uso',
+        page,
+        limit: 50
       })
 
-      setModalArticulos(response.data.data || [])
-      setModalArticulosTotal(response.data.pagination?.total || 0)
+      setModalArticulos(response.data || [])
+      setModalArticulosTotal(response.pagination?.total || 0)
       setModalPage(page)
       setModalOpen(true)
       setError(null)
@@ -182,15 +181,15 @@ function CreateRemitoPage() {
       setLoading(true)
       setError(null)
 
-      const response = await api.post('/remitos', formData)
+      const response = await remitosAPI.create(formData)
       setSuccess(true)
 
       setTimeout(() => {
-        navigate(`/remitos/${response.data.data.id}`)
+        navigate(`/remitos/${response.data.id}`)
       }, 1500)
     } catch (err) {
       console.error('Error creating remito:', err)
-      setError(err.response?.data?.message || 'Error al crear el remito')
+      setError(err.message || 'Error al crear el remito')
     } finally {
       setLoading(false)
     }

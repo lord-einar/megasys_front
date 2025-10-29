@@ -222,6 +222,14 @@ export const remitosAPI = {
   }),
   delete: (id) => apiCall(`/remitos/${id}`, { method: 'DELETE' }),
   getDetalles: (id) => apiCall(`/remitos/${id}/detalles`),
+  cambiarEstado: (id, estado) => apiCall(`/remitos/${id}/estado`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estado })
+  }),
+  devolver: (id, detalleIds) => apiCall(`/remitos/${id}/devolver`, {
+    method: 'POST',
+    body: JSON.stringify({ detalleIds })
+  }),
 }
 
 // Proveedores Endpoints

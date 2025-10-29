@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '../services/api'
+import { remitosAPI } from '../services/api'
 import Swal from 'sweetalert2'
 
 function RemitoDetailPage() {
@@ -23,13 +24,12 @@ function RemitoDetailPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await api.get(`/remitos/${id}`)
-      const data = response.data?.data || response.data
-      setRemito(data)
+      const response = await remitosAPI.getById(id)
+      setRemito(response.data)
     } catch (err) {
       console.error('Error cargando remito:', err)
-      setError(err.response?.data?.message || 'Error al cargar remito')
-      Swal.fire('Error', err.response?.data?.message || 'No se pudo cargar el remito', 'error')
+      setError(err.message || 'Error al cargar remito')
+      Swal.fire('Error', err.message || 'No se pudo cargar el remito', 'error')
     } finally {
       setLoading(false)
     }
@@ -84,12 +84,12 @@ function RemitoDetailPage() {
 
     try {
       setChangingState(true)
-      await api.patch(`/remitos/${id}/estado`, { estado: newState })
+      await remitosAPI.cambiarEstado(id, newState)
       Swal.fire('Éxito', 'Estado del remito actualizado correctamente', 'success')
       setNewState('')
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Error al cambiar el estado', 'error')
+      Swal.fire('Error', err.message || 'Error al cambiar el estado', 'error')
     } finally {
       setChangingState(false)
     }
@@ -111,11 +111,9 @@ function RemitoDetailPage() {
 
     try {
       setDevolviendoArticulos(true)
-      const response = await api.post(`/remitos/${id}/devolver`, {
-        detalleIds: selectedDetalles
-      })
+      const response = await remitosAPI.devolver(id, selectedDetalles)
 
-      const remitoDevolucion = response.data?.data
+      const remitoDevolucion = response.data
       Swal.fire({
         title: 'Éxito',
         html: `Remito de devolución <strong>${remitoDevolucion.numero_remito}</strong> creado correctamente`,
@@ -126,7 +124,7 @@ function RemitoDetailPage() {
       setSelectedDetalles([])
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Error al generar remito de devolución', 'error')
+      Swal.fire('Error', err.message || 'Error al generar remito de devolución', 'error')
     } finally {
       setDevolviendoArticulos(false)
     }
