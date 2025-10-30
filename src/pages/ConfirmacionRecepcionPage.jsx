@@ -23,6 +23,8 @@ function ConfirmacionRecepcionPage() {
         setLoading(true)
         const response = await remitosAPI.confirmarRecepcion(remitoId, token)
 
+        // La respuesta tiene estructura: { success: true, data: {...}, message: "..." }
+        // Accedemos a la propiedad 'data' que contiene los detalles del remito
         setRemitoData(response.data)
         setConfirmed(true)
         setError(null)
@@ -117,8 +119,8 @@ function ConfirmacionRecepcionPage() {
           <div className="space-y-3">
             {remitoData.pdfConfirmado && (
               <a
-                href={remitoData.pdfConfirmado}
-                download
+                href={`http://localhost:4000${remitoData.pdfConfirmado}`}
+                download={`Remito_${remitoData.numeroRemito}_Confirmado.pdf`}
                 className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition text-center"
               >
                 📥 Descargar PDF de Confirmación
