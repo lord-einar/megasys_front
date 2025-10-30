@@ -18,6 +18,7 @@ function RemitoDetailPage() {
   const [editingLoanId, setEditingLoanId] = useState(null)
   const [editingDate, setEditingDate] = useState('')
   const [markingReturned, setMarkingReturned] = useState(false)
+  const [reenviandoEmails, setReenviandoEmails] = useState(false)
 
   useEffect(() => {
     cargarDetalle()
@@ -195,6 +196,29 @@ function RemitoDetailPage() {
       Swal.fire('Error', err.message || 'Error al marcar como devuelto', 'error')
     } finally {
       setMarkingReturned(false)
+    }
+  }
+
+  const handleReenviarEmails = async () => {
+    const confirm = await Swal.fire({
+      title: '¿Reenviar emails?',
+      text: 'Se reenviará el remito a infraestructura y al solicitante',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, reenviar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!confirm.isConfirmed) return
+
+    try {
+      setReenviandoEmails(true)
+      await remitosAPI.reenviarEmails(id)
+      Swal.fire('Éxito', 'Emails reenviados exitosamente', 'success')
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Error al reenviar emails', 'error')
+    } finally {
+      setReenviandoEmails(false)
     }
   }
 
@@ -438,6 +462,21 @@ function RemitoDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Reenviar Emails */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Reenviar Emails</h2>
+        <p className="text-gray-600 mb-4">
+          Reenvía el remito por correo a infraestructura y al solicitante
+        </p>
+        <button
+          onClick={handleReenviarEmails}
+          disabled={reenviandoEmails}
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded transition-colors"
+        >
+          {reenviandoEmails ? 'Reenviando...' : '📧 Reenviar Email'}
+        </button>
+      </div>
 
       {/* Generar Devolución */}
       {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (

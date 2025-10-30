@@ -245,6 +245,10 @@ export const remitosAPI = {
   obtenerResumenPrestamos: () => apiCall('/remitos/prestamos/resumen'),
   obtenerPrestamosProximosAVencer: (dias = 7) => apiCall(`/remitos/prestamos/proximos-a-vencer?dias=${dias}`),
   obtenerPrestamosVencidos: () => apiCall('/remitos/prestamos/vencidos'),
+  // Email resending
+  reenviarEmails: (id) => apiCall(`/remitos/${id}/reenviar-emails`, {
+    method: 'POST'
+  }),
 }
 
 // Proveedores Endpoints
