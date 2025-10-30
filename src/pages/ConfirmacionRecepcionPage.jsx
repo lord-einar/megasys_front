@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { remitosAPI } from '../services/api'
+import { BACKEND_BASE_URL } from '../config/api'
 import Swal from 'sweetalert2'
 
 function ConfirmacionRecepcionPage() {
@@ -121,7 +122,7 @@ function ConfirmacionRecepcionPage() {
               <a
                 href={remitoData.pdfConfirmado.startsWith('http')
                   ? remitoData.pdfConfirmado
-                  : `http://localhost:4000${remitoData.pdfConfirmado}`}
+                  : `${BACKEND_BASE_URL}${remitoData.pdfConfirmado}`}
                 download={`Remito_${remitoData.numeroRemito}_Confirmado.pdf`}
                 className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition text-center"
               >

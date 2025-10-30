@@ -1,5 +1,5 @@
-// API Base Configuration - backend running on port 4000
-const API_BASE_URL = 'http://localhost:4000/api'
+// API Base Configuration - imported from config
+import { API_BASE_URL } from '../config/api'
 
 // Helper para hacer requests con auth token
 const apiCall = async (endpoint, options = {}) => {
