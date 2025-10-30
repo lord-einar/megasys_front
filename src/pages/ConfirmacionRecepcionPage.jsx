@@ -15,14 +15,18 @@ function ConfirmacionRecepcionPage() {
   const token = searchParams.get('token')
 
   useEffect(() => {
+    console.log('ConfirmacionRecepcionPage: Mounted', { remitoId, token, hasParams: !!remitoId && !!token })
+
     const confirmarRecepcion = async () => {
       try {
         if (!remitoId || !token) {
           throw new Error('Parámetros faltantes: remito y token son requeridos')
         }
 
+        console.log('ConfirmacionRecepcionPage: Iniciando confirmación', { remitoId })
         setLoading(true)
         const response = await remitosAPI.confirmarRecepcion(remitoId, token)
+        console.log('ConfirmacionRecepcionPage: Respuesta del servidor', response)
 
         // La respuesta tiene estructura: { success: true, data: {...}, message: "..." }
         // Accedemos a la propiedad 'data' que contiene los detalles del remito

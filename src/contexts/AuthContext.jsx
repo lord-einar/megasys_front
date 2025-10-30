@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 const AuthContext = createContext(null);
 
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
           setToken(savedToken);
 
           // Luego valida el token con el backend en background
-          const response = await fetch('http://localhost:4000/api/auth/me', {
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${savedToken}`,
               'Content-Type': 'application/json'
