@@ -119,7 +119,9 @@ function ConfirmacionRecepcionPage() {
           <div className="space-y-3">
             {remitoData.pdfConfirmado && (
               <a
-                href={`http://localhost:4000${remitoData.pdfConfirmado}`}
+                href={remitoData.pdfConfirmado.startsWith('http')
+                  ? remitoData.pdfConfirmado
+                  : `http://localhost:4000${remitoData.pdfConfirmado}`}
                 download={`Remito_${remitoData.numeroRemito}_Confirmado.pdf`}
                 className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition text-center"
               >
