@@ -22,6 +22,7 @@ import InventarioDetailPage from './pages/InventarioDetailPage'
 import RemitoListPage from './pages/RemitoListPage'
 import CreateRemitoPage from './pages/CreateRemitoPage'
 import RemitoDetailPage from './pages/RemitoDetailPage'
+import ConfirmacionRecepcionPage from './pages/ConfirmacionRecepcionPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -42,6 +43,8 @@ function App() {
   if (!isAuthenticated) {
     return <Routes>
       <Route path="/login" element={<Login />} />
+      {/* Public confirmation route - accesible without authentication */}
+      <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   }

@@ -249,6 +249,10 @@ export const remitosAPI = {
   reenviarEmails: (id) => apiCall(`/remitos/${id}/reenviar-emails`, {
     method: 'POST'
   }),
+  // Public confirmation endpoint (no auth required)
+  confirmarRecepcion: (id, token) => apiCall(`/remitos/${id}/confirmar-recepcion?token=${encodeURIComponent(token)}`, {
+    method: 'POST'
+  }),
 }
 
 // Proveedores Endpoints
