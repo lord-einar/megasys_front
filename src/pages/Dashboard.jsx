@@ -28,32 +28,20 @@ function Dashboard() {
       let sedesCount = 0
       let personalCount = 0
       let inventarioCount = 0
+      let remitosCount = 0
 
+      // Usar el endpoint de estadísticas para sedes (más eficiente)
       try {
-        const sedesData = await sedesAPI.list({ limit: 1 })
-        sedesCount = sedesData.pagination?.total || 0
+        const estadisticasData = await sedesAPI.getEstadisticas()
+        sedesCount = estadisticasData?.sedes?.activas || 0
+        personalCount = estadisticasData?.personal?.total || 0
+        inventarioCount = estadisticasData?.inventario?.total || 0
       } catch (err) {
-        console.error('Error cargando sedes:', err)
-      }
-
-      try {
-        const personalData = await personalAPI.list({ limit: 1 })
-        personalCount = personalData.pagination?.total || 0
-      } catch (err) {
-        console.error('Error cargando personal:', err)
-      }
-
-      try {
-        const inventarioData = await inventarioAPI.list({ limit: 1 })
-        inventarioCount = inventarioData?.pagination?.total || 0
-      } catch (err) {
-        console.warn('Inventario no disponible:', err.message)
-        // Inventario puede no estar implementado, es opcional
+        console.error('Error cargando estadísticas generales:', err)
       }
 
       // Cargar remitos pendientes de confirmación
       // Estos son remitos que aún no están en estado 'completado'
-      let remitosCount = 0
       try {
         const remitosData = await remitosAPI.list({
           limit: 100  // Cargar sin filtro de estado para obtener todos
