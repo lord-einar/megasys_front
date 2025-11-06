@@ -1,41 +1,37 @@
 import { useState, useEffect } from 'react'
+import { remitosAPI } from '../services/api'
 
 function RecentActivityCard() {
   const [activities, setActivities] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Datos de ejemplo
-    setActivities([
-      {
-        id: 1,
-        type: 'transfer',
-        description: 'Remito #001 - Transferencia de laptop a Sede Central',
-        timestamp: '2024-10-21 10:30',
-        user: 'Juan García',
-      },
-      {
-        id: 2,
-        type: 'inventory',
-        description: 'Nuevo artículo agregado - Monitor Samsung 27"',
-        timestamp: '2024-10-21 09:15',
-        user: 'María López',
-      },
-      {
-        id: 3,
-        type: 'staff',
-        description: 'Nuevo personal - Carlos Mendez (Técnico Senior)',
-        timestamp: '2024-10-20 16:45',
-        user: 'Admin',
-      },
-      {
-        id: 4,
-        type: 'service',
-        description: 'Servicio de soporte asignado a Sede Norte',
-        timestamp: '2024-10-20 14:20',
-        user: 'Admin',
-      },
-    ])
+    cargarActividades()
   }, [])
+
+  const cargarActividades = async () => {
+    try {
+      setLoading(true)
+      const response = await remitosAPI.list({ limit: 10 })
+      const remitos = Array.isArray(response.data) ? response.data : response || []
+
+      const actividades = remitos.slice(0, 5).map((remito) => ({
+        id: remito.id,
+        type: 'transfer',
+        description: `Remito #${remito.numero_remito} - ${remito.descripcion || 'Transferencia de artículos'}`,
+        timestamp: new Date(remito.created_at).toLocaleString('es-AR'),
+        user: remito.tecnicoAsignado?.nombre || 'Sistema',
+        estado: remito.estado,
+      }))
+
+      setActivities(actividades)
+    } catch (err) {
+      console.error('Error cargando actividades:', err)
+      setActivities([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getActivityIcon = (type) => {
     const icons = {
@@ -47,46 +43,61 @@ function RecentActivityCard() {
     return icons[type] || '📝'
   }
 
+  const getEstadoBadgeColor = (estado) => {
+    const colors = {
+      'pendiente': 'bg-yellow-100 text-yellow-800',
+      'en transito': 'bg-blue-100 text-blue-800',
+      'en tránsito': 'bg-blue-100 text-blue-800',
+      'confirmado': 'bg-green-100 text-green-800',
+      'completado': 'bg-green-100 text-green-800',
+      'cancelado': 'bg-red-100 text-red-800',
+    }
+    return colors[estado?.toLowerCase()] || 'bg-gray-100 text-gray-800'
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
         Actividad Reciente
       </h2>
-      <div className="space-y-4">
-        {activities.map((activity) => (
-          <div
-            key={activity.id}
-            className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
-          >
-            <div className="flex-shrink-0 text-2xl">
-              {getActivityIcon(activity.type)}
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <p className="text-gray-500 text-sm mt-2">Cargando actividades...</p>
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No hay actividades recientes</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activities.map((activity) => (
+            <div
+              key={activity.id}
+              className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
+            >
+              <div className="flex-shrink-0 text-2xl">
+                {getActivityIcon(activity.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">
+                  {activity.description}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-gray-500">
+                    {activity.timestamp} • Por {activity.user}
+                  </p>
+                  {activity.estado && (
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getEstadoBadgeColor(activity.estado)}`}>
+                      {activity.estado}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {activity.description}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {activity.timestamp} • Por {activity.user}
-              </p>
-            </div>
-            <button className="text-gray-400 hover:text-gray-600">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

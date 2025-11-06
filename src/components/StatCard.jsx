@@ -55,20 +55,6 @@ function StatCard({ title, value, icon, trend, subtitle }) {
           {getIconComponent()}
         </div>
       </div>
-      
-      {/* Progress bar for trend visualization */}
-      {trend !== undefined && (
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-1">
-            <div 
-              className={`h-1 rounded-full ${
-                trend > 0 ? 'bg-green-500' : trend < 0 ? 'bg-red-500' : 'bg-gray-400'
-              }`}
-              style={{ width: `${Math.min(Math.abs(trend) * 10, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
