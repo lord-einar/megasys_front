@@ -11,6 +11,8 @@ import SedesPage from './pages/SedesPage'
 import SedeDetallePage from './pages/SedeDetallePage'
 import NuevaSede from './pages/NuevaSede'
 import EditSede from './pages/EditSede'
+import AsignarTecnicoPage from './pages/AsignarTecnicoPage'
+import AsignarSedesPage from './pages/AsignarSedesPage'
 import PersonalPage from './pages/PersonalPage'
 import PersonalDetailPage from './pages/PersonalDetailPage'
 import NuevoPersonal from './pages/NuevoPersonal'
@@ -40,10 +42,19 @@ function App() {
     )
   }
 
+  // Public routes that don't require authentication
+  // Check first before authentication check
+  if (window.location.pathname === '/confirmar-recepcion' || window.location.pathname === '/login') {
+    return <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  }
+
   if (!isAuthenticated) {
     return <Routes>
       <Route path="/login" element={<Login />} />
-      {/* Public confirmation route - accesible without authentication */}
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
@@ -56,7 +67,7 @@ function App() {
         element={
           <div className="flex h-screen bg-gray-100">
             {/* Sidebar */}
-            <Sidebar isOpen={sidebarOpen} />
+            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -76,11 +87,13 @@ function App() {
                   {/* Sedes routes - más específicas primero */}
                   <Route path="/sedes/nueva" element={<NuevaSede />} />
                   <Route path="/sedes/:id/editar" element={<EditSede />} />
+                  <Route path="/sedes/:id/asignar-tecnico" element={<AsignarTecnicoPage />} />
                   <Route path="/sedes/:id" element={<SedeDetallePage />} />
                   <Route path="/sedes" element={<SedesPage />} />
 
                   {/* Personal routes - más específicas primero */}
                   <Route path="/personal/crear" element={<NuevoPersonal />} />
+                  <Route path="/personal/:id/asignar-sedes" element={<AsignarSedesPage />} />
                   <Route path="/personal/:id/editar" element={<EditPersonal />} />
                   <Route path="/personal/:id" element={<PersonalDetailPage />} />
                   <Route path="/personal" element={<PersonalPage />} />

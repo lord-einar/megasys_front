@@ -2,8 +2,8 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 400px;
+  width: min(90vw, 400px);
+  max-width: 90vw;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
@@ -266,27 +266,80 @@
 }
 
 /* Responsive design */
+@media (max-width: 768px) {
+  .modal-fecha {
+    width: min(90vw, 380px);
+    max-width: 90vw;
+  }
+}
+
 @media (max-width: 480px) {
   .modal-fecha {
-    width: 95%;
-    max-width: 100%;
+    width: min(90vw, 320px);
+    max-width: 90vw;
+    border-radius: 8px;
+  }
+
+  .modal-fecha .modal-header {
+    padding: 16px;
+  }
+
+  .modal-fecha .modal-header h3 {
+    font-size: 16px;
+  }
+
+  .modal-fecha .modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
   }
 
   .modal-fecha .modal-content {
-    padding: 16px;
-    gap: 16px;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .calendar-header {
+    padding: 0 4px;
+  }
+
+  .calendar-header .month-year {
+    font-size: 14px;
+  }
+
+  .nav-btn {
+    font-size: 18px;
+    padding: 2px 6px;
   }
 
   .calendar-day {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .quick-select {
     flex-direction: column;
+    gap: 6px;
   }
 
   .quick-btn {
     min-width: auto;
     width: 100%;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .selected-date-display {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .modal-fecha .modal-footer {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .modal-fecha .btn {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }

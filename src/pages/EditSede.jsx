@@ -256,7 +256,7 @@ export default function EditSede() {
                 <option value="">-- Seleccionar empresa --</option>
                 {empresas.map((empresa) => (
                   <option key={empresa.id} value={empresa.id}>
-                    {empresa.nombre}
+                    {empresa.nombre_empresa}
                   </option>
                 ))}
               </select>

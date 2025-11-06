@@ -22,6 +22,7 @@
 .tabla-articulos {
   width: 100%;
   border-collapse: collapse;
+  min-width: 700px; /* Ensure table has minimum width for horizontal scroll */
 }
 
 .tabla-articulos thead {
@@ -40,34 +41,44 @@
 }
 
 .tabla-articulos th.col-expand {
+  min-width: 40px;
   width: 40px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .tabla-articulos th.col-codigo {
+  min-width: 100px;
   width: 120px;
 }
 
 .tabla-articulos th.col-tipo {
+  min-width: 120px;
   width: 140px;
 }
 
 .tabla-articulos th.col-marca {
+  min-width: 100px;
   width: 120px;
 }
 
 .tabla-articulos th.col-modelo {
+  min-width: 120px;
   width: 140px;
 }
 
 .tabla-articulos th.col-prestamo {
+  min-width: 90px;
   width: 100px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .tabla-articulos th.col-acciones {
+  min-width: 120px;
   width: 140px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .tabla-articulos tbody tr {

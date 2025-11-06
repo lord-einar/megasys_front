@@ -42,7 +42,8 @@ function TablaArticulos({
 
   return (
     <div className="tabla-articulos-container">
-      <table className="tabla-articulos">
+      <div className="overflow-x-auto">
+        <table className="tabla-articulos">
         <thead>
           <tr>
             <th className="col-expand"></th>
@@ -131,6 +132,7 @@ function TablaArticulos({
           ))}
         </tbody>
       </table>
+      </div>
 
       <div className="tabla-summary">
         <div className="summary-item">

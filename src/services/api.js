@@ -123,6 +123,21 @@ export const sedesAPI = {
     method: 'POST',
     body: JSON.stringify(serviceData)
   }),
+  // SedeAsignacion methods (support technician assignments)
+  getTecnicoActivo: (id) => apiCall(`/sedes/${id}/asignaciones/tecnico/activo`),
+  getAsignaciones: (id, params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/sedes/${id}/asignaciones${query ? '?' + query : ''}`)
+  },
+  asignarTecnico: (id, data) => apiCall(`/sedes/${id}/asignaciones`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  desasignarTecnico: (sedeId, personalId) => apiCall(`/sedes/${sedeId}/asignaciones/${personalId}`, {
+    method: 'DELETE'
+  }),
+  getTecnicosDisponibles: () => apiCall('/sedes/asignaciones/tecnicos/disponibles'),
+  getSedesAsignadas: (personalId) => apiCall(`/sedes/asignaciones/personal/${personalId}`),
 }
 
 // Personal Endpoints

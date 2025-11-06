@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import logo from '../assets/logo.png'
 
 function Header({ onMenuClick, sidebarOpen }) {
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -47,6 +48,11 @@ function Header({ onMenuClick, sidebarOpen }) {
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left Section */}
         <div className="flex items-center gap-4">
+          {/* Logo */}
+          <div className="flex items-center h-8">
+            <img src={logo} alt="Grupo Megatlon" className="h-8 object-contain" />
+          </div>
+
           <button
             onClick={onMenuClick}
             className="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 focus:outline-none transition-colors border border-gray-200"
@@ -66,7 +72,7 @@ function Header({ onMenuClick, sidebarOpen }) {
               />
             </svg>
           </button>
-          
+
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>Dashboard</span>

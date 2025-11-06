@@ -275,8 +275,9 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .modal-articulos {
-    width: 95%;
+    width: min(95vw, 800px);
     max-height: 95vh;
+    max-width: 95vw;
   }
 
   .modal-header {
@@ -307,5 +308,77 @@
 
   .page-indicator {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-articulos {
+    width: min(90vw, 600px);
+    max-height: 90vh;
+    max-width: 90vw;
+    border-radius: 8px;
+  }
+
+  .modal-header {
+    padding: 12px;
+  }
+
+  .modal-header h3 {
+    font-size: 16px;
+  }
+
+  .modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
+
+  .modal-content {
+    max-height: 60vh;
+  }
+
+  .modal-footer {
+    padding: 8px 12px;
+    gap: 12px;
+  }
+
+  .articulos-table {
+    font-size: 11px;
+  }
+
+  .articulos-table th,
+  .articulos-table td {
+    padding: 6px 8px;
+  }
+
+  .btn-select {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .pagination-info {
+    font-size: 12px;
+  }
+
+  .pagination-controls {
+    gap: 8px;
+  }
+
+  .btn-pagination {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .empty-state {
+    min-height: 200px;
+    padding: 16px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  .empty-state small {
+    font-size: 12px;
   }
 }

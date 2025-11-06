@@ -30,10 +30,18 @@ function LoansAboutToExpireCard() {
       const resumenResponse = await remitosAPI.obtenerResumenPrestamos()
       setLoansResumen(resumenResponse.data || resumenResponse)
 
-      // Cargar préstamos próximos a vencer (próximos 7 días)
-      const proximosResponse = await remitosAPI.obtenerPrestamosProximosAVencer(7)
-      const prestamos = Array.isArray(proximosResponse.data) ? proximosResponse.data : proximosResponse
-      setLoans(prestamos.slice(0, 5)) // Mostrar los 5 primeros
+      // Cargar tanto próximos a vencer como vencidos
+      const [proximosResponse, vencidosResponse] = await Promise.all([
+        remitosAPI.obtenerPrestamosProximosAVencer(7),
+        remitosAPI.obtenerPrestamosVencidos()
+      ])
+
+      const proximosPrestamos = Array.isArray(proximosResponse.data) ? proximosResponse.data : proximosResponse || []
+      const prestamosvencidos = Array.isArray(vencidosResponse.data) ? vencidosResponse.data : vencidosResponse || []
+
+      // Combinar ambos, priorizando los vencidos primero (por severidad)
+      const todosPrestamos = [...prestamosvencidos, ...proximosPrestamos]
+      setLoans(todosPrestamos.slice(0, 5)) // Mostrar los 5 primeros
     } catch (err) {
       console.error('Error cargando préstamos:', err)
       setError('Error al cargar los préstamos')

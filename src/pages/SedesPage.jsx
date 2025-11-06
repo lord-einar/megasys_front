@@ -203,7 +203,7 @@ export default function SedesPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {empresa.nombre}
+                  {empresa.nombre_empresa}
                 </button>
               ))}
             </div>
@@ -239,7 +239,7 @@ export default function SedesPage() {
                 {/* Header de la tarjeta */}
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
                   <h3 className="text-xl font-bold">{sede.nombre_sede}</h3>
-                  <p className="text-blue-100 text-sm mt-1">{sede.empresa?.nombre || 'Sin empresa'}</p>
+                  <p className="text-blue-100 text-sm mt-1">{sede.empresa?.nombre_empresa || 'Sin empresa'}</p>
                 </div>
 
                 {/* Contenido de la tarjeta */}

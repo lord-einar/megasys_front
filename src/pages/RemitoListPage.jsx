@@ -152,7 +152,8 @@ function RemitoListPage() {
             No hay remitos para mostrar
           </div>
         ) : (
-          <table className="min-w-full">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
@@ -237,6 +238,7 @@ function RemitoListPage() {
               ))}
             </tbody>
           </table>
+            </div>
         )}
       </div>
 

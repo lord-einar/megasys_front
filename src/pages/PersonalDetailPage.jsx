@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { personalAPI } from '../services/api'
+import { personalAPI, authAPI } from '../services/api'
 
 export default function PersonalDetailPage() {
   const { id } = useParams()
@@ -9,21 +9,28 @@ export default function PersonalDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
-    cargarPersonal()
+    cargarDatos()
   }, [id])
 
-  const cargarPersonal = async () => {
+  const cargarDatos = async () => {
     try {
       setLoading(true)
       setError(null)
+
+      // Load current user
+      const userResponse = await authAPI.getMe()
+      setCurrentUser(userResponse?.data?.user || userResponse?.user)
+
+      // Load personal details
       const response = await personalAPI.getById(id)
       const personalData = response?.data || response
       setPersonal(personalData)
     } catch (err) {
-      setError(err.message || 'Error al cargar el personal')
-      console.error('Error cargando personal:', err)
+      setError(err.message || 'Error al cargar los datos')
+      console.error('Error cargando datos:', err)
     } finally {
       setLoading(false)
     }
@@ -303,6 +310,14 @@ export default function PersonalDetailPage() {
           >
             Editar Personal
           </button>
+          {currentUser && currentUser.role === 'super_admin' && (
+            <button
+              onClick={() => navigate(`/personal/${id}/asignar-sedes`)}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              Asignar Sedes
+            </button>
+          )}
           <button
             onClick={() => navigate('/personal')}
             className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"

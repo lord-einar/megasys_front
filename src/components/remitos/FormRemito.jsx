@@ -27,8 +27,8 @@ function FormRemito({ formData, setFormData, onSubmit, loading, error }) {
     try {
       setPersonalLoading(true)
       const [personalRes, sedesRes] = await Promise.all([
-        personalAPI.list({ limit: 1000 }),
-        sedesAPI.list({ limit: 1000 })
+        personalAPI.list({ limit: 100 }),
+        sedesAPI.list({ limit: 100 })
       ])
 
       const allPersonal = personalRes.data || []

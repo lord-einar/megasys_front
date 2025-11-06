@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
+import logo from '../assets/logo.png';
 import '../styles/Login.css';
 
 export default function Login() {
@@ -66,6 +68,11 @@ export default function Login() {
               tokenLength: decodedData.token.length
             });
 
+            // Guardar token en localStorage antes de navegar
+            localStorage.setItem('authToken', decodedData.token);
+            localStorage.setItem('authUser', JSON.stringify(decodedData.user));
+
+            // Llamar login para actualizar el contexto
             login(decodedData.user, decodedData.token, decodedData.profilePhotoUrl);
 
             console.log('✅ login() executed');
@@ -74,12 +81,11 @@ export default function Login() {
             // Limpiar parámetros de URL para evitar reprocessing
             setSearchParams('');
 
-            // Usar un pequeño delay para asegurar que el estado se actualiza
-            setTimeout(() => {
-              if (isMounted) {
-                navigate('/dashboard');
-              }
-            }, 100);
+            // Navegar inmediatamente (el token ya está en localStorage)
+            if (isMounted) {
+              // Usar replace para evitar que el usuario pueda volver atrás
+              navigate('/dashboard', { replace: true });
+            }
           } else {
             console.error('❌ Auth data validation failed');
             console.error('   - User present:', !!decodedData.user);
@@ -113,7 +119,7 @@ export default function Login() {
     setIsLoggingIn(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login');
+      const response = await fetch(`${API_BASE_URL}/auth/login`);
       if (response.ok) {
         const data = await response.json();
         // Redirect to Microsoft login URL
@@ -153,9 +159,7 @@ export default function Login() {
         {/* Logo Section */}
         <div className="login-header">
           <div className="logo-placeholder">
-            <svg className="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <img src={logo} alt="Grupo Megatlon Logo" className="h-20 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mt-4">Gestión Empresarial</h1>
           <p className="text-gray-600 mt-2">Sistema Integral de Administración</p>

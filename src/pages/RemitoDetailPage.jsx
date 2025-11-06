@@ -463,20 +463,22 @@ function RemitoDetailPage() {
         </div>
       )}
 
-      {/* Reenviar Emails */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Reenviar Emails</h2>
-        <p className="text-gray-600 mb-4">
-          Reenvía el remito por correo a infraestructura y al solicitante
-        </p>
-        <button
-          onClick={handleReenviarEmails}
-          disabled={reenviandoEmails}
-          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded transition-colors"
-        >
-          {reenviandoEmails ? 'Reenviando...' : '📧 Reenviar Email'}
-        </button>
-      </div>
+      {/* Reenviar Emails - Solo visible si el remito no está en estado "preparado" ni "completado" */}
+      {remito && remito.estado !== 'preparado' && remito.estado !== 'completado' && (
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Reenviar Emails</h2>
+          <p className="text-gray-600 mb-4">
+            Reenvía el remito por correo a infraestructura y al solicitante
+          </p>
+          <button
+            onClick={handleReenviarEmails}
+            disabled={reenviandoEmails}
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded transition-colors"
+          >
+            {reenviandoEmails ? 'Reenviando...' : '📧 Reenviar Email'}
+          </button>
+        </div>
+      )}
 
       {/* Generar Devolución */}
       {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (
