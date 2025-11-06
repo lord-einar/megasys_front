@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { remitosAPI } from '../services/api'
 import LoanDetailModal from './LoanDetailModal'
 
@@ -96,13 +97,26 @@ function LoansAboutToExpireCard() {
       const response = await remitosAPI.enviarAvisoDevolucion(loanId)
 
       if (response.success || response.success !== false) {
-        // Mostrar éxito
-        alert('Aviso de devolución enviado exitosamente a infraestructura y solicitante')
+        // Mostrar éxito con SweetAlert2
+        await Swal.fire({
+          title: '¡Aviso enviado!',
+          text: 'El aviso de devolución ha sido enviado exitosamente a infraestructura y solicitante',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+          timer: 3000,
+          timerProgressBar: true
+        })
         cargarPrestamos()
       }
     } catch (err) {
       console.error('Error enviando aviso:', err)
-      alert('Error al enviar el aviso de devolución: ' + (err.response?.data?.message || err.message))
+      const errorMessage = err.response?.data?.message || err.message || 'Error desconocido'
+      await Swal.fire({
+        title: '¡Error!',
+        text: `Error al enviar el aviso de devolución: ${errorMessage}`,
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      })
     } finally {
       setSendingReminder(null)
     }
