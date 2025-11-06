@@ -3,8 +3,27 @@ import { remitosAPI } from '../services/api'
 import Swal from 'sweetalert2'
 
 function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
+  // Convertir fecha a formato dd/mm/yyyy para mostrar
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
+  }
+
+  // Convertir formato dd/mm/yyyy a yyyy-mm-dd para enviar al backend
+  const formatDateForBackend = (displayDate) => {
+    if (!displayDate) return ''
+    const parts = displayDate.split('/')
+    if (parts.length !== 3) return ''
+    const [day, month, year] = parts
+    return `${year}-${month}-${day}`
+  }
+
   const [newDate, setNewDate] = useState(
-    loan?.fecha_devolucion_esperada ? loan.fecha_devolucion_esperada.split('T')[0] : ''
+    loan?.fecha_devolucion_esperada ? formatDateForDisplay(loan.fecha_devolucion_esperada) : ''
   )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -17,15 +36,32 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
       return
     }
 
+    // Validar que el formato sea dd/mm/yyyy
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/
+    const match = newDate.match(dateRegex)
+    if (!match) {
+      setError('Formato de fecha inválido. Usa dd/mm/yyyy')
+      return
+    }
+
+    const [, day, month, year] = match
+    if (parseInt(day) < 1 || parseInt(day) > 31 || parseInt(month) < 1 || parseInt(month) > 12) {
+      setError('Fecha inválida')
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
       setSuccess(null)
 
+      // Convertir a formato yyyy-mm-dd para backend
+      const backendDate = formatDateForBackend(newDate)
+
       await remitosAPI.actualizarFechaDevolucion(
         loan.remito.id,
         loan.id,
-        newDate
+        backendDate
       )
 
       setSuccess('Fecha actualizada correctamente')
@@ -158,13 +194,28 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
           {/* Nueva Fecha */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Extender Fecha de Devolución
+              Extender Fecha de Devolución (dd/mm/yyyy)
             </label>
             <input
-              type="date"
+              type="text"
+              placeholder="dd/mm/yyyy"
               value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                let value = e.target.value
+                // Solo permitir números y barras
+                value = value.replace(/[^\d/]/g, '')
+                // Limitar a máximo 10 caracteres (dd/mm/yyyy)
+                if (value.length <= 10) {
+                  // Auto-insertar barras
+                  if (value.length === 2 && !value.includes('/')) {
+                    value = value + '/'
+                  } else if (value.length === 5 && (value.match(/\//g) || []).length === 1) {
+                    value = value + '/'
+                  }
+                  setNewDate(value)
+                }
+              }}
+              maxLength="10"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
