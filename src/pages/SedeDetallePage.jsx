@@ -1,31 +1,58 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI } from '../services/api'
+import { sedesAPI, authAPI } from '../services/api'
+import TablaInventarioSede from '../components/TablaInventarioSede'
 
 export default function SedeDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [sede, setSede] = useState(null)
+  const [tecnico, setTecnico] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tecnicoLoading, setTecnicoLoading] = useState(false)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
-    cargarSede()
+    cargarDatos()
   }, [id])
 
-  const cargarSede = async () => {
+  const cargarDatos = async () => {
     try {
       setLoading(true)
       setError(null)
+
+      // Load current user
+      const userResponse = await authAPI.getMe()
+      setCurrentUser(userResponse?.data || userResponse)
+
+      // Load sede
       const response = await sedesAPI.getById(id)
       const sedeData = response?.data || response
       setSede(sedeData)
+
+      // Load assigned technician
+      cargarTecnico()
     } catch (err) {
       setError(err.message || 'Error al cargar la sede')
       console.error('Error cargando sede:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const cargarTecnico = async () => {
+    try {
+      setTecnicoLoading(true)
+      const response = await sedesAPI.getTecnicoActivo(id)
+      setTecnico(response?.data || response)
+    } catch (err) {
+      // It's ok if there's no assigned technician
+      console.log('No hay técnico asignado a esta sede:', err.message)
+      setTecnico(null)
+    } finally {
+      setTecnicoLoading(false)
     }
   }
 
@@ -93,7 +120,7 @@ export default function SedeDetallePage() {
           {/* Header Gradiente */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">
             <h1 className="text-4xl font-bold">{sede.nombre_sede}</h1>
-            <p className="text-blue-100 text-lg mt-2">{sede.empresa?.nombre || 'Sin empresa'}</p>
+            <p className="text-blue-100 text-lg mt-2">{sede.empresa?.nombre_empresa || 'Sin empresa'}</p>
             <div className="mt-4 flex items-center gap-4">
               <span className={`px-4 py-2 rounded-full font-semibold ${
                 sede.activo
@@ -197,6 +224,68 @@ export default function SedeDetallePage() {
                   </div>
                 </div>
 
+                {/* Técnico de Soporte Asignado */}
+                {(currentUser?.roles?.some(r => r.nombre === 'super_admin') || currentUser?.roles?.some(r => r.nombre === 'support')) && (
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      👨‍💼 Técnico de Soporte
+                    </h3>
+                    {tecnicoLoading ? (
+                      <div className="bg-gray-50 p-4 rounded-lg text-center">
+                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <p className="text-gray-500 text-sm mt-2">Cargando...</p>
+                      </div>
+                    ) : tecnico?.personal ? (
+                      <div className="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div>
+                          <p className="text-xs text-blue-600 uppercase font-semibold">Nombre</p>
+                          <p className="text-gray-900 font-medium">
+                            {tecnico.personal.nombre} {tecnico.personal.apellido}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-600 uppercase font-semibold">Email</p>
+                          <p className="text-gray-900 break-all">{tecnico.personal.email}</p>
+                        </div>
+                        {tecnico.personal.telefono && (
+                          <div>
+                            <p className="text-xs text-blue-600 uppercase font-semibold">Teléfono</p>
+                            <p className="text-gray-900">{tecnico.personal.telefono}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-blue-600 uppercase font-semibold">Asignado desde</p>
+                          <p className="text-gray-900">
+                            {new Date(tecnico.fecha_asignacion).toLocaleDateString('es-AR')}
+                          </p>
+                        </div>
+                        {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
+                          <button
+                            onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
+                            className="w-full mt-4 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors font-medium text-sm"
+                          >
+                            Cambiar Técnico
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <p className="text-yellow-800 text-sm">
+                          No hay un técnico de soporte asignado a esta sede
+                        </p>
+                        {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
+                          <button
+                            onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
+                            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
+                          >
+                            + Asignar Técnico
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
@@ -240,6 +329,7 @@ export default function SedeDetallePage() {
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nombre</th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Rol</th>
                           <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Acciones</th>
                         </tr>
                       </thead>
@@ -250,6 +340,11 @@ export default function SedeDetallePage() {
                               <p className="font-medium text-gray-900">{person.nombre} {person.apellido}</p>
                             </td>
                             <td className="px-6 py-4 text-gray-600">{person.email}</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                {person.rol?.nombre || 'Sin rol'}
+                              </span>
+                            </td>
                             <td className="px-6 py-4">
                               <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
                                 Ver Perfil
@@ -270,24 +365,36 @@ export default function SedeDetallePage() {
 
             {/* Tab: Inventario */}
             {activeTab === 'inventario' && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg mb-4">Inventario de la sede</p>
-                <div className="grid grid-cols-3 gap-4 mt-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Total de Items</p>
+              <div className="space-y-6">
+                {/* Estadísticas de inventario */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+                    <p className="text-xs text-blue-600 uppercase font-semibold mb-2">Total de Items</p>
                     <p className="text-3xl font-bold text-blue-600">{sede.inventario?.total || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Disponibles</p>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                    <p className="text-xs text-green-600 uppercase font-semibold mb-2">Disponibles</p>
                     <p className="text-3xl font-bold text-green-600">{sede.inventario?.disponible || 0}</p>
                   </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">En Uso</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <p className="text-xs text-yellow-600 uppercase font-semibold mb-2">En Uso</p>
                     <p className="text-3xl font-bold text-yellow-600">
                       {(sede.inventario?.total || 0) - (sede.inventario?.disponible || 0)}
                     </p>
                   </div>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
+                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">Otros</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      {(sede.inventario?.total || 0) - (sede.estadisticas?.inventario?.disponible || 0) - ((sede.inventario?.total || 0) - (sede.inventario?.disponible || 0))}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Tabla de artículos */}
+                <TablaInventarioSede
+                  articulos={sede.inventarioSede || []}
+                  loading={loading}
+                />
               </div>
             )}
           </div>

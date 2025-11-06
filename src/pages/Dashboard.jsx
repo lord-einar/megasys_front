@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
-import { sedesAPI, personalAPI, inventarioAPI } from '../services/api'
+import { sedesAPI, personalAPI, inventarioAPI, remitosAPI } from '../services/api'
 import StatCard from '../components/StatCard'
 import RecentActivityCard from '../components/RecentActivityCard'
 import LoansAboutToExpireCard from '../components/LoansAboutToExpireCard'
+import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
+  const navigate = useNavigate()
   const [stats, setStats] = useState({
     sedes: 0,
     personal: 0,
     inventario: 0,
     remitos: 0,
   })
+  const [pendingRemitos, setPendingRemitos] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,17 +45,35 @@ function Dashboard() {
 
       try {
         const inventarioData = await inventarioAPI.list({ limit: 1 })
-        inventarioCount = inventarioData?.pagination?.total || inventarioData?.total || 0
+        inventarioCount = inventarioData?.pagination?.total || 0
       } catch (err) {
         console.warn('Inventario no disponible:', err.message)
         // Inventario puede no estar implementado, es opcional
+      }
+
+      // Cargar remitos pendientes de confirmación
+      // Estos son remitos que aún no están en estado 'completado'
+      let remitosCount = 0
+      try {
+        const remitosData = await remitosAPI.list({
+          limit: 100  // Cargar sin filtro de estado para obtener todos
+        })
+
+        const remitos = Array.isArray(remitosData.data) ? remitosData.data : remitosData || []
+        remitosCount = remitosData?.pagination?.total || remitos.length || 0
+        // Filtrar solo los que NO estén en estado 'completado' (aún no han sido confirmados)
+        const pendientes = remitos.filter(r => r.estado !== 'completado').slice(0, 5)
+        setPendingRemitos(pendientes)
+      } catch (err) {
+        console.warn('No se pudieron cargar los remitos pendientes:', err.message)
+        setPendingRemitos([])
       }
 
       setStats({
         sedes: sedesCount,
         personal: personalCount,
         inventario: inventarioCount,
-        remitos: 0, // Placeholder - remitos no está completamente implementado
+        remitos: remitosCount,
       })
     } catch (err) {
       console.error('Error inesperado cargando estadísticas:', err)
@@ -136,6 +157,47 @@ function Dashboard() {
         <div className="xl:col-span-2 space-y-8">
           <RecentActivityCard />
           <LoansAboutToExpireCard />
+
+          {/* Pending Confirmations Card */}
+          {pendingRemitos.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-card">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-warning-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Remitos Pendientes de Confirmación
+              </h2>
+              <div className="space-y-3">
+                {pendingRemitos.slice(0, 5).map((remito) => (
+                  <div
+                    key={remito.id}
+                    onClick={() => navigate(`/remitos/${remito.id}`)}
+                    className="p-3 bg-warning-50 border border-warning-200 rounded-lg hover:bg-warning-100 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">{remito.numero_remito}</p>
+                        <p className="text-sm text-gray-600">
+                          Solicitante: {remito.solicitante?.nombre || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-block px-3 py-1 bg-warning-200 text-warning-800 text-xs font-semibold rounded-full">
+                          Pendiente
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => navigate('/remitos')}
+                className="mt-4 w-full px-4 py-2 bg-warning-100 text-warning-800 hover:bg-warning-200 rounded-lg font-medium transition-colors text-sm"
+              >
+                Ver todos los remitos pendientes
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right column - Quick Actions & System Status */}
