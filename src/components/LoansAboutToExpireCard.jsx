@@ -16,6 +16,7 @@ function LoansAboutToExpireCard() {
   const [error, setError] = useState(null)
   const [selectedLoan, setSelectedLoan] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [sendingReminder, setSendingReminder] = useState(null) // Track which loan is sending reminder
 
   useEffect(() => {
     cargarPrestamos()
@@ -86,6 +87,25 @@ function LoansAboutToExpireCard() {
     if (daysUntilDue === 0) return 'Vence hoy'
     if (daysUntilDue === 1) return 'Vence mañana'
     return `Vence en ${daysUntilDue} días`
+  }
+
+  const handleEnviarAviso = async (e, loanId) => {
+    e.stopPropagation()
+    try {
+      setSendingReminder(loanId)
+      const response = await remitosAPI.enviarAvisoDevolucion(loanId)
+
+      if (response.success || response.success !== false) {
+        // Mostrar éxito
+        alert('Aviso de devolución enviado exitosamente a infraestructura y solicitante')
+        cargarPrestamos()
+      }
+    } catch (err) {
+      console.error('Error enviando aviso:', err)
+      alert('Error al enviar el aviso de devolución: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setSendingReminder(null)
+    }
   }
 
   if (loading) {
@@ -176,29 +196,43 @@ function LoansAboutToExpireCard() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedLoan(loan)
-                      setModalOpen(true)
-                    }}
-                    className="text-primary-500 hover:text-primary-600 flex-shrink-0 transition-colors"
-                    title="Acción rápida"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Botón "Enviar Aviso" solo cuando falte exactamente 1 día */}
+                    {daysUntilDue === 1 && (
+                      <button
+                        onClick={(e) => handleEnviarAviso(e, loan.id)}
+                        disabled={sendingReminder === loan.id}
+                        className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed rounded text-xs font-medium transition-colors"
+                        title="Enviar aviso de devolución mañana"
+                      >
+                        {sendingReminder === loan.id ? 'Enviando...' : 'Enviar aviso'}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedLoan(loan)
+                        setModalOpen(true)
+                      }}
+                      className="text-primary-500 hover:text-primary-600 transition-colors"
+                      title="Acción rápida"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             )

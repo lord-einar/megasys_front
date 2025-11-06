@@ -43,9 +43,14 @@ function FormRemito({ formData, setFormData, onSubmit, loading, error }) {
       setSedes(allSedes)
 
       // Set default sede origen as "Depósito" if not already set
-      if (!formData.sede_origen_id && allSedes.length > 0) {
-        const deposito = allSedes.find(s => s.nombre.toLowerCase().includes('depósito'))
-        if (deposito) {
+      if (allSedes.length > 0) {
+        // Buscar sede con nombre que incluya "depósito" (case-insensitive)
+        const deposito = allSedes.find(s =>
+          s.nombre_sede?.toLowerCase().includes('depósito') ||
+          s.nombre?.toLowerCase().includes('depósito')
+        )
+
+        if (deposito && !formData.sede_origen_id) {
           setFormData(prev => ({
             ...prev,
             sede_origen_id: deposito.id
