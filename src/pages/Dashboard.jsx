@@ -32,10 +32,11 @@ function Dashboard() {
 
       // Usar el endpoint de estadísticas para sedes (más eficiente)
       try {
-        const estadisticasData = await sedesAPI.getEstadisticas()
-        sedesCount = estadisticasData?.sedes?.activas || 0
-        personalCount = estadisticasData?.personal?.total || 0
-        inventarioCount = estadisticasData?.inventario?.total || 0
+        const response = await sedesAPI.getEstadisticas()
+        const estadisticas = response?.data || response
+        sedesCount = estadisticas?.sedes?.activas || 0
+        personalCount = estadisticas?.personal?.total || 0
+        inventarioCount = estadisticas?.inventario?.total || 0
       } catch (err) {
         console.error('Error cargando estadísticas generales:', err)
       }
