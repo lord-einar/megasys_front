@@ -6,11 +6,23 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
   // Convertir fecha a formato dd/mm/yyyy para mostrar
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return ''
+    // Si es un string de fecha ISO (YYYY-MM-DD), dividirlo
+    if (dateString.includes('-')) {
+      const parts = dateString.split('T')[0].split('-')
+      if (parts.length === 3) {
+        const [year, month, day] = parts
+        return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`
+      }
+    }
+    // Fallback a parseo de fecha (para casos con timestamp)
     const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
+    if (!isNaN(date.getTime())) {
+      const day = String(date.getUTCDate()).padStart(2, '0')
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+      const year = date.getUTCFullYear()
+      return `${day}/${month}/${year}`
+    }
+    return ''
   }
 
   // Convertir formato dd/mm/yyyy a yyyy-mm-dd para enviar al backend
@@ -19,7 +31,7 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
     const parts = displayDate.split('/')
     if (parts.length !== 3) return ''
     const [day, month, year] = parts
-    return `${year}-${month}-${day}`
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
   const [newDate, setNewDate] = useState(

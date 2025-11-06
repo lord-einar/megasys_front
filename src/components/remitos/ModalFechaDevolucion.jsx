@@ -94,31 +94,40 @@ function ModalFechaDevolucion({
 
   const handleConfirm = () => {
     if (selectedDate) {
-      onSelectDate(selectedDate)
+      // Formatear fecha como YYYY-MM-DD para backend
+      const year = selectedDate.getFullYear()
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
+      const day = String(selectedDate.getDate()).padStart(2, '0')
+      const isoDate = `${year}-${month}-${day}`
+      onSelectDate(isoDate)
       onClose()
     }
   }
 
   const handleToday = () => {
     const today = new Date()
+    // Ajustar para evitar problemas de timezone
+    today.setHours(0, 0, 0, 0)
     if (!isDateDisabled(today)) {
-      setSelectedDate(today)
+      setSelectedDate(new Date(today))
     }
   }
 
   const handleTomorrow = () => {
     const tomorrow = new Date()
+    tomorrow.setHours(0, 0, 0, 0)
     tomorrow.setDate(tomorrow.getDate() + 1)
     if (!isDateDisabled(tomorrow)) {
-      setSelectedDate(tomorrow)
+      setSelectedDate(new Date(tomorrow))
     }
   }
 
   const handleNextWeek = () => {
     const nextWeek = new Date()
+    nextWeek.setHours(0, 0, 0, 0)
     nextWeek.setDate(nextWeek.getDate() + 7)
     if (!isDateDisabled(nextWeek)) {
-      setSelectedDate(nextWeek)
+      setSelectedDate(new Date(nextWeek))
     }
   }
 
@@ -255,12 +264,13 @@ function ModalFechaDevolucion({
           {selectedDate && (
             <div className="selected-date-display">
               <strong>Fecha seleccionada:</strong>{' '}
-              {selectedDate.toLocaleDateString('es-AR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {(() => {
+                const dayName = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][selectedDate.getDay()]
+                const monthName = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][selectedDate.getMonth()]
+                const day = String(selectedDate.getDate()).padStart(2, '0')
+                const year = selectedDate.getFullYear()
+                return `${dayName}, ${day} de ${monthName} de ${year}`
+              })()}
             </div>
           )}
         </div>
