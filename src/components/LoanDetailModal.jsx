@@ -31,7 +31,13 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
     const parts = displayDate.split('/')
     if (parts.length !== 3) return ''
     const [day, month, year] = parts
-    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    // Asegurar que estamos enviando la fecha correcta sin conversiones de timezone
+    const dayStr = String(day).padStart(2, '0')
+    const monthStr = String(month).padStart(2, '0')
+    const yearStr = String(year).padStart(4, '0')
+    const result = `${yearStr}-${monthStr}-${dayStr}`
+    console.log('formatDateForBackend:', { displayDate, parts, result }) // DEBUG
+    return result
   }
 
   const [newDate, setNewDate] = useState(
@@ -208,28 +214,46 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Extender Fecha de Devolución (dd/mm/yyyy)
             </label>
-            <input
-              type="text"
-              placeholder="dd/mm/yyyy"
-              value={newDate}
-              onChange={(e) => {
-                let value = e.target.value
-                // Solo permitir números y barras
-                value = value.replace(/[^\d/]/g, '')
-                // Limitar a máximo 10 caracteres (dd/mm/yyyy)
-                if (value.length <= 10) {
-                  // Auto-insertar barras
-                  if (value.length === 2 && !value.includes('/')) {
-                    value = value + '/'
-                  } else if (value.length === 5 && (value.match(/\//g) || []).length === 1) {
-                    value = value + '/'
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="dd/mm/yyyy"
+                value={newDate}
+                onChange={(e) => {
+                  let value = e.target.value
+                  // Solo permitir números y barras
+                  value = value.replace(/[^\d/]/g, '')
+                  // Limitar a máximo 10 caracteres (dd/mm/yyyy)
+                  if (value.length <= 10) {
+                    // Auto-insertar barras
+                    if (value.length === 2 && !value.includes('/')) {
+                      value = value + '/'
+                    } else if (value.length === 5 && (value.match(/\//g) || []).length === 1) {
+                      value = value + '/'
+                    }
+                    setNewDate(value)
                   }
-                  setNewDate(value)
-                }
-              }}
-              maxLength="10"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+                }}
+                maxLength="10"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const tomorrow = new Date()
+                  tomorrow.setDate(tomorrow.getDate() + 1)
+                  const day = String(tomorrow.getDate()).padStart(2, '0')
+                  const month = String(tomorrow.getMonth() + 1).padStart(2, '0')
+                  const year = tomorrow.getFullYear()
+                  setNewDate(`${day}/${month}/${year}`)
+                }}
+                className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                title="Establecer para mañana"
+              >
+                Mañana
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Ingresa la fecha en formato dd/mm/yyyy o usa el botón "Mañana"</p>
           </div>
         </div>
 
