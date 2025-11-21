@@ -19,6 +19,10 @@ function RemitoDetailPage() {
   const [editingDate, setEditingDate] = useState('')
   const [markingReturned, setMarkingReturned] = useState(false)
   const [reenviandoEmails, setReenviandoEmails] = useState(false)
+  const [showReceptorModal, setShowReceptorModal] = useState(false)
+  const [receptorNombre, setReceptorNombre] = useState('')
+  const [receptorEmail, setReceptorEmail] = useState('')
+  const [asignandoReceptor, setAsignandoReceptor] = useState(false)
 
   useEffect(() => {
     cargarDetalle()
@@ -219,6 +223,38 @@ function RemitoDetailPage() {
       Swal.fire('Error', err.message || 'Error al reenviar emails', 'error')
     } finally {
       setReenviandoEmails(false)
+    }
+  }
+
+  const handleAsignarReceptor = async () => {
+    if (!receptorNombre.trim() || !receptorEmail.trim()) {
+      Swal.fire('Error', 'Por favor completa todos los campos', 'error')
+      return
+    }
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(receptorEmail)) {
+      Swal.fire('Error', 'El email no es válido', 'error')
+      return
+    }
+
+    try {
+      setAsignandoReceptor(true)
+      await remitosAPI.asignarReceptor(id, receptorNombre, receptorEmail)
+      Swal.fire({
+        title: 'Éxito',
+        html: `Receptor asignado exitosamente.<br><br>Se han enviado emails a:<br>- ${receptorEmail} (receptor)<br>- ${remito.solicitante?.email} (solicitante)`,
+        icon: 'success'
+      })
+      setShowReceptorModal(false)
+      setReceptorNombre('')
+      setReceptorEmail('')
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Error al asignar receptor', 'error')
+    } finally {
+      setAsignandoReceptor(false)
     }
   }
 
@@ -480,6 +516,40 @@ function RemitoDetailPage() {
         </div>
       )}
 
+      {/* Receptor Asignado - Mostrar si ya tiene receptor */}
+      {remito && remito.receptor_nombre && (
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-green-700">✓ Receptor Asignado</h2>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-gray-700 mb-2">
+              <span className="font-medium">Nombre:</span> {remito.receptor_nombre}
+            </p>
+            <p className="text-gray-700">
+              <span className="font-medium">Email:</span> {remito.receptor_email}
+            </p>
+          </div>
+          <p className="text-sm text-gray-500 mt-3">
+            Esta persona recibirá el remito y confirmará la recepción.
+          </p>
+        </div>
+      )}
+
+      {/* Asignar Receptor - Solo si está en tránsito y no tiene receptor */}
+      {remito && remito.estado === 'en_transito' && !remito.receptor_nombre && (
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Asignar Receptor Alternativo</h2>
+          <p className="text-gray-600 mb-4">
+            Si el solicitante no puede recibir el remito, puedes asignar otra persona como receptor.
+          </p>
+          <button
+            onClick={() => setShowReceptorModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded transition-colors"
+          >
+            👤 Asignar Receptor
+          </button>
+        </div>
+      )}
+
       {/* Generar Devolución */}
       {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
@@ -578,6 +648,77 @@ function RemitoDetailPage() {
                 className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors"
               >
                 {devolviendoArticulos ? 'Generando...' : 'Generar Devolución'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Asignar Receptor */}
+      {showReceptorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Asignar Receptor Alternativo</h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Esta persona recibirá el remito en lugar del solicitante original.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre Completo *
+                </label>
+                <input
+                  type="text"
+                  value={receptorNombre}
+                  onChange={(e) => setReceptorNombre(e.target.value)}
+                  placeholder="Ej: Juan Pérez"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={asignandoReceptor}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={receptorEmail}
+                  onChange={(e) => setReceptorEmail(e.target.value)}
+                  placeholder="Ej: juan.perez@megatlon.com.ar"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={asignandoReceptor}
+                />
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> Se enviará un email al receptor con un link para confirmar la recepción del remito.
+                El solicitante original ({remito?.solicitante?.email}) recibirá una copia informativa.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowReceptorModal(false)
+                  setReceptorNombre('')
+                  setReceptorEmail('')
+                }}
+                disabled={asignandoReceptor}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 rounded"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAsignarReceptor}
+                disabled={asignandoReceptor || !receptorNombre.trim() || !receptorEmail.trim()}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded"
+              >
+                {asignandoReceptor ? 'Asignando...' : 'Asignar y Enviar Email'}
               </button>
             </div>
           </div>

@@ -267,6 +267,11 @@ export const remitosAPI = {
   reenviarEmails: (id) => apiCall(`/remitos/${id}/reenviar-emails`, {
     method: 'POST'
   }),
+  // Assign alternative receptor
+  asignarReceptor: (id, receptorNombre, receptorEmail) => apiCall(`/remitos/${id}/asignar-receptor`, {
+    method: 'PATCH',
+    body: JSON.stringify({ receptor_nombre: receptorNombre, receptor_email: receptorEmail })
+  }),
   // Public confirmation endpoint (no auth required)
   confirmarRecepcion: (id, token) => apiCall(`/remitos/${id}/confirmar-recepcion?token=${encodeURIComponent(token)}`, {
     method: 'POST'
