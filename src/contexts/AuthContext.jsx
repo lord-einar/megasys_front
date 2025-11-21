@@ -22,20 +22,38 @@ export const AuthProvider = ({ children }) => {
           setUser(parsedUser);
           setToken(savedToken);
 
-          // Luego valida el token con el backend en background
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${savedToken}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          // Luego valida el token con el backend en background con timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
 
-          if (!response.ok) {
-            // Si el token no es válido, limpiar localStorage
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authUser');
-            setUser(null);
-            setToken(null);
+          try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${savedToken}`,
+                'Content-Type': 'application/json'
+              },
+              signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              // Si el token no es válido, limpiar localStorage
+              console.warn('Token validation failed, clearing session');
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('authUser');
+              setUser(null);
+              setToken(null);
+            }
+          } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+              console.warn('Token validation timeout, keeping cached session');
+              // Mantener la sesión en caso de timeout - mejor UX
+            } else {
+              console.warn('Token validation error, keeping cached session:', fetchErr.message);
+              // Mantener la sesión en caso de error de red - mejor UX
+            }
           }
         } catch (err) {
           console.error('Error initializing auth:', err);
