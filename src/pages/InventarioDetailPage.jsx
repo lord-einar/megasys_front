@@ -296,6 +296,60 @@ export default function InventarioDetailPage() {
             </div>
           </div>
 
+          {/* Información de Préstamo Activo */}
+          {item.prestamoActivo && (
+            <div className="bg-purple-50 border-2 border-purple-200 rounded-lg shadow p-6 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <h2 className="text-xl font-bold text-purple-900">Préstamo Activo</h2>
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-white rounded p-3">
+                  <p className="text-gray-600 text-sm">En uso en</p>
+                  <p className="text-purple-900 font-bold text-lg">
+                    {item.prestamoActivo.sedeDestino?.nombre_sede}
+                  </p>
+                  <p className="text-gray-600 text-xs">
+                    {item.prestamoActivo.sedeDestino?.localidad}, {item.prestamoActivo.sedeDestino?.provincia}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-700 text-sm">Remito</p>
+                  <p className="text-purple-900 font-semibold font-mono">
+                    {item.prestamoActivo.numeroRemito}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-700 text-sm">Estado del remito</p>
+                  <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                    {item.prestamoActivo.estado}
+                  </span>
+                </div>
+
+                {item.prestamoActivo.fechaDevolucionEsperada && (
+                  <div>
+                    <p className="text-gray-700 text-sm">Fecha de devolución esperada</p>
+                    <p className="text-purple-900 font-semibold">
+                      {formatDate(item.prestamoActivo.fechaDevolucionEsperada)}
+                    </p>
+                  </div>
+                )}
+
+                {item.prestamoActivo.observaciones && (
+                  <div>
+                    <p className="text-gray-700 text-sm">Observaciones</p>
+                    <p className="text-gray-800 text-sm italic">{item.prestamoActivo.observaciones}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Cambiar Estado */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Cambiar Estado</h2>

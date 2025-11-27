@@ -367,7 +367,7 @@ export default function SedeDetallePage() {
             {activeTab === 'inventario' && (
               <div className="space-y-6">
                 {/* Estadísticas de inventario */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
                     <p className="text-xs text-blue-600 uppercase font-semibold mb-2">Total de Items</p>
                     <p className="text-3xl font-bold text-blue-600">{sede.inventario?.total || 0}</p>
@@ -383,18 +383,72 @@ export default function SedeDetallePage() {
                     </p>
                   </div>
                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">Otros</p>
+                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">En Préstamo</p>
                     <p className="text-3xl font-bold text-purple-600">
-                      {(sede.inventario?.total || 0) - (sede.estadisticas?.inventario?.disponible || 0) - ((sede.inventario?.total || 0) - (sede.inventario?.disponible || 0))}
+                      {sede.inventario?.prestamosEnEstaSede || sede.prestamosEnSede?.length || 0}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <p className="text-xs text-gray-600 uppercase font-semibold mb-2">Otros</p>
+                    <p className="text-3xl font-bold text-gray-600">
+                      {(sede.inventario?.total || 0) - (sede.inventario?.disponible || 0) - (sede.inventario?.enUso || 0)}
                     </p>
                   </div>
                 </div>
 
-                {/* Tabla de artículos */}
-                <TablaInventarioSede
-                  articulos={sede.inventarioSede || []}
-                  loading={loading}
-                />
+                {/* Tabla de artículos del inventario propio */}
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Inventario de la Sede</h3>
+                  <TablaInventarioSede
+                    articulos={sede.inventarioSede || []}
+                    loading={loading}
+                  />
+                </div>
+
+                {/* Artículos en préstamo EN esta sede */}
+                {sede.prestamosEnSede && sede.prestamosEnSede.length > 0 && (
+                  <div className="mt-8">
+                    <div className="flex items-center gap-2 mb-4">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                      <h3 className="text-lg font-bold text-purple-900">Artículos en Préstamo en esta Sede</h3>
+                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                        {sede.prestamosEnSede.length}
+                      </span>
+                    </div>
+                    <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6">
+                      <div className="grid grid-cols-1 gap-4">
+                        {sede.prestamosEnSede.map((prestamo, idx) => (
+                          <div key={idx} className="bg-white rounded-lg p-4 shadow">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-bold text-gray-900">
+                                  {prestamo.inventario?.tipoArticulo?.nombre} - {prestamo.inventario?.marca} {prestamo.inventario?.modelo}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  SN: {prestamo.inventario?.numero_serie || 'N/A'}
+                                </p>
+                                <div className="mt-2 flex gap-4 text-xs text-gray-600">
+                                  <span>Remito: <span className="font-mono font-semibold text-purple-700">{prestamo.remito?.numero_remito}</span></span>
+                                  <span>Desde: <span className="font-semibold">{prestamo.remito?.sedeOrigen?.nombre_sede}</span></span>
+                                </div>
+                                {prestamo.fechaDevolucionEsperada && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Devolución esperada: {new Date(prestamo.fechaDevolucionEsperada).toLocaleDateString('es-AR')}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                                {prestamo.remito?.estado}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
