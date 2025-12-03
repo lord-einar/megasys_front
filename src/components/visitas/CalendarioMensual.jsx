@@ -5,6 +5,7 @@ import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import es from 'date-fns/locale/es';
+import '../../styles/Calendar.css';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = {
@@ -36,30 +37,18 @@ const messages = {
 
 const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavigate, view, onView }) => {
 
-    const eventStyleGetter = (event) => {
-        let backgroundColor = '#3174ad';
+    const eventPropGetter = (event) => {
+        let className = 'rbc-event';
 
-        // Colores según estado
-        if (event.extendedProps?.estado === 'realizada') backgroundColor = '#28a745';
-        if (event.extendedProps?.estado === 'cancelada') backgroundColor = '#6c757d';
-        if (event.extendedProps?.tipo === 'urgencia') backgroundColor = '#dc3545';
-
-        // Opcional: Colores por técnico (hash simple)
-        // const hash = event.extendedProps.tecnicoId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        // const hue = hash % 360;
-        // backgroundColor = `hsl(${hue}, 70%, 50%)`;
+        // Clases según estado y tipo
+        if (event.extendedProps?.estado === 'realizada') className += ' event-realizada';
+        else if (event.extendedProps?.estado === 'cancelada') className += ' event-cancelada';
+        else if (event.extendedProps?.tipo === 'urgencia') className += ' event-urgencia';
+        else className += ' event-programada';
 
         return {
-            style: {
-                backgroundColor,
-                borderRadius: '5px',
-                opacity: 0.8,
-                color: 'white',
-                border: '0px',
-                display: 'block',
-                fontSize: '0.875rem',
-                padding: '2px 5px'
-            }
+            className,
+            style: {} // Limpiamos estilos inline para usar CSS puro
         };
     };
 
@@ -80,7 +69,7 @@ const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavig
                 onSelectEvent={onSelectEvent}
                 onSelectSlot={onSelectSlot}
                 selectable
-                eventPropGetter={eventStyleGetter}
+                eventPropGetter={eventPropGetter}
                 views={['month', 'agenda']}
             />
         </div>
