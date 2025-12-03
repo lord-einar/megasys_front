@@ -112,63 +112,72 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-            <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full m-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+            <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full m-4 max-h-[90vh] overflow-y-auto">
                 {loading && <LoadingOverlay message="Guardando informe y enviando minuta..." />}
 
-                <div className="flex justify-between items-center p-6 border-b bg-green-50">
+                <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-emerald-50/50 rounded-t-xl">
                     <div>
-                        <h3 className="text-xl font-bold text-green-800">Completar Informe de Visita</h3>
-                        <p className="text-sm text-green-600">{visita.sedePrincipal?.nombre} - {new Date(visita.fecha).toLocaleDateString()}</p>
+                        <h3 className="text-xl font-bold text-emerald-800">Completar Informe de Visita</h3>
+                        <p className="text-sm text-emerald-600">{visita.sedePrincipal?.nombre_sede} - {new Date(visita.fecha).toLocaleDateString()}</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-                        <span className="text-2xl">&times;</span>
+                    <button
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="Cerrar formulario"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-8">
                     {error && (
-                        <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                            <p className="text-red-700">{error}</p>
+                        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                            <p className="text-red-700 font-medium">{error}</p>
                         </div>
                     )}
 
                     {/* 1. Checklist */}
                     <section>
-                        <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">1. Checklist de Control</h4>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">1. Checklist de Control</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {checklistItems.map((item, index) => (
-                                <label key={index} className="flex items-start space-x-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                                <label key={index} className="flex items-start space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={item.completado}
                                         onChange={() => handleChecklistChange(index)}
-                                        className="h-5 w-5 text-green-600 mt-0.5"
+                                        className="h-5 w-5 text-emerald-600 rounded border-slate-300 focus:ring-2 focus:ring-emerald-500 mt-0.5"
                                     />
                                     <div>
-                                        <span className="font-medium text-gray-900">{item.nombre}</span>
-                                        {item.descripcion && <p className="text-xs text-gray-500">{item.descripcion}</p>}
+                                        <span className="font-medium text-slate-900">{item.nombre}</span>
+                                        {item.descripcion && <p className="text-xs text-slate-500">{item.descripcion}</p>}
                                     </div>
                                 </label>
                             ))}
                         </div>
 
                         <div className="mt-4">
-                            <label className="text-sm font-medium text-gray-700">Agregar item adicional</label>
+                            <label className="text-sm font-medium text-slate-700">Agregar item adicional</label>
                             <div className="flex gap-2 mt-1">
                                 <input
                                     type="text"
                                     value={extraInput}
                                     onChange={(e) => setExtraInput(e.target.value)}
                                     placeholder="Ej: Revisión de cableado extra"
-                                    className="flex-1 border p-2 rounded"
+                                    className="input flex-1"
                                 />
-                                <button type="button" onClick={handleAddExtra} className="bg-gray-200 px-4 py-2 rounded">Agregar</button>
+                                <button type="button" onClick={handleAddExtra} className="btn btn-secondary">Agregar</button>
                             </div>
                             <div className="mt-2 space-y-1">
                                 {checklistExtra.map((item, i) => (
-                                    <div key={i} className="flex items-center text-sm text-green-700 bg-green-50 px-2 py-1 rounded w-fit">
-                                        ✓ {item.nombre} (Adicional)
+                                    <div key={i} className="flex items-center text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg w-fit">
+                                        <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        {item.nombre} <span className="text-emerald-600 ml-1">(Adicional)</span>
                                     </div>
                                 ))}
                             </div>
@@ -177,20 +186,20 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                     {/* 2. Problemas Resueltos */}
                     <section>
-                        <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">2. Problemas Resueltos</h4>
-                        <div className="bg-gray-50 p-4 rounded-md space-y-3">
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">2. Problemas Resueltos</h4>
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                             <input
                                 type="text"
                                 value={problemaInput.descripcion}
                                 onChange={(e) => setProblemaInput({ ...problemaInput, descripcion: e.target.value })}
                                 placeholder="Descripción del problema resuelto"
-                                className="w-full border p-2 rounded"
+                                className="input w-full"
                             />
                             <div className="flex gap-4">
                                 <select
                                     value={problemaInput.categoria}
                                     onChange={(e) => setProblemaInput({ ...problemaInput, categoria: e.target.value })}
-                                    className="border p-2 rounded flex-1"
+                                    className="select flex-1"
                                 >
                                     <option value="otro">Otro</option>
                                     <option value="telefonia">Telefonía</option>
@@ -203,11 +212,11 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                         type="checkbox"
                                         checked={problemaInput.causado_por_usuario}
                                         onChange={(e) => setProblemaInput({ ...problemaInput, causado_por_usuario: e.target.checked })}
-                                        className="h-4 w-4"
+                                        className="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-2 focus:ring-blue-500"
                                     />
-                                    <span className="text-sm">Causado por usuario</span>
+                                    <span className="text-sm text-slate-700">Causado por usuario</span>
                                 </label>
-                                <button type="button" onClick={handleAddProblema} className="bg-blue-600 text-white px-4 py-2 rounded">
+                                <button type="button" onClick={handleAddProblema} className="btn btn-primary">
                                     Agregar
                                 </button>
                             </div>
@@ -215,20 +224,23 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                         <div className="mt-4 space-y-2">
                             {problemasResueltos.map((prob, i) => (
-                                <div key={i} className="flex justify-between items-center bg-white border p-3 rounded shadow-sm">
+                                <div key={i} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                     <div>
-                                        <p className="font-medium">{prob.descripcion}</p>
+                                        <p className="font-medium text-slate-900">{prob.descripcion}</p>
                                         <div className="flex gap-2 text-xs mt-1">
-                                            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{prob.categoria}</span>
-                                            {prob.causado_por_usuario && <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded">Usuario</span>}
+                                            <span className="badge badge-primary">{prob.categoria}</span>
+                                            {prob.causado_por_usuario && <span className="badge badge-danger">Usuario</span>}
                                         </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setProblemasResueltos(problemasResueltos.filter((_, idx) => idx !== i))}
-                                        className="text-red-500 hover:text-red-700"
+                                        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors"
+                                        aria-label="Eliminar problema"
                                     >
-                                        &times;
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                     </button>
                                 </div>
                             ))}
@@ -286,28 +298,31 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                     {/* 5. Observaciones */}
                     <section>
-                        <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">5. Observaciones Finales</h4>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">5. Observaciones Finales</h4>
                         <textarea
                             value={observaciones}
                             onChange={(e) => setObservaciones(e.target.value)}
                             rows="3"
-                            className="w-full border p-2 rounded"
+                            className="textarea w-full"
                             placeholder="Comentarios generales sobre la visita..."
                         />
                     </section>
 
-                    <div className="flex justify-end gap-3 pt-6 border-t">
+                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="bg-white py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            className="btn btn-secondary px-6"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
-                            className="bg-green-600 py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700"
+                            className="btn btn-success px-6 flex items-center gap-2"
                         >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
                             Finalizar Visita y Enviar Minuta
                         </button>
                     </div>

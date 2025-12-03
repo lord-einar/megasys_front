@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/enterprise.css";
 
 /* Design System Profesional */
 @theme {
@@ -13,7 +14,7 @@
   --color-primary-700: #0369a1;
   --color-primary-800: #075985;
   --color-primary-900: #0c4a6e;
-  
+
   /* Colores neutros empresariales */
   --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
@@ -25,11 +26,15 @@
   --color-gray-700: #334155;
   --color-gray-800: #1e293b;
   --color-gray-900: #0f172a;
-  
+
   /* Colores semánticos */
   --color-success-500: #10b981;
   --color-warning-500: #f59e0b;
   --color-error-500: #ef4444;
+
+  /* Sombras */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 /* Tipografía empresarial */
