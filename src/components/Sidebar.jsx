@@ -89,6 +89,15 @@ function Sidebar({ isOpen, onNavigate }) {
       ],
     },
     {
+      label: 'Visitas',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      href: '/visitas',
+    },
+    {
       label: 'Proveedores',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,9 +113,8 @@ function Sidebar({ isOpen, onNavigate }) {
 
   return (
     <aside
-      className={`${
-        isOpen ? 'w-64' : 'w-0'
-      } bg-gray-900 text-white transition-all duration-300 overflow-hidden flex flex-col border-r border-gray-800`}
+      className={`${isOpen ? 'w-64' : 'w-0'
+        } bg-gray-900 text-white transition-all duration-300 overflow-hidden flex flex-col border-r border-gray-800`}
     >
       {/* Logo Section */}
       <div className="flex items-center gap-3 h-16 px-6 border-b border-gray-800">
@@ -121,16 +129,14 @@ function Sidebar({ isOpen, onNavigate }) {
               <>
                 <button
                   onClick={() => toggleMenu(item.label)}
-                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-colors ${
-                    expandedMenu === item.label ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-colors ${expandedMenu === item.label ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
                 >
                   <span className="text-gray-400">{item.icon}</span>
                   <span className="flex-1 font-medium">{item.label}</span>
                   <svg
-                    className={`w-4 h-4 transition-transform text-gray-400 ${
-                      expandedMenu === item.label ? 'rotate-180' : ''
-                    }`}
+                    className={`w-4 h-4 transition-transform text-gray-400 ${expandedMenu === item.label ? 'rotate-180' : ''
+                      }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -151,11 +157,10 @@ function Sidebar({ isOpen, onNavigate }) {
                       <Link
                         key={subindex}
                         to={subitem.href}
-                        className={`block px-12 py-2 text-sm transition-colors ${
-                          location.pathname === subitem.href
+                        className={`block px-12 py-2 text-sm transition-colors ${location.pathname === subitem.href
                             ? 'text-primary-500 bg-gray-700/50'
                             : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                        }`}
+                          }`}
                       >
                         {subitem.label}
                       </Link>
@@ -166,11 +171,10 @@ function Sidebar({ isOpen, onNavigate }) {
             ) : (
               <Link
                 to={item.href}
-                className={`flex items-center gap-3 px-6 py-3 transition-colors ${
-                  location.pathname === item.href
+                className={`flex items-center gap-3 px-6 py-3 transition-colors ${location.pathname === item.href
                     ? 'bg-primary-500/10 text-primary-500 border-r-2 border-primary-500'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
+                  }`}
               >
                 <span className={location.pathname === item.href ? 'text-primary-500' : 'text-gray-400'}>
                   {item.icon}

@@ -25,6 +25,8 @@ import RemitoListPage from './pages/RemitoListPage'
 import CreateRemitoPage from './pages/CreateRemitoPage'
 import RemitoDetailPage from './pages/RemitoDetailPage'
 import ConfirmacionRecepcionPage from './pages/ConfirmacionRecepcionPage'
+import VisitasPage from './pages/VisitasPage'
+import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -44,10 +46,11 @@ function App() {
 
   // Public routes that don't require authentication
   // Check first before authentication check
-  if (window.location.pathname === '/confirmar-recepcion' || window.location.pathname === '/login') {
+  if (window.location.pathname === '/confirmar-recepcion' || window.location.pathname === '/login' || window.location.pathname === '/visitas/solicitar') {
     return <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
+      <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   }
@@ -108,6 +111,9 @@ function App() {
                   <Route path="/remitos/crear" element={<CreateRemitoPage />} />
                   <Route path="/remitos/:id" element={<RemitoDetailPage />} />
                   <Route path="/remitos" element={<RemitoListPage />} />
+
+                  {/* Visitas routes */}
+                  <Route path="/visitas" element={<VisitasPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

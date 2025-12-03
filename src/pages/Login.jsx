@@ -217,6 +217,34 @@ export default function Login() {
               </>
             )}
           </button>
+
+          {/* DEV ONLY BUTTON */}
+          <button
+            onClick={async () => {
+              setIsLoggingIn(true);
+              try {
+                const response = await fetch(`${API_BASE_URL}/auth/dev-login`, { method: 'POST' });
+                if (response.ok) {
+                  const data = await response.json();
+                  const { user, token } = data.data;
+                  localStorage.setItem('authToken', token);
+                  localStorage.setItem('authUser', JSON.stringify(user));
+                  login(user, token);
+                  navigate('/dashboard', { replace: true });
+                } else {
+                  setError('Error en login de desarrollo');
+                  setIsLoggingIn(false);
+                }
+              } catch (err) {
+                console.error(err);
+                setError('Error de conexión');
+                setIsLoggingIn(false);
+              }
+            }}
+            className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none"
+          >
+            🔧 Login Desarrollo (Bypass)
+          </button>
         </div>
 
         {/* Info Section */}
