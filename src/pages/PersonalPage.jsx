@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { personalAPI } from '../services/api'
+import { usePagination } from '../hooks/usePagination'
 import Swal from 'sweetalert2'
 
 export default function PersonalPage() {
@@ -10,15 +11,29 @@ export default function PersonalPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filtro, setFiltro] = useState('')
-  const [page, setPage] = useState(1)
-  const [limit] = useState(10)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalRecords, setTotalRecords] = useState(0)
+
+  const {
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    pageNumbers,
+    goToPage,
+    goToPreviousPage,
+    goToNextPage,
+    resetPage,
+    updatePagination,
+    isFirstPage,
+    isLastPage
+  } = usePagination(1, 10)
 
   useEffect(() => {
     cargarPersonal()
     cargarEstadisticas()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page])
+  // Nota: filtro no está en dependencias intencionalmente
+  // El filtro solo se aplica al hacer clic en "Buscar" (handleBuscar)
 
   const cargarPersonal = async () => {
     try {
@@ -28,14 +43,9 @@ export default function PersonalPage() {
       const datos = response?.data || response || []
       setPersonal(Array.isArray(datos) ? datos : [])
 
-      // Calcular paginación desde la respuesta
-      if (response?.pagination) {
-        setTotalRecords(response.pagination.total || 0)
-        setTotalPages(Math.ceil(response.pagination.total / limit) || 1)
-      } else if (response?.meta) {
-        setTotalRecords(response.meta.total || 0)
-        setTotalPages(response.meta.pages || 1)
-      }
+      // Actualizar paginación desde la respuesta
+      const total = response?.pagination?.total || response?.meta?.total || 0
+      updatePagination(total)
     } catch (err) {
       setError(err.message)
       console.error('Error cargando personal:', err)
@@ -56,37 +66,8 @@ export default function PersonalPage() {
 
   const handleBuscar = (e) => {
     e.preventDefault()
-    setPage(1)
+    resetPage()
     cargarPersonal()
-  }
-
-  const getPaginacionNumeros = () => {
-    const numeros = []
-    const maxVisible = 5
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        numeros.push(i)
-      }
-    } else {
-      numeros.push(1)
-
-      if (page > 3) numeros.push('...')
-
-      const inicio = Math.max(2, page - 1)
-      const fin = Math.min(totalPages - 1, page + 1)
-      for (let i = inicio; i <= fin; i++) {
-        if (!numeros.includes(i)) numeros.push(i)
-      }
-
-      if (page < totalPages - 2) numeros.push('...')
-
-      if (!numeros.includes(totalPages)) {
-        numeros.push(totalPages)
-      }
-    }
-
-    return numeros
   }
 
   const eliminarPersona = async (persona) => {
@@ -191,7 +172,7 @@ export default function PersonalPage() {
             type="button"
             onClick={() => {
               setFiltro('')
-              setPage(1)
+              resetPage()
             }}
             className="btn btn-secondary"
           >
@@ -309,15 +290,15 @@ export default function PersonalPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
+              onClick={goToPreviousPage}
+              disabled={isFirstPage}
               className="btn btn-secondary"
             >
               Anterior
             </button>
 
             <div className="flex gap-1">
-              {getPaginacionNumeros().map((num, i) =>
+              {pageNumbers.map((num, i) =>
                 num === '...' ? (
                   <span key={`dots-${i}`} className="px-2 py-2 text-slate-400">
                     ...
@@ -325,7 +306,7 @@ export default function PersonalPage() {
                 ) : (
                   <button
                     key={num}
-                    onClick={() => setPage(num)}
+                    onClick={() => goToPage(num)}
                     className={`px-3 py-2 rounded-lg transition-all font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                       page === num
                         ? 'bg-blue-600 text-white shadow-md'
@@ -339,8 +320,8 @@ export default function PersonalPage() {
             </div>
 
             <button
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
+              onClick={goToNextPage}
+              disabled={isLastPage}
               className="btn btn-secondary"
             >
               Siguiente

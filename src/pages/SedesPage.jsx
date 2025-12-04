@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sedesAPI, empresasAPI } from '../services/api'
+import { usePagination } from '../hooks/usePagination'
 import Swal from 'sweetalert2'
 
 export default function SedesPage() {
@@ -12,15 +13,30 @@ export default function SedesPage() {
   const [error, setError] = useState(null)
   const [filtro, setFiltro] = useState('')
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null)
-  const [page, setPage] = useState(1)
-  const [limit] = useState(9)
-  const [totalPages, setTotalPages] = useState(1)
+
+  const {
+    page,
+    limit,
+    totalPages,
+    pageNumbers,
+    goToPage,
+    goToPreviousPage,
+    goToNextPage,
+    resetPage,
+    updatePagination,
+    isFirstPage,
+    isLastPage,
+    hasPages
+  } = usePagination(1, 9)
 
   useEffect(() => {
     cargarEmpresas()
     cargarSedes()
     cargarEstadisticas()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, empresaSeleccionada])
+  // Nota: filtro no está en dependencias intencionalmente
+  // El filtro solo se aplica al hacer clic en "Buscar" (handleBuscar)
 
   const cargarEmpresas = async () => {
     try {
@@ -49,10 +65,9 @@ export default function SedesPage() {
 
       setSedes(sedesFiltradas)
 
-      // Calcular total de páginas basado en la respuesta
+      // Actualizar paginación desde la respuesta
       const total = data.pagination?.total || data.total || 0
-      const calculatedPages = Math.max(1, Math.ceil(total / limit))
-      setTotalPages(calculatedPages)
+      updatePagination(total)
     } catch (err) {
       setError(err.message)
       console.error('Error cargando sedes:', err)
@@ -73,13 +88,13 @@ export default function SedesPage() {
 
   const handleBuscar = (e) => {
     e.preventDefault()
-    setPage(1)
+    resetPage()
     cargarSedes()
   }
 
   const cambiarEmpresa = (empresaId) => {
     setEmpresaSeleccionada(empresaId === empresaSeleccionada ? null : empresaId)
-    setPage(1)
+    resetPage()
   }
 
   const eliminarSede = async (sede) => {
@@ -181,7 +196,7 @@ export default function SedesPage() {
               type="button"
               onClick={() => {
                 setFiltro('')
-                setPage(1)
+                resetPage()
               }}
               className="btn btn-secondary"
             >
@@ -324,51 +339,41 @@ export default function SedesPage() {
           </div>
 
           {/* Paginador */}
-          {totalPages > 1 && (
+          {hasPages && (
             <div className="flex justify-center items-center gap-2 mt-8">
               <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
+                onClick={goToPreviousPage}
+                disabled={isFirstPage}
                 className="btn btn-secondary"
               >
                 ← Anterior
               </button>
 
               <div className="flex gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                  // Mostrar solo páginas cercanas para no saturar
-                  const showPage =
-                    pageNum === 1 ||
-                    pageNum === totalPages ||
-                    (pageNum >= page - 1 && pageNum <= page + 1)
-
-                  if (!showPage && pageNum === page - 2) {
-                    return <span key="dots-left" className="px-2 py-2 text-slate-400">...</span>
-                  }
-                  if (!showPage && pageNum === page + 2) {
-                    return <span key="dots-right" className="px-2 py-2 text-slate-400">...</span>
-                  }
-                  if (!showPage) return null
-
-                  return (
+                {pageNumbers.map((num, i) =>
+                  num === '...' ? (
+                    <span key={`dots-${i}`} className="px-2 py-2 text-slate-400">
+                      ...
+                    </span>
+                  ) : (
                     <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
+                      key={num}
+                      onClick={() => goToPage(num)}
                       className={`px-3 py-2 rounded-lg font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        page === pageNum
+                        page === num
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      {pageNum}
+                      {num}
                     </button>
                   )
-                })}
+                )}
               </div>
 
               <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
+                onClick={goToNextPage}
+                disabled={isLastPage}
                 className="btn btn-secondary"
               >
                 Siguiente →

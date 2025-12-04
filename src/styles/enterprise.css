@@ -29,6 +29,29 @@
         @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
     }
 
+    /* Responsive Button Sizes */
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    .btn-lg {
+        @apply px-6 py-3 text-base;
+    }
+
+    .btn-xl {
+        @apply px-8 py-4 text-lg;
+    }
+
+    /* Full width button (useful for mobile) */
+    .btn-block {
+        @apply w-full;
+    }
+
+    /* Icon-only button (square) */
+    .btn-icon {
+        @apply p-2 aspect-square;
+    }
+
     .btn-primary {
         @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md;
     }
@@ -82,33 +105,33 @@
     }
 
     .badge-success {
-        @apply bg-emerald-100 text-emerald-700 border border-emerald-100;
+        @apply bg-emerald-100 text-emerald-700 border border-emerald-200;
     }
 
     .badge-warning {
-        @apply bg-amber-100 text-amber-600 border border-amber-100;
+        @apply bg-amber-100 text-amber-600 border border-amber-200;
     }
 
     .badge-danger {
-        @apply bg-red-100 text-red-700 border border-red-100;
+        @apply bg-red-100 text-red-700 border border-red-200;
     }
 
     /* Page Container */
     .page-container {
-        @apply p-6 bg-slate-50 min-h-screen;
+        @apply p-4 md:p-6 bg-slate-50 min-h-screen;
     }
 
     /* Page Header */
     .page-header {
-        @apply mb-6 flex justify-between items-start;
+        @apply mb-4 md:mb-6 flex flex-col md:flex-row gap-4 md:justify-between md:items-start;
     }
 
     .page-title {
-        @apply text-4xl font-bold text-slate-900;
+        @apply text-2xl md:text-4xl font-bold text-slate-900;
     }
 
     .page-subtitle {
-        @apply text-slate-600 mt-2;
+        @apply text-sm md:text-base text-slate-600 mt-1 md:mt-2;
     }
 }
 

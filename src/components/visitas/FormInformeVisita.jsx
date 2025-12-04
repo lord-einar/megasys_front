@@ -84,7 +84,20 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             return;
         }
 
-        if (!window.confirm('Se enviará la minuta a Infraestructura y a la Sede. ¿Confirmas que la visita está terminada?')) {
+        const result = await Swal.fire({
+            title: '¿Finalizar visita?',
+            html: 'Se enviará la minuta a <strong>Infraestructura</strong> y a la <strong>Sede</strong>.<br/><br/>¿Confirmas que la visita está terminada?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, finalizar',
+            cancelButtonText: 'Cancelar',
+            backdrop: true,
+            allowOutsideClick: false
+        });
+
+        if (!result.isConfirmed) {
             return;
         }
 
@@ -318,12 +331,13 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                         </button>
                         <button
                             type="submit"
+                            disabled={loading}
                             className="btn btn-success px-6 flex items-center gap-2"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            Finalizar Visita y Enviar Minuta
+                            {loading ? 'Finalizando...' : 'Finalizar Visita y Enviar Minuta'}
                         </button>
                     </div>
                 </form>
