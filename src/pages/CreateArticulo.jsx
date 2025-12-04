@@ -2,24 +2,26 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import logger from '../utils/logger'
 
 export default function CreateArticulo() {
   const navigate = useNavigate()
+
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])
+  const [errors, setErrors] = useState({})
   const [formData, setFormData] = useState({
     tipo_articulo_id: '',
     marca: '',
     modelo: '',
     numero_serie: '',
     service_tag: '',
-    sede_id: '', // Will be auto-set to Depósito
-    estado: 'disponible', // Always new items
+    sede_id: '',
     fecha_adquisicion: '',
+    valor_adquisicion: '',
     observaciones: ''
   })
-  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     cargarDatosIniciales()
@@ -34,7 +36,7 @@ export default function CreateArticulo() {
       try {
         tiposResponse = await tipoArticuloAPI.list()
       } catch (tiposErr) {
-        console.error('Error cargando tipos:', tiposErr)
+        logger.error('Error cargando tipos:', tiposErr)
         // Si falla, intenta con el endpoint /api/tipo-articulo/todos
         tiposResponse = await tipoArticuloAPI.getById ? null : []
       }
@@ -47,7 +49,7 @@ export default function CreateArticulo() {
       try {
         sedesResponse = await sedesAPI.list({ limit: 100 })
       } catch (sedesErr) {
-        console.error('Error cargando sedes:', sedesErr)
+        logger.error('Error cargando sedes:', sedesErr)
         sedesResponse = []
       }
 
@@ -59,7 +61,13 @@ export default function CreateArticulo() {
       if (deposito) {
         setFormData(prev => ({ ...prev, sede_id: deposito.id }))
       } else {
-        console.warn('Sede Depósito no encontrada')
+        logger.warn('Sede Depósito no encontrada')
+        Swal.fire({
+          title: 'Advertencia',
+          text: 'No se encontró la sede "Depósito". Por favor contacta al administrador.',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        })
       }
 
       // Si no se cargaron tipos, mostrar error
@@ -67,7 +75,7 @@ export default function CreateArticulo() {
         Swal.fire('Error', 'No se pudieron cargar los tipos de artículos. Por favor, intenta de nuevo.', 'error')
       }
     } catch (err) {
-      console.error('Error cargando datos:', err)
+      logger.error('Error cargando datos:', err)
       Swal.fire('Error', 'No se pudieron cargar los datos: ' + (err.message || 'Error desconocido'), 'error')
     } finally {
       setLoading(false)
@@ -140,7 +148,7 @@ export default function CreateArticulo() {
       Swal.fire('Éxito', 'Artículo creado correctamente', 'success')
       navigate('/inventario')
     } catch (err) {
-      console.error('Error creando artículo:', err)
+      logger.error('Error creando artículo:', err)
       Swal.fire('Error', err.message || 'Error al crear el artículo', 'error')
     } finally {
       setLoading(false)
