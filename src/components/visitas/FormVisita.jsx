@@ -1,38 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { visitasAPI, personalAPI, sedesAPI } from '../../services/api';
-import { getLocalDateString } from '../../utils/dateUtils';
+import { useState, useEffect } from 'react';
+import { visitasAPI, sedesAPI, personalAPI } from '../../services/api';
 import LoadingOverlay from '../LoadingOverlay';
+import logger from '../../utils/logger';
+import Swal from 'sweetalert2';
 
 const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada = null }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [sedes, setSedes] = useState([]);
+    const [tecnicos, setTecnicos] = useState([]);
+    const [ticketInput, setTicketInput] = useState('');
+
+    // Función helper para convertir Date a formato yyyy-MM-dd
+    const formatearFecha = (fecha) => {
+        if (!fecha) return '';
+        if (typeof fecha === 'string') return fecha.split('T')[0];
+        if (fecha instanceof Date) {
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const day = String(fecha.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return '';
+    };
+
     const [formData, setFormData] = useState({
         sede_id: '',
         tecnico_asignado_id: '',
-        fecha: fechaPreseleccionada ? getLocalDateString(fechaPreseleccionada) : '',
-        tipo: 'programada',
+        fecha: formatearFecha(fechaPreseleccionada),
         motivo: '',
+        tipo: 'programada',
+        observaciones: '',
         casos_tickets: [],
-        es_recurrente: false,
-        observaciones: ''
+        es_recurrente: false
     });
-
-    const [sedes, setSedes] = useState([]);
-    const [tecnicos, setTecnicos] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [ticketInput, setTicketInput] = useState('');
-    const [error, setError] = useState(null);
 
     useEffect(() => {
         cargarDatos();
         if (visitaEditar) {
             setFormData({
-                sede_id: visitaEditar.sede_id,
-                tecnico_asignado_id: visitaEditar.tecnico_asignado_id,
-                fecha: visitaEditar.fecha,
-                tipo: visitaEditar.tipo,
+                sede_id: visitaEditar.sedePrincipal?.id || visitaEditar.sede_id || '',
+                tecnico_asignado_id: visitaEditar.tecnicoAsignado?.id || visitaEditar.tecnico_asignado_id || '',
+                fecha: formatearFecha(visitaEditar.fecha),
                 motivo: visitaEditar.motivo || '',
+                tipo: visitaEditar.tipo || 'programada',
+                observaciones: visitaEditar.observaciones || '',
                 casos_tickets: visitaEditar.casos_tickets || [],
-                es_recurrente: visitaEditar.es_recurrente || false,
-                observaciones: visitaEditar.observaciones || ''
+                es_recurrente: visitaEditar.es_recurrente || false
             });
         }
     }, [visitaEditar]);
@@ -45,13 +59,13 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
             ]);
             setSedes(sedesRes.data || []);
 
-            console.log('📊 Técnicos response:', tecnicosRes);
-            console.log('📊 Técnicos data:', tecnicosRes.data);
+            logger.debug('📊 Técnicos response:', tecnicosRes);
+            logger.debug('📊 Técnicos data:', tecnicosRes.data);
 
             // Mostrar los roles de cada persona para debug
             if (tecnicosRes.data) {
                 tecnicosRes.data.forEach(p => {
-                    console.log(`👤 ${p.nombre} ${p.apellido} - Rol nombre: "${p.rol?.nombre}" - Rol completo:`, p.rol);
+                    logger.debug(`👤 ${p.nombre} ${p.apellido} - Rol nombre: "${p.rol?.nombre}" - Rol completo:`, p.rol);
                 });
             }
 
@@ -59,17 +73,17 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
             const tecnicosSoporte = (tecnicosRes.data || []).filter(p =>
                 p.rol?.nombre === 'Soporte Técnico' || p.rol?.nombre === 'Sistemas'
             );
-            console.log('✅ Técnicos filtrados:', tecnicosSoporte);
+            logger.debug('✅ Técnicos filtrados:', tecnicosSoporte);
 
             // Si no hay técnicos filtrados, mostrar todos temporalmente para debug
             if (tecnicosSoporte.length === 0) {
-                console.warn('⚠️ No se encontraron técnicos con rol "Soporte Técnico" o "Sistemas". Mostrando todos los usuarios temporalmente.');
+                logger.warn('⚠️ No se encontraron técnicos con rol "Soporte Técnico" o "Sistemas". Mostrando todos los usuarios temporalmente.');
                 setTecnicos(tecnicosRes.data || []);
             } else {
                 setTecnicos(tecnicosSoporte);
             }
         } catch (err) {
-            console.error('Error cargando datos:', err);
+            logger.error('Error cargando datos:', err);
             setError('Error cargando listas de sedes o técnicos');
         }
     };
@@ -125,10 +139,87 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
         }
     };
 
+    const handleDelete = async () => {
+        let eliminarSerie = false;
+
+        if (visitaEditar.es_recurrente) {
+            const result = await Swal.fire({
+                title: 'Eliminar Visita Recurrente',
+                text: 'Esta visita es parte de una serie. ¿Qué deseas eliminar?',
+                icon: 'warning',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Solo esta visita',
+                denyButtonText: 'Toda la serie futura',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                denyButtonColor: '#d33'
+            });
+
+            if (result.isDismissed) return;
+            if (result.isDenied) eliminarSerie = true;
+        } else {
+            const result = await Swal.fire({
+                title: '¿Eliminar visita?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+        }
+
+        setLoading(true);
+        try {
+            await visitasAPI.delete(visitaEditar.id, eliminarSerie);
+            await Swal.fire('Eliminada', 'La visita ha sido eliminada correctamente', 'success');
+            onSave(); // Recargar calendario
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Error eliminando la visita');
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        const { value: motivo } = await Swal.fire({
+            title: 'Cancelar Visita',
+            input: 'text',
+            inputLabel: 'Motivo de la cancelación',
+            inputPlaceholder: 'Ingrese el motivo...',
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Cancelación',
+            cancelButtonText: 'Volver',
+            confirmButtonColor: '#f59e0b',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes ingresar un motivo para cancelar';
+                }
+            }
+        });
+
+        if (!motivo) return;
+
+        setLoading(true);
+        try {
+            await visitasAPI.cancelar(visitaEditar.id, { motivo });
+            await Swal.fire('Cancelada', 'La visita ha sido marcada como cancelada', 'success');
+            onSave();
+            onClose();
+        } catch (err) {
+            setError(err.message || 'Error cancelando la visita');
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full transform transition-all">
-                {loading && <LoadingOverlay message="Guardando..." />}
+                {loading && <LoadingOverlay message="Procesando..." />}
 
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
@@ -303,20 +394,42 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                         />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                            {visitaEditar ? 'Guardar Cambios' : 'Crear Visita'}
-                        </button>
+                    <div className="flex justify-between pt-6 border-t border-slate-100">
+                        <div className="flex gap-2">
+                            {visitaEditar && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleDelete}
+                                        className="px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                    >
+                                        Eliminar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancel}
+                                        className="px-4 py-2 border border-amber-300 rounded-lg text-sm font-medium text-amber-700 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                                    >
+                                        Cancelar Visita
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            >
+                                {visitaEditar ? 'Guardar Cambios' : 'Crear Visita'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
