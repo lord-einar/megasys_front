@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { visitasAPI, personalAPI } from '../services/api';
-import { getLocalDateString } from '../utils/dateUtils';
+import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
 import CalendarioMensual from '../components/visitas/CalendarioMensual';
 import FormVisita from '../components/visitas/FormVisita';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
@@ -71,8 +71,8 @@ const VisitasPage = () => {
             if (response.data) {
                 const eventosFormateados = response.data.map(e => ({
                     ...e,
-                    start: new Date(e.start),
-                    end: new Date(e.end)
+                    start: parseLocalDate(e.start),
+                    end: parseLocalDate(e.end)
                 }));
                 setEventos(eventosFormateados);
             }
