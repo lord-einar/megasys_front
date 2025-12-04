@@ -57,13 +57,11 @@ export default function EditPersonal() {
     mode: 'onChange'
   })
 
-  const { validateField, fieldStatus } = useFieldValidation(personalSchema)
-
   // Validaciones individuales de campos
-  const nombreValidation = validateField('nombre', formValues.nombre)
-  const apellidoValidation = validateField('apellido', formValues.apellido)
-  const emailValidation = validateField('email', formValues.email)
-  const telefonoValidation = validateField('telefono', formValues.telefono)
+  const nombreValidation = useFieldValidation(personalSchema, 'nombre')
+  const apellidoValidation = useFieldValidation(personalSchema, 'apellido')
+  const emailValidation = useFieldValidation(personalSchema, 'email')
+  const telefonoValidation = useFieldValidation(personalSchema, 'telefono')
 
   // Cargar datos iniciales: sedes, roles y personal existente
   useEffect(() => {
