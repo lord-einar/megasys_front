@@ -31,6 +31,10 @@ export default function EditPersonal() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [serverFieldErrors, setServerFieldErrors] = useState({})
+  const [sedesFilter, setSedesFilter] = useState('')
+  const [toast, setToast] = useState(null)
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
   const [personalData, setPersonalData] = useState(null)
@@ -44,7 +48,7 @@ export default function EditPersonal() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setValue,
     reset,
     watch
@@ -54,6 +58,12 @@ export default function EditPersonal() {
   })
 
   const { validateField, fieldStatus } = useFieldValidation(personalSchema)
+
+  // Validaciones individuales de campos
+  const nombreValidation = validateField('nombre', formValues.nombre)
+  const apellidoValidation = validateField('apellido', formValues.apellido)
+  const emailValidation = validateField('email', formValues.email)
+  const telefonoValidation = validateField('telefono', formValues.telefono)
 
   // Cargar datos iniciales: sedes, roles y personal existente
   useEffect(() => {
