@@ -11,6 +11,7 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
 import CharacterCounter from '../components/CharacterCounter'
 import FieldError from '../components/FieldError'
+import logger from '../utils/logger'
 import './NuevaSede.css'
 
 // Schema de validación con Yup
@@ -67,6 +68,7 @@ const sedeSchema = yup.object().shape({
 
 export default function NuevaSede() {
   const navigate = useNavigate()
+
   const [empresas, setEmpresas] = useState([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [error, setError] = useState(null)
@@ -96,8 +98,7 @@ export default function NuevaSede() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset
+    formState: { errors, isSubmitting }
   } = useForm({
     resolver: yupResolver(sedeSchema),
     defaultValues: {
@@ -126,7 +127,7 @@ export default function NuevaSede() {
           setEmpresas([])
         }
       } catch (err) {
-        console.error('Error cargando empresas:', err)
+        logger.error('Error cargando empresas:', err)
         setError('No se pudieron cargar las empresas')
       } finally {
         setLoadingEmpresas(false)
@@ -141,14 +142,14 @@ export default function NuevaSede() {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Creando sede con datos:', data)
+      logger.log('Creando sede con datos:', data)
       const response = await sedesAPI.create(data)
 
-      console.log('Respuesta del servidor:', response)
+      logger.log('Respuesta del servidor:', response)
 
       // Si la respuesta indica éxito, redirigir
       if (response && (response.success || response.data || response.id)) {
-        console.log('Sede creada exitosamente, redirigiendo a /sedes')
+        logger.log('Sede creada exitosamente, redirigiendo a /sedes')
         const successMsg = getSuccessMessage('create', 'Sede')
         setToast({ message: successMsg, type: 'success' })
 
@@ -163,7 +164,7 @@ export default function NuevaSede() {
         setSubmitError('Error inesperado: No se recibió confirmación del servidor')
       }
     } catch (err) {
-      console.error('Error creando sede:', err)
+      logger.error('Error creando sede:', err)
 
       // Parsear errores del servidor
       const errorData = parseApiError(err)
