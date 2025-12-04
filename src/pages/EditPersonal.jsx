@@ -11,66 +11,28 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
 import CharacterCounter from '../components/CharacterCounter'
 import FieldError from '../components/FieldError'
+import logger from '../utils/logger'
 import './NuevaSede.css'
 import './NuevoPersonal.css'
 
 // Schema de validación con Yup
 const personalSchema = yup.object().shape({
-  nombre: yup
-    .string()
-    .required('El nombre es requerido')
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(50, 'El nombre no puede exceder 50 caracteres')
-    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras')
-    .trim(),
-
-  apellido: yup
-    .string()
-    .required('El apellido es requerido')
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .max(50, 'El apellido no puede exceder 50 caracteres')
-    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras')
-    .trim(),
-
-  email: yup
-    .string()
-    .required('El email es requerido')
-    .email('El email debe ser válido')
-    .max(100, 'El email no puede exceder 100 caracteres')
-    .trim(),
-
-  telefono: yup
-    .string()
-    .optional()
-    .matches(/^[+]?[0-9\s\-\(\)]*$/, 'El formato del teléfono no es válido')
-    .max(20, 'El teléfono no puede exceder 20 caracteres')
-    .trim(),
-
-  sedes: yup
-    .array()
-    .min(1, 'Debe seleccionar al menos una sede')
-    .required('La sede es requerida'),
-
-  rol_id: yup
-    .string()
-    .required('El rol es requerido')
-    .uuid('Debe seleccionar un rol válido')
+  nombre: yup.string().required('El nombre es obligatorio'),
+  apellido: yup.string().required('El apellido es obligatorio'),
+  email: yup.string().email('Email inválido').required('El email es obligatorio'),
+  telefono: yup.string(),
+  sedes: yup.array().min(1, 'Debe seleccionar al menos una sede'),
+  rol_id: yup.string().required('Debe seleccionar un rol')
 })
 
 export default function EditPersonal() {
-  const navigate = useNavigate()
   const { id } = useParams()
-
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
   const [personalData, setPersonalData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [submitError, setSubmitError] = useState(null)
-  const [serverFieldErrors, setServerFieldErrors] = useState({})
-  const [sedesFilter, setSedesFilter] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [toast, setToast] = useState(null)
   const [formValues, setFormValues] = useState({
     nombre: '',
     apellido: '',
@@ -78,28 +40,19 @@ export default function EditPersonal() {
     telefono: ''
   })
 
-  // Hooks para validación en tiempo real
-  const nombreValidation = useFieldValidation(personalSchema, 'nombre')
-  const apellidoValidation = useFieldValidation(personalSchema, 'apellido')
-  const emailValidation = useFieldValidation(personalSchema, 'email')
-  const telefonoValidation = useFieldValidation(personalSchema, 'telefono')
-
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset
+    formState: { errors },
+    setValue,
+    reset,
+    watch
   } = useForm({
     resolver: yupResolver(personalSchema),
-    defaultValues: {
-      nombre: '',
-      apellido: '',
-      email: '',
-      telefono: '',
-      sedes: [],
-      rol_id: ''
-    }
+    mode: 'onChange'
   })
+
+  const { validateField, fieldStatus } = useFieldValidation(personalSchema)
 
   // Cargar datos iniciales: sedes, roles y personal existente
   useEffect(() => {
@@ -146,7 +99,7 @@ export default function EditPersonal() {
           telefono: personal.telefono || ''
         })
       } catch (err) {
-        console.error('Error cargando datos:', err)
+        logger.error('Error cargando datos:', err)
         setError('No se pudieron cargar los datos necesarios')
       } finally {
         setLoading(false)
@@ -161,7 +114,7 @@ export default function EditPersonal() {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Actualizando personal con datos:', data)
+      logger.log('Actualizando personal con datos:', data)
 
       // Preparar datos para actualizar personal
       const datosPersonal = {
@@ -175,10 +128,10 @@ export default function EditPersonal() {
 
       // Actualizar personal
       const response = await personalAPI.update(id, datosPersonal)
-      console.log('Respuesta del servidor:', response)
+      logger.log('Respuesta del servidor:', response)
 
       if (response && (response.success || response.data || response.id)) {
-        console.log('Personal actualizado correctamente, redirigiendo a /personal')
+        logger.log('Personal actualizado correctamente, redirigiendo a /personal')
         const successMsg = getSuccessMessage('update', 'Personal')
         setToast({ message: successMsg, type: 'success' })
 
@@ -193,7 +146,7 @@ export default function EditPersonal() {
         setSubmitError('Error inesperado: No se recibió confirmación del servidor')
       }
     } catch (err) {
-      console.error('Error actualizando personal:', err)
+      logger.error('Error actualizando personal:', err)
 
       // Parsear errores del servidor
       const errorData = parseApiError(err)
@@ -433,10 +386,10 @@ export default function EditPersonal() {
                 sede.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase()) ||
                 sede.localidad.toLowerCase().includes(sedesFilter.toLowerCase())
             ).length === 0 && (
-              <div className="no-sedes-message">
-                No se encontraron sedes que coincidan con tu búsqueda
-              </div>
-            )}
+                <div className="no-sedes-message">
+                  No se encontraron sedes que coincidan con tu búsqueda
+                </div>
+              )}
 
             <FieldError
               serverError={getFieldError('sedes', serverFieldErrors)}
