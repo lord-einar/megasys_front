@@ -30,6 +30,7 @@ export default function EditPersonal() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [submitError, setSubmitError] = useState(null)
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
   const [personalData, setPersonalData] = useState(null)
