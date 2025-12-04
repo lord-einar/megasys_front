@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { visitasAPI, personalAPI, sedesAPI } from '../../services/api';
+import { getLocalDateString } from '../../utils/dateUtils';
 import LoadingOverlay from '../LoadingOverlay';
 
 const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada = null }) => {
     const [formData, setFormData] = useState({
         sede_id: '',
         tecnico_asignado_id: '',
-        fecha: fechaPreseleccionada ? fechaPreseleccionada.toISOString().split('T')[0] : '',
+        fecha: fechaPreseleccionada ? getLocalDateString(fechaPreseleccionada) : '',
         tipo: 'programada',
         motivo: '',
         casos_tickets: [],

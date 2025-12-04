@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { personalAPI, sedesAPI } from '../../services/api'
+import { getLocalDateString } from '../../utils/dateUtils'
 import './FormRemito.css'
 
 /**
@@ -73,7 +74,7 @@ function FormRemito({ formData, setFormData, onSubmit, loading, error }) {
   }
 
   const getCurrentDate = () => {
-    return new Date().toISOString().split('T')[0]
+    return getLocalDateString()
   }
 
   const getSedeNombre = (sedeId) => {

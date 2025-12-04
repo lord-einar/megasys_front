@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { personalAPI, sedesAPI, tipoArticuloAPI, inventarioAPI, remitosAPI } from '../services/api'
+import { getLocalDateString } from '../utils/dateUtils'
 
 function CreateRemitoPage() {
   const navigate = useNavigate()
@@ -29,7 +30,7 @@ function CreateRemitoPage() {
     tecnico_id: '',
     sede_origen_id: '',
     sede_destino_id: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: getLocalDateString(),
     observaciones: '',
     articulos: []
   })
@@ -569,7 +570,7 @@ function CreateRemitoPage() {
             <h3 className="text-lg font-bold mb-4">Seleccionar Fecha de Devolución</h3>
             <input
               type="date"
-              min={new Date().toISOString().split('T')[0]}
+              min={getLocalDateString()}
               defaultValue={formData.articulos[selectedArticuloIndex]?.fecha_devolucion || ''}
               onChange={(e) => setFechaDevolucion(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"

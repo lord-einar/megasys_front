@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { visitasAPI, personalAPI } from '../services/api';
+import { getLocalDateString } from '../utils/dateUtils';
 import CalendarioMensual from '../components/visitas/CalendarioMensual';
 import FormVisita from '../components/visitas/FormVisita';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
@@ -51,8 +52,8 @@ const VisitasPage = () => {
     const cargarEstadisticas = async () => {
         try {
             // Obtener estadísticas del mes actual
-            const fechaInicio = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1).toISOString().split('T')[0];
-            const fechaFin = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).toISOString().split('T')[0];
+            const fechaInicio = getLocalDateString(new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1));
+            const fechaFin = getLocalDateString(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0));
             const response = await visitasAPI.getEstadisticas({ fecha_desde: fechaInicio, fecha_hasta: fechaFin });
             setStats(response.data);
         } catch (error) {
