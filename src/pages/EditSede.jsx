@@ -183,11 +183,11 @@ export default function EditSede() {
 
       const response = await sedesAPI.update(id, data)
 
-      console.log('Respuesta del servidor:', response)
+      // console.log('Respuesta del servidor:', response)
 
       // Si la respuesta indica éxito, redirigir
       if (response && (response.success || response.data || response.id)) {
-        console.log('Sede actualizada exitosamente, redirigiendo a /sedes')
+        // console.log('Sede actualizada exitosamente, redirigiendo a /sedes')
         const successMsg = getSuccessMessage('update', 'Sede')
         setToast({ message: successMsg, type: 'success' })
 

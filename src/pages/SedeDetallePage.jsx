@@ -49,7 +49,7 @@ export default function SedeDetallePage() {
       setTecnico(response?.data || response)
     } catch (err) {
       // It's ok if there's no assigned technician
-      console.log('No hay técnico asignado a esta sede:', err.message)
+      // console.log('No hay técnico asignado a esta sede:', err.message)
       setTecnico(null)
     } finally {
       setTecnicoLoading(false)
@@ -122,11 +122,10 @@ export default function SedeDetallePage() {
             <h1 className="text-4xl font-bold">{sede.nombre_sede}</h1>
             <p className="text-blue-100 text-lg mt-2">{sede.empresa?.nombre_empresa || 'Sin empresa'}</p>
             <div className="mt-4 flex items-center gap-4">
-              <span className={`px-4 py-2 rounded-full font-semibold ${
-                sede.activo
+              <span className={`px-4 py-2 rounded-full font-semibold ${sede.activo
                   ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
-              }`}>
+                }`}>
                 {sede.activo ? '✓ Activa' : '✗ Inactiva'}
               </span>
             </div>
@@ -137,31 +136,28 @@ export default function SedeDetallePage() {
             <div className="flex gap-8 px-8">
               <button
                 onClick={() => setActiveTab('general')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'general'
+                className={`py-4 px-2 border-b-2 font-medium transition-colors ${activeTab === 'general'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 Información General
               </button>
               <button
                 onClick={() => setActiveTab('personal')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'personal'
+                className={`py-4 px-2 border-b-2 font-medium transition-colors ${activeTab === 'personal'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 Personal ({sede.personalSede?.length || 0})
               </button>
               <button
                 onClick={() => setActiveTab('inventario')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'inventario'
+                className={`py-4 px-2 border-b-2 font-medium transition-colors ${activeTab === 'inventario'
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 Inventario
               </button>
