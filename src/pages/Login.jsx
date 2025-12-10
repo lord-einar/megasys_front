@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import logo from '../assets/logo.png';
 import '../styles/Login.css';
+import logger from '../utils/logger';
 
 export default function Login() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,7 +21,7 @@ export default function Login() {
     const handleCallback = async () => {
       // Prevent double processing usando ref persistente
       if (hasProcessedRef.current) {
-        console.log('Callback already processed, skipping...');
+        logger.debug('Callback already processed, skipping...');
         return;
       }
 
@@ -28,8 +29,8 @@ export default function Login() {
       const errorParam = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
-      console.log('🔍 Checking for auth_data:', authData ? 'YES' : 'NO');
-      console.log('🔍 Checking for error:', errorParam ? 'YES' : 'NO');
+      logger.debug('🔍 Checking for auth_data:', authData ? 'YES' : 'NO');
+      logger.debug('🔍 Checking for error:', errorParam ? 'YES' : 'NO');
 
       if (errorParam) {
         hasProcessedRef.current = true;
@@ -47,19 +48,19 @@ export default function Login() {
         }
 
         try {
-          console.log('📦 Processing auth_data from URL...');
+          logger.log('📦 Processing auth_data from URL...');
 
           // Decodificar los datos del Base64 (usando atob para el navegador)
           const decodedString = atob(authData);
           const decodedData = JSON.parse(decodedString);
 
-          console.log('✅ Decoded auth data:', decodedData);
-          console.log('👤 User:', decodedData.user);
-          console.log('🔑 Token:', decodedData.token?.substring(0, 20) + '...');
+          logger.log('✅ Decoded auth data:', decodedData);
+          logger.debug('👤 User:', decodedData.user);
+          logger.debug('🔑 Token:', decodedData.token?.substring(0, 20) + '...');
 
           if (decodedData.user && decodedData.token) {
-            console.log('✅ Auth data is valid');
-            console.log('📝 Calling login() with user:', {
+            logger.log('✅ Auth data is valid');
+            logger.debug('📝 Calling login() with user:', {
               id: decodedData.user.id,
               email: decodedData.user.email,
               firstName: decodedData.user.firstName,
@@ -75,8 +76,8 @@ export default function Login() {
             // Llamar login para actualizar el contexto
             login(decodedData.user, decodedData.token, decodedData.profilePhotoUrl);
 
-            console.log('✅ login() executed');
-            console.log('🚀 Navigating to /dashboard');
+            logger.log('✅ login() executed');
+            logger.log('🚀 Navigating to /dashboard');
 
             // Limpiar parámetros de URL para evitar reprocessing
             setSearchParams('');
@@ -87,9 +88,9 @@ export default function Login() {
               navigate('/dashboard', { replace: true });
             }
           } else {
-            console.error('❌ Auth data validation failed');
-            console.error('   - User present:', !!decodedData.user);
-            console.error('   - Token present:', !!decodedData.token);
+            logger.error('❌ Auth data validation failed');
+            logger.error('   - User present:', !!decodedData.user);
+            logger.error('   - Token present:', !!decodedData.token);
 
             if (isMounted) {
               setError('Respuesta de autenticación incompleta');
@@ -97,7 +98,7 @@ export default function Login() {
             }
           }
         } catch (err) {
-          console.error('❌ Error processing auth_data:', err);
+          logger.error('❌ Error processing auth_data:', err);
           if (isMounted) {
             setError('Error al procesar la autenticación: ' + err.message);
             setIsLoggingIn(false);
@@ -137,7 +138,7 @@ export default function Login() {
       }
     } catch (err) {
       setError('Error de conexión con el servidor');
-      console.error('Login error:', err);
+      logger.error('Login error:', err);
       setIsLoggingIn(false);
     }
   };
@@ -236,8 +237,8 @@ export default function Login() {
                   setIsLoggingIn(false);
                 }
               } catch (err) {
-                console.error(err);
-                setError('Error de conexión');
+                logger.error('Dev login error:', err);
+                setError('Error de conexión: ' + (err.message || 'Desconocido'));
                 setIsLoggingIn(false);
               }
             }}

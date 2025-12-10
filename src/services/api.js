@@ -359,6 +359,12 @@ export const visitasAPI = {
     method: 'POST',
     body: JSON.stringify(data)
   }),
+  delete: (id, eliminarSerie = false) => apiCall(`/visitas/${id}?eliminar_serie=${eliminarSerie}`, {
+    method: 'DELETE'
+  }),
+  enviarAviso: (id) => apiCall(`/visitas/${id}/aviso`, {
+    method: 'POST'
+  }),
   getCalendario: (mes, anio, tecnicoId = '') => apiCall(`/visitas/calendario?mes=${mes}&anio=${anio}&tecnico_id=${tecnicoId}`),
   getEstadisticas: (params = {}) => {
     const query = new URLSearchParams(params).toString()

@@ -56,15 +56,31 @@ export default function CreateArticulo() {
       const sedesData = sedesResponse?.rows || sedesResponse?.data || sedesResponse || []
       setSedes(Array.isArray(sedesData) ? sedesData : [])
 
-      // Auto-seleccionar el Depósito (todos los nuevos artículos van al Depósito)
-      const deposito = Array.isArray(sedesData) && sedesData.find(s => s.nombre_sede === 'Depósito')
+      // Auto-seleccionar el Depósito
+      // Prioridad 1: ID desde variable de entorno (lo más seguro, solicitado por usuario)
+      const depositoId = import.meta.env.VITE_DEPOSITO_SEDE_ID
+      let deposito = null
+
+      if (depositoId) {
+        deposito = Array.isArray(sedesData) && sedesData.find(s => s.id === depositoId)
+      }
+
+      // Prioridad 2: Búsqueda por nombre flexible (fallback si no hay ID configurado)
+      if (!deposito) {
+        deposito = Array.isArray(sedesData) && sedesData.find(s => {
+          if (!s.nombre_sede) return false
+          const nombre = s.nombre_sede.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          return nombre.includes('deposito')
+        })
+      }
+
       if (deposito) {
         setFormData(prev => ({ ...prev, sede_id: deposito.id }))
       } else {
-        logger.warn('Sede Depósito no encontrada')
+        logger.warn('Sede Depósito no encontrada por ID ni por nombre')
         Swal.fire({
           title: 'Advertencia',
-          text: 'No se encontró la sede "Depósito". Por favor contacta al administrador.',
+          text: 'No se encontró la sede "Depósito". Por favor configure VITE_DEPOSITO_SEDE_ID o verifique el nombre de la sede.',
           icon: 'warning',
           confirmButtonText: 'Entendido'
         })

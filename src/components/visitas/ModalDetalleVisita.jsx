@@ -38,9 +38,31 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
         );
     };
 
+    const handleEnviarAviso = async () => {
+        setLoading(true);
+        try {
+            await visitasAPI.enviarAviso(visita.id);
+            // Usar alert simple o Swal si estuviera importado. Como no está importado Swal en este archivo, usaré alert.
+            // O mejor, importar Swal si es posible. Veo que no está importado.
+            // Para mantener consistencia, agregaré import Swal al principio si no está.
+            // Pero replace_file_content es local. Usaré alert por ahora o window.confirm para feedback.
+            alert('Aviso enviado correctamente a los destinatarios.');
+        } catch (error) {
+            console.error('Error enviando aviso:', error);
+            alert('Error al enviar el aviso: ' + (error.message || 'Error desconocido'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full transform transition-all">
+                {loading && (
+                    <div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center rounded-xl">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex justify-between items-start px-6 py-5 border-b border-slate-100 bg-slate-50/50 rounded-t-xl">
@@ -153,6 +175,15 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                 <div className="px-6 py-4 bg-slate-50 rounded-b-xl border-t border-slate-100 flex justify-end gap-3">
                     {visita.estado === 'programada' && (
                         <>
+                            <button
+                                onClick={handleEnviarAviso}
+                                className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors shadow-sm flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Reenviar Aviso
+                            </button>
                             <button
                                 onClick={() => onEdit(visita)}
                                 className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
