@@ -180,7 +180,6 @@ export default function EditSede() {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Actualizando sede con datos:', data)
 
       const response = await sedesAPI.update(id, data)
 

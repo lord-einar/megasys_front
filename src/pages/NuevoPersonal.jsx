@@ -128,7 +128,6 @@ export default function NuevoPersonal() {
       setSubmitError(null)
       setServerFieldErrors({})
       setIsLoading(true)
-      console.log('Creando personal con datos:', data)
 
       // Preparar datos para crear personal con sedes y rol
       const datosPersonal = {
@@ -142,10 +141,8 @@ export default function NuevoPersonal() {
 
       // Crear personal
       const response = await personalAPI.create(datosPersonal)
-      console.log('Respuesta del servidor:', response)
 
       if (response && (response.success || response.data || response.id)) {
-        console.log('Personal creado correctamente, redirigiendo a /personal')
         const successMsg = getSuccessMessage('create', 'Personal')
         setToast({ message: successMsg, type: 'success' })
 

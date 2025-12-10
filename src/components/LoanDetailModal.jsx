@@ -36,7 +36,6 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
     const monthStr = String(month).padStart(2, '0')
     const yearStr = String(year).padStart(4, '0')
     const result = `${yearStr}-${monthStr}-${dayStr}`
-    console.log('formatDateForBackend:', { displayDate, parts, result }) // DEBUG
     return result
   }
 

@@ -44,9 +44,3 @@ const getBackendBaseURL = () => {
 
 export const API_BASE_URL = getAPIBaseURL()
 export const BACKEND_BASE_URL = getBackendBaseURL()
-
-console.log('🔧 API Configuration:', {
-  mode: import.meta.env.MODE,
-  apiBaseUrl: API_BASE_URL,
-  backendBaseUrl: BACKEND_BASE_URL
-})
