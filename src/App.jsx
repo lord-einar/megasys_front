@@ -1,31 +1,46 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import './App.css'
 import MainLayout from './components/layout/MainLayout'
 import ProtectedRoute from './components/ProtectedRoute'
-import Dashboard from './pages/Dashboard'
-import Login from './pages/Login'
-import Profile from './pages/Profile'
-import SedesPage from './pages/SedesPage'
-import SedeDetallePage from './pages/SedeDetallePage'
-import NuevaSede from './pages/NuevaSede'
-import EditSede from './pages/EditSede'
-import AsignarTecnicoPage from './pages/AsignarTecnicoPage'
-import AsignarSedesPage from './pages/AsignarSedesPage'
-import PersonalPage from './pages/PersonalPage'
-import PersonalDetailPage from './pages/PersonalDetailPage'
-import NuevoPersonal from './pages/NuevoPersonal'
-import EditPersonal from './pages/EditPersonal'
-import InventarioPage from './pages/InventarioPage'
-import CreateArticulo from './pages/CreateArticulo'
-import EditArticulo from './pages/EditArticulo'
-import InventarioDetailPage from './pages/InventarioDetailPage'
-import RemitoListPage from './pages/RemitoListPage'
-import CreateRemitoPage from './pages/CreateRemitoPage'
-import RemitoDetailPage from './pages/RemitoDetailPage'
-import ConfirmacionRecepcionPage from './pages/ConfirmacionRecepcionPage'
-import VisitasPage from './pages/VisitasPage'
-import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
 import { useAuth } from './contexts/AuthContext'
+
+// Only Login loads immediately (critical for first paint)
+import Login from './pages/Login'
+
+// Lazy load all other pages for better initial load performance
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Profile = lazy(() => import('./pages/Profile'))
+const SedesPage = lazy(() => import('./pages/SedesPage'))
+const SedeDetallePage = lazy(() => import('./pages/SedeDetallePage'))
+const NuevaSede = lazy(() => import('./pages/NuevaSede'))
+const EditSede = lazy(() => import('./pages/EditSede'))
+const AsignarTecnicoPage = lazy(() => import('./pages/AsignarTecnicoPage'))
+const AsignarSedesPage = lazy(() => import('./pages/AsignarSedesPage'))
+const PersonalPage = lazy(() => import('./pages/PersonalPage'))
+const PersonalDetailPage = lazy(() => import('./pages/PersonalDetailPage'))
+const NuevoPersonal = lazy(() => import('./pages/NuevoPersonal'))
+const EditPersonal = lazy(() => import('./pages/EditPersonal'))
+const InventarioPage = lazy(() => import('./pages/InventarioPage'))
+const CreateArticulo = lazy(() => import('./pages/CreateArticulo'))
+const EditArticulo = lazy(() => import('./pages/EditArticulo'))
+const InventarioDetailPage = lazy(() => import('./pages/InventarioDetailPage'))
+const RemitoListPage = lazy(() => import('./pages/RemitoListPage'))
+const CreateRemitoPage = lazy(() => import('./pages/CreateRemitoPage'))
+const RemitoDetailPage = lazy(() => import('./pages/RemitoDetailPage'))
+const ConfirmacionRecepcionPage = lazy(() => import('./pages/ConfirmacionRecepcionPage'))
+const VisitasPage = lazy(() => import('./pages/VisitasPage'))
+const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen bg-slate-50">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p className="mt-4 text-slate-600 font-medium">Cargando página...</p>
+    </div>
+  </div>
+)
 
 function App() {
   const { isAuthenticated, loading } = useAuth()
@@ -57,12 +72,14 @@ function App() {
   // Public routes
   if (['/login', '/confirmar-recepcion', '/visitas/solicitar'].some(path => location.pathname.startsWith(path))) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
-        <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
+          <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
     )
   }
 
@@ -72,41 +89,43 @@ function App() {
 
   return (
     <MainLayout title={getPageTitle(location.pathname)}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
 
-        {/* Sedes routes */}
-        <Route path="/sedes/nueva" element={<NuevaSede />} />
-        <Route path="/sedes/:id/editar" element={<EditSede />} />
-        <Route path="/sedes/:id/asignar-tecnico" element={<AsignarTecnicoPage />} />
-        <Route path="/sedes/:id" element={<SedeDetallePage />} />
-        <Route path="/sedes" element={<SedesPage />} />
+          {/* Sedes routes */}
+          <Route path="/sedes/nueva" element={<NuevaSede />} />
+          <Route path="/sedes/:id/editar" element={<EditSede />} />
+          <Route path="/sedes/:id/asignar-tecnico" element={<AsignarTecnicoPage />} />
+          <Route path="/sedes/:id" element={<SedeDetallePage />} />
+          <Route path="/sedes" element={<SedesPage />} />
 
-        {/* Personal routes */}
-        <Route path="/personal/crear" element={<NuevoPersonal />} />
-        <Route path="/personal/:id/asignar-sedes" element={<AsignarSedesPage />} />
-        <Route path="/personal/:id/editar" element={<EditPersonal />} />
-        <Route path="/personal/:id" element={<PersonalDetailPage />} />
-        <Route path="/personal" element={<PersonalPage />} />
+          {/* Personal routes */}
+          <Route path="/personal/crear" element={<NuevoPersonal />} />
+          <Route path="/personal/:id/asignar-sedes" element={<AsignarSedesPage />} />
+          <Route path="/personal/:id/editar" element={<EditPersonal />} />
+          <Route path="/personal/:id" element={<PersonalDetailPage />} />
+          <Route path="/personal" element={<PersonalPage />} />
 
-        {/* Inventario routes */}
-        <Route path="/inventario/crear" element={<CreateArticulo />} />
-        <Route path="/inventario/:id/editar" element={<EditArticulo />} />
-        <Route path="/inventario/:id" element={<InventarioDetailPage />} />
-        <Route path="/inventario" element={<InventarioPage />} />
+          {/* Inventario routes */}
+          <Route path="/inventario/crear" element={<CreateArticulo />} />
+          <Route path="/inventario/:id/editar" element={<EditArticulo />} />
+          <Route path="/inventario/:id" element={<InventarioDetailPage />} />
+          <Route path="/inventario" element={<InventarioPage />} />
 
-        {/* Remitos routes */}
-        <Route path="/remitos/crear" element={<CreateRemitoPage />} />
-        <Route path="/remitos/:id" element={<RemitoDetailPage />} />
-        <Route path="/remitos" element={<RemitoListPage />} />
+          {/* Remitos routes */}
+          <Route path="/remitos/crear" element={<CreateRemitoPage />} />
+          <Route path="/remitos/:id" element={<RemitoDetailPage />} />
+          <Route path="/remitos" element={<RemitoListPage />} />
 
-        {/* Visitas routes */}
-        <Route path="/visitas" element={<VisitasPage />} />
+          {/* Visitas routes */}
+          <Route path="/visitas" element={<VisitasPage />} />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
     </MainLayout>
   )
 }
