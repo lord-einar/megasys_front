@@ -167,6 +167,37 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                                     "{visita.informe.observaciones || 'Sin observaciones'}"
                                 </p>
                             </div>
+
+                            {/* Comentarios del Responsable de Sede */}
+                            {visita.informe.comentarios_responsable_sede && (
+                                <div className="mt-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-lg p-5 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h5 className="text-sm font-bold text-amber-900 mb-1 flex items-center gap-2">
+                                                💭 Comentarios del Responsable de Sede
+                                                {visita.informe.comentarios_responsable_fecha && (
+                                                    <span className="text-xs font-normal text-amber-600">
+                                                        ({new Date(visita.informe.comentarios_responsable_fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
+                                                    </span>
+                                                )}
+                                            </h5>
+                                            <p className="text-sm text-amber-900 leading-relaxed mb-2 italic">
+                                                "{visita.informe.comentarios_responsable_sede}"
+                                            </p>
+                                            {visita.informe.comentarios_responsable_nombre && (
+                                                <p className="text-xs text-amber-700 font-medium">
+                                                    — {visita.informe.comentarios_responsable_nombre}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

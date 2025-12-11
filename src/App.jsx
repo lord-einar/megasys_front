@@ -31,6 +31,7 @@ const RemitoDetailPage = lazy(() => import('./pages/RemitoDetailPage'))
 const ConfirmacionRecepcionPage = lazy(() => import('./pages/ConfirmacionRecepcionPage'))
 const VisitasPage = lazy(() => import('./pages/VisitasPage'))
 const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
+const VisitaFeedbackPublico = lazy(() => import('./pages/VisitaFeedbackPublico'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -70,13 +71,14 @@ function App() {
   }
 
   // Public routes
-  if (['/login', '/confirmar-recepcion', '/visitas/solicitar'].some(path => location.pathname.startsWith(path))) {
+  if (['/login', '/confirmar-recepcion', '/visitas/solicitar', '/visitas/feedback'].some(path => location.pathname.startsWith(path))) {
     return (
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
           <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
+          <Route path="/visitas/feedback/:token" element={<VisitaFeedbackPublico />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
