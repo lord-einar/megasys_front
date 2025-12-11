@@ -32,6 +32,7 @@ const ConfirmacionRecepcionPage = lazy(() => import('./pages/ConfirmacionRecepci
 const VisitasPage = lazy(() => import('./pages/VisitasPage'))
 const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
 const VisitaFeedbackPublico = lazy(() => import('./pages/VisitaFeedbackPublico'))
+const ReportesVisitasPage = lazy(() => import('./pages/ReportesVisitasPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -124,6 +125,7 @@ function App() {
 
           {/* Visitas routes */}
           <Route path="/visitas" element={<VisitasPage />} />
+          <Route path="/reportes/visitas" element={<ReportesVisitasPage />} />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
