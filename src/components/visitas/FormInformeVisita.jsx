@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { visitasAPI } from '../../services/api';
 import LoadingOverlay from '../LoadingOverlay';
+import Swal from 'sweetalert2';
 
 const FormInformeVisita = ({ visita, onClose, onSave }) => {
     const [checklistItems, setChecklistItems] = useState([]);
@@ -82,6 +83,35 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
         if (!checklistItems.some(i => i.completado) && checklistExtra.length === 0) {
             setError('Debes marcar al menos un item del checklist.');
             return;
+        }
+
+        // Verificar si hay items sin completar
+        const itemsSinCompletar = checklistItems.filter(i => !i.completado);
+
+        if (itemsSinCompletar.length > 0) {
+            // Mostrar advertencia de items sin completar
+            const warningResult = await Swal.fire({
+                title: '⚠️ Items sin completar',
+                html: `
+                    <p>Hay <strong>${itemsSinCompletar.length} item(s)</strong> del checklist sin marcar:</p>
+                    <ul style="text-align: left; margin: 15px 0; padding-left: 20px;">
+                        ${itemsSinCompletar.map(item => `<li>${item.nombre}</li>`).join('')}
+                    </ul>
+                    <p style="margin-top: 15px;">¿Deseas continuar de todas formas?</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'Cancelar',
+                backdrop: true,
+                allowOutsideClick: false
+            });
+
+            if (!warningResult.isConfirmed) {
+                return;
+            }
         }
 
         const result = await Swal.fire({
@@ -294,7 +324,13 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                 type="text"
                                 value={casoInput}
                                 onChange={(e) => setCasoInput(e.target.value)}
-                                placeholder="Nro Ticket (ej: CRM-123)"
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddCaso();
+                                    }
+                                }}
+                                placeholder="Nro Ticket (ej: CRM-123) - Presiona Enter para agregar"
                                 className="border p-2 rounded flex-1"
                             />
                             <button type="button" onClick={handleAddCaso} className="bg-gray-200 px-4 py-2 rounded">Agregar</button>
