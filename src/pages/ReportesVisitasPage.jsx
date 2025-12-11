@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -23,6 +24,10 @@ export default function ReportesVisitasPage() {
 
     const [sedes, setSedes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
+
+    // Modal de detalle
+    const [showDetalleVisita, setShowDetalleVisita] = useState(false);
+    const [selectedVisitaId, setSelectedVisitaId] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -109,6 +114,17 @@ export default function ReportesVisitasPage() {
             tipo: ''
         });
         setTimeout(() => cargarDatos(), 100);
+    };
+
+    const handleVerDetalle = (visitaId) => {
+        setSelectedVisitaId(visitaId);
+        setShowDetalleVisita(true);
+    };
+
+    const handleCloseDetalle = () => {
+        setShowDetalleVisita(false);
+        setSelectedVisitaId(null);
+        cargarDatos(); // Recargar por si hubo cambios
     };
 
     if (loading) {
@@ -261,6 +277,17 @@ export default function ReportesVisitasPage() {
 
             {/* Tabla de Casos Cerrados */}
             <CasosTable casos={data?.casos} />
+
+            {/* Tabla de Visitas Filtradas */}
+            <VisitasTable visitas={data?.visitas} onVerDetalle={handleVerDetalle} />
+
+            {/* Modal de Detalle */}
+            {showDetalleVisita && (
+                <ModalDetalleVisita
+                    visitaId={selectedVisitaId}
+                    onClose={handleCloseDetalle}
+                />
+            )}
         </div>
     );
 }
@@ -377,6 +404,129 @@ function CasosTable({ casos }) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                     {item.sede}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+// Componente de Tabla de Visitas
+function VisitasTable({ visitas, onVerDetalle }) {
+    if (!visitas || visitas.length === 0) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">📅 Lista de Visitas</h3>
+                <div className="text-slate-400 text-center py-8">
+                    No hay visitas para mostrar con los filtros seleccionados
+                </div>
+            </div>
+        );
+    }
+
+    const getEstadoBadge = (estado) => {
+        const styles = {
+            programada: 'bg-blue-100 text-blue-800 border-blue-200',
+            realizada: 'bg-green-100 text-green-800 border-green-200',
+            cancelada: 'bg-slate-100 text-slate-800 border-slate-200',
+        };
+        const labels = {
+            programada: 'Programada',
+            realizada: 'Realizada',
+            cancelada: 'Cancelada',
+        };
+        return (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${styles[estado] || 'bg-gray-100 text-gray-800'}`}>
+                {labels[estado] || estado}
+            </span>
+        );
+    };
+
+    const getTipoBadge = (tipo) => {
+        const styles = {
+            urgencia: 'bg-red-100 text-red-800',
+            solicitud: 'bg-yellow-100 text-yellow-800',
+            programada: 'bg-blue-100 text-blue-800',
+        };
+        const labels = {
+            urgencia: 'Urgencia',
+            solicitud: 'Solicitud',
+            programada: 'Programada',
+        };
+        return (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[tipo] || 'bg-gray-100 text-gray-800'}`}>
+                {labels[tipo] || tipo}
+            </span>
+        );
+    };
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                📅 Lista de Visitas ({visitas.length})
+            </h3>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Fecha
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Sede
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Técnico
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Tipo
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Estado
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Informe
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-slate-200">
+                        {visitas.map((visita) => (
+                            <tr key={visita.id} className="hover:bg-slate-50">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    {new Date(visita.fecha).toLocaleDateString('es-AR')}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-slate-900">
+                                    {visita.sede}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    {visita.tecnico}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    {getTipoBadge(visita.tipo)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    {getEstadoBadge(visita.estado)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    {visita.tiene_informe ? (
+                                        <span className="text-green-600">✓</span>
+                                    ) : (
+                                        <span className="text-slate-300">-</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button
+                                        onClick={() => onVerDetalle(visita.id)}
+                                        className="text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Ver Detalle
+                                    </button>
                                 </td>
                             </tr>
                         ))}
