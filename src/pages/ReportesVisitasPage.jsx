@@ -141,6 +141,11 @@ export default function ReportesVisitasPage() {
         );
     }
 
+    // Filtrar visitas para mostrar solo realizadas o canceladas (excluir programadas)
+    const visitasFiltradas = data?.visitas?.filter(v =>
+        v.estado === 'realizada' || v.estado === 'cancelada'
+    ) || [];
+
     return (
         <div className="p-6 space-y-6">
             {/* Header */}
@@ -261,7 +266,7 @@ export default function ReportesVisitasPage() {
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                     >
-                        📋 Lista de Visitas ({data?.visitas?.length || 0})
+                        📋 Lista de Visitas ({visitasFiltradas.length})
                     </button>
                 </div>
             </div>
@@ -314,7 +319,7 @@ export default function ReportesVisitasPage() {
 
             {/* Vista Lista de Visitas */}
             {vistaActual === 'lista' && (
-                <VisitasTable visitas={data?.visitas} onVerDetalle={handleVerDetalle} />
+                <VisitasTable visitas={visitasFiltradas} onVerDetalle={handleVerDetalle} />
             )}
 
             {/* Modal de Detalle */}
