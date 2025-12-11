@@ -25,6 +25,9 @@ export default function ReportesVisitasPage() {
     const [sedes, setSedes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
 
+    // Pestaña activa
+    const [vistaActual, setVistaActual] = useState('dashboard');
+
     // Modal de detalle
     const [showDetalleVisita, setShowDetalleVisita] = useState(false);
     const [selectedVisitaId, setSelectedVisitaId] = useState(null);
@@ -237,8 +240,37 @@ export default function ReportesVisitasPage() {
                 </div>
             </div>
 
-            {/* Métricas Generales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Pestañas */}
+            <div className="bg-white rounded-lg shadow-sm p-2">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setVistaActual('dashboard')}
+                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                            vistaActual === 'dashboard'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        📊 Dashboard
+                    </button>
+                    <button
+                        onClick={() => setVistaActual('lista')}
+                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                            vistaActual === 'lista'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        📋 Lista de Visitas ({data?.visitas?.length || 0})
+                    </button>
+                </div>
+            </div>
+
+            {/* Vista Dashboard */}
+            {vistaActual === 'dashboard' && (
+                <>
+                    {/* Métricas Generales */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                     title="Total Visitas"
                     value={data?.metricas?.totalVisitas || 0}
@@ -275,11 +307,15 @@ export default function ReportesVisitasPage() {
                 <ChartCard title="Tipos de Visitas" data={data?.graficos?.tipos} />
             </div>
 
-            {/* Tabla de Casos Cerrados */}
-            <CasosTable casos={data?.casos} />
+                    {/* Tabla de Casos Cerrados */}
+                    <CasosTable casos={data?.casos} />
+                </>
+            )}
 
-            {/* Tabla de Visitas Filtradas */}
-            <VisitasTable visitas={data?.visitas} onVerDetalle={handleVerDetalle} />
+            {/* Vista Lista de Visitas */}
+            {vistaActual === 'lista' && (
+                <VisitasTable visitas={data?.visitas} onVerDetalle={handleVerDetalle} />
+            )}
 
             {/* Modal de Detalle */}
             {showDetalleVisita && (
