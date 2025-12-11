@@ -48,7 +48,10 @@ const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavig
 
         return {
             className,
-            style: {} // Limpiamos estilos inline para usar CSS puro
+            style: {
+                backgroundColor: event.backgroundColor,
+                borderColor: event.borderColor
+            }
         };
     };
 

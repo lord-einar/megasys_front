@@ -22,7 +22,8 @@ const personalSchema = yup.object().shape({
   email: yup.string().email('Email inválido').required('El email es obligatorio'),
   telefono: yup.string(),
   sedes: yup.array().min(1, 'Debe seleccionar al menos una sede'),
-  rol_id: yup.string().required('Debe seleccionar un rol')
+
+  color: yup.string().matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Color inválido').default('#007bff')
 })
 
 export default function EditPersonal() {
@@ -42,7 +43,9 @@ export default function EditPersonal() {
     nombre: '',
     apellido: '',
     email: '',
-    telefono: ''
+
+    telefono: '',
+    color: '#007bff'
   })
 
   const {
@@ -97,7 +100,8 @@ export default function EditPersonal() {
           email: personal.email || '',
           telefono: personal.telefono || '',
           sedes: personal.sedesAsignadas?.map(s => s.sede_id) || [],
-          rol_id: personal.rol?.id || ''
+
+          color: personal.color || '#007bff'
         }
 
         reset(defaultValues)
@@ -105,7 +109,9 @@ export default function EditPersonal() {
           nombre: personal.nombre || '',
           apellido: personal.apellido || '',
           email: personal.email || '',
-          telefono: personal.telefono || ''
+
+          telefono: personal.telefono || '',
+          color: personal.color || '#007bff'
         })
       } catch (err) {
         logger.error('Error cargando datos:', err)
@@ -132,7 +138,8 @@ export default function EditPersonal() {
         email: data.email,
         telefono: data.telefono || null,
         sedes: data.sedes,
-        rol_id: data.rol_id
+
+        color: data.color
       }
 
       // Actualizar personal
@@ -319,6 +326,25 @@ export default function EditPersonal() {
             />
             <ValidationIndicator isValid={telefonoValidation.isValid} label="Teléfono válido" />
             <CharacterCounter currentLength={formValues.telefono.length} maxLength={20} />
+          </div>
+
+          {/* Color */}
+          <div className="form-group">
+            <label htmlFor="color">Color Identificador</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                id="color"
+                {...register('color', {
+                  onChange: (e) => setFormValues(prev => ({ ...prev, color: e.target.value }))
+                })}
+                className="h-10 w-20 p-1 rounded border border-gray-300 cursor-pointer"
+                disabled={isLoading}
+              />
+              <span className="text-sm text-gray-500">
+                Este color se usará en el calendario de visitas
+              </span>
+            </div>
           </div>
         </div>
 

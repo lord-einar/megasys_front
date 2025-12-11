@@ -85,8 +85,9 @@
 
 /* Custom Event Types Colors */
 .event-programada {
-    background-color: #3b82f6 !important; /* Blue 500 */
-    border-left: 3px solid #1d4ed8 !important; /* Blue 700 */
+    /* Background color handled dynamically by technician color */
+    /* background-color: #3b82f6 !important; */
+    /* border-left: 3px solid #1d4ed8 !important; */
 }
 
 .event-realizada {

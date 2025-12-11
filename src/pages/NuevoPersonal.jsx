@@ -54,8 +54,14 @@ const personalSchema = yup.object().shape({
   rol_id: yup
     .string()
     .required('El rol es requerido')
-    .uuid('Debe seleccionar un rol válido')
-})
+    .uuid('Debe seleccionar un rol válido'),
+
+  color: yup
+    .string()
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Color inválido')
+    .default('#007bff')
+});
+
 
 export default function NuevoPersonal() {
   const navigate = useNavigate()
@@ -72,7 +78,9 @@ export default function NuevoPersonal() {
     nombre: '',
     apellido: '',
     email: '',
-    telefono: ''
+
+    telefono: '',
+    color: '#007bff'
   })
 
   // Hooks para validación en tiempo real
@@ -93,7 +101,8 @@ export default function NuevoPersonal() {
       email: '',
       telefono: '',
       sedes: [],
-      rol_id: ''
+      rol_id: '',
+      color: '#007bff'
     }
   })
 
@@ -136,7 +145,8 @@ export default function NuevoPersonal() {
         email: data.email,
         telefono: data.telefono || null,
         sedes: data.sedes,
-        rol_id: data.rol_id
+        rol_id: data.rol_id,
+        color: data.color
       }
 
       // Crear personal
@@ -321,6 +331,26 @@ export default function NuevoPersonal() {
             />
             <ValidationIndicator isValid={telefonoValidation.isValid} label="Teléfono válido" />
             <CharacterCounter currentLength={formValues.telefono.length} maxLength={20} />
+
+          </div>
+
+          {/* Color */}
+          <div className="form-group">
+            <label htmlFor="color">Color Identificador</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                id="color"
+                {...register('color', {
+                  onChange: (e) => setFormValues(prev => ({ ...prev, color: e.target.value }))
+                })}
+                className="h-10 w-20 p-1 rounded border border-gray-300 cursor-pointer"
+                disabled={isLoading}
+              />
+              <span className="text-sm text-gray-500">
+                Este color se usará en el calendario de visitas
+              </span>
+            </div>
           </div>
         </div>
 
@@ -395,10 +425,10 @@ export default function NuevoPersonal() {
                 sede.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase()) ||
                 sede.localidad.toLowerCase().includes(sedesFilter.toLowerCase())
             ).length === 0 && (
-              <div className="no-sedes-message">
-                No se encontraron sedes que coincidan con tu búsqueda
-              </div>
-            )}
+                <div className="no-sedes-message">
+                  No se encontraron sedes que coincidan con tu búsqueda
+                </div>
+              )}
 
             {(errors.sedes || hasFieldError('sedes', serverFieldErrors)) && (
               <div className="invalid-feedback" style={{ display: 'block' }}>
@@ -426,18 +456,20 @@ export default function NuevoPersonal() {
             Cancelar
           </button>
         </div>
-      </form>
+      </form >
 
       <LoadingOverlay isVisible={isLoading} message="Creando personal..." />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          duration={3000}
-          onClose={() => setToast(null)}
-        />
-      )}
-    </div>
+      {
+        toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={3000}
+            onClose={() => setToast(null)}
+          />
+        )
+      }
+    </div >
   )
 }

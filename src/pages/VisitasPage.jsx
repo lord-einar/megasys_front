@@ -33,6 +33,19 @@ const VisitasPage = () => {
 
     useEffect(() => {
         cargarEventos();
+
+        // Auto-refresh when tab becomes visible
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                cargarEventos();
+                cargarEstadisticas();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [fechaActual, filtroTecnico]);
 
     const cargarTecnicos = async () => {
