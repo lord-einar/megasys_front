@@ -332,4 +332,50 @@ export const tipoArticuloAPI = {
   delete: (id) => apiCall(`/tipo-articulo/${id}`, { method: 'DELETE' }),
 }
 
+// Visitas Endpoints
+export const visitasAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/visitas${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/visitas/${id}`),
+  create: (data) => apiCall('/visitas', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data, actualizarSerie = false) => apiCall(`/visitas/${id}?actualizar_serie=${actualizarSerie}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  marcarRealizada: (id, data) => apiCall(`/visitas/${id}/realizada`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  cancelar: (id, data) => apiCall(`/visitas/${id}/cancelar`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  reprogramar: (id, data) => apiCall(`/visitas/${id}/reprogramar`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  delete: (id, eliminarSerie = false) => apiCall(`/visitas/${id}?eliminar_serie=${eliminarSerie}`, {
+    method: 'DELETE'
+  }),
+  enviarAviso: (id) => apiCall(`/visitas/${id}/aviso`, {
+    method: 'POST'
+  }),
+  getCalendario: (mes, anio, tecnicoId = '') => apiCall(`/visitas/calendario?mes=${mes}&anio=${anio}&tecnico_id=${tecnicoId}`),
+  getEstadisticas: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/visitas/estadisticas${query ? '?' + query : ''}`)
+  },
+  getChecklistItems: () => apiCall('/visitas/checklist-items'),
+  // Public endpoint
+  agregarSolicitud: (data) => apiCall('/visitas/solicitudes', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+}
+
 export default apiCall
