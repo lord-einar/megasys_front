@@ -132,62 +132,62 @@ const VisitasPage = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Calendario de Visitas</h1>
-                    <p className="text-slate-500 mt-1 text-sm">Gestión y programación de visitas técnicas a sedes</p>
+                    <h1 className="text-2xl font-bold text-navy-900 tracking-tight">Calendario de Visitas</h1>
+                    <p className="text-slate-500 mt-1 font-medium">Gestión y programación de visitas técnicas a sedes</p>
                 </div>
                 <div className="flex gap-3">
                     <button
                         onClick={() => cargarEventos()}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all text-sm font-medium shadow-sm"
+                        className="btn-secondary flex items-center gap-2"
                     >
-                        ↻ Actualizar
+                        <span className="text-lg">↻</span> Actualizar
                     </button>
                     <button
                         onClick={() => handleSelectSlot({ start: new Date() })}
-                        className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all text-sm font-medium flex items-center gap-2"
+                        className="btn-primary flex items-center gap-2 shadow-lg hover:shadow-xl"
                     >
-                        <span>+</span> Nueva Visita
+                        <span className="text-lg font-bold">+</span> Nueva Visita
                     </button>
                 </div>
             </div>
 
-            {/* Stats Cards (Mocked if no API yet, or using stats state) */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <StatCard
                     title="Total Visitas (Mes)"
                     value={stats?.total || eventos.length}
                     icon="📅"
-                    color="blue"
+                    color="navy"
                 />
                 <StatCard
                     title="Pendientes"
                     value={stats?.visitas_pendientes || eventos.filter(e => e.extendedProps?.estado === 'programada').length}
                     icon="⏳"
-                    color="yellow"
+                    color="warning"
                 />
                 <StatCard
                     title="Realizadas"
                     value={stats?.visitas_realizadas || eventos.filter(e => e.extendedProps?.estado === 'realizada').length}
                     icon="✅"
-                    color="green"
+                    color="success"
                 />
                 <StatCard
                     title="Urgencias"
                     value={eventos.filter(e => e.extendedProps?.tipo === 'urgencia').length}
                     icon="🚨"
-                    color="red"
+                    color="error"
                 />
             </div>
 
             {/* Main Content Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="card-base overflow-hidden">
                 {/* Toolbar */}
                 <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Filtros:</span>
-                        <div className="relative">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtrar por Técnico:</span>
+                        <div className="relative group">
                             <select
-                                className="appearance-none pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer hover:bg-slate-100 transition-colors"
+                                className="appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none cursor-pointer hover:bg-slate-100 transition-colors w-64"
                                 value={filtroTecnico}
                                 onChange={(e) => setFiltroTecnico(e.target.value)}
                             >
@@ -196,7 +196,7 @@ const VisitasPage = () => {
                                     <option key={t.id} value={t.id}>{t.nombre} {t.apellido}</option>
                                 ))}
                             </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 group-hover:text-primary-600">
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -204,16 +204,16 @@ const VisitasPage = () => {
                         </div>
                     </div>
 
-                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <div className="flex bg-slate-100 p-1.5 rounded-lg border border-slate-200">
                         <button
                             onClick={() => setVistaActual('month')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${vistaActual === 'month' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${vistaActual === 'month' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
                         >
                             Mes
                         </button>
                         <button
                             onClick={() => setVistaActual('agenda')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${vistaActual === 'agenda' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${vistaActual === 'agenda' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
                         >
                             Agenda
                         </button>
@@ -266,21 +266,25 @@ const VisitasPage = () => {
 
 // Helper Component for Stats
 const StatCard = ({ title, value, icon, color }) => {
-    const colorClasses = {
-        blue: 'bg-blue-50 text-blue-600 border-blue-100',
-        green: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        yellow: 'bg-amber-50 text-amber-600 border-amber-100',
-        red: 'bg-rose-50 text-rose-600 border-rose-100',
+    const colorStyles = {
+        navy: { bg: 'bg-primary-50', text: 'text-primary-700', border: 'border-primary-100' },
+        warning: { bg: 'bg-warning-50', text: 'text-warning-700', border: 'border-warning-100' },
+        success: { bg: 'bg-success-50', text: 'text-success-700', border: 'border-success-100' },
+        error: { bg: 'bg-error-50', text: 'text-error-700', border: 'border-error-100' },
     };
 
+    const style = colorStyles[color] || colorStyles.navy;
+
     return (
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-start justify-between hover:shadow-md transition-shadow">
-            <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">{title}</p>
-                <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-            </div>
-            <div className={`p-3 rounded-lg ${colorClasses[color] || 'bg-slate-50'}`}>
-                <span className="text-xl">{icon}</span>
+        <div className={`bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group border-l-4 ${color === 'navy' ? 'border-l-primary-500' : ''} ${color === 'warning' ? 'border-l-warning-500' : ''} ${color === 'success' ? 'border-l-success-500' : ''} ${color === 'error' ? 'border-l-error-500' : ''}`}>
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
+                    <h3 className="text-2xl font-bold text-navy-900">{value}</h3>
+                </div>
+                <div className={`p-2.5 rounded-lg ${style.bg} ${style.text} ${style.border} border shadow-sm group-hover:scale-110 transition-transform`}>
+                    <span className="text-lg">{icon}</span>
+                </div>
             </div>
         </div>
     );

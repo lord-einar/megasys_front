@@ -73,7 +73,7 @@ function App() {
       <Route
         path="/*"
         element={
-          <div className="flex h-screen bg-gray-100">
+          <div className="flex h-screen bg-slate-50">
             {/* Sidebar */}
             <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
 

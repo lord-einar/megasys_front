@@ -116,33 +116,34 @@ function Sidebar({ isOpen, onNavigate }) {
 
   return (
     <aside
-      className={`${
-        isOpen ? 'w-64' : 'w-0'
-      } bg-gray-900 text-white transition-all duration-300 overflow-hidden flex flex-col border-r border-gray-800`}
+      className={`${isOpen ? 'w-64' : 'w-0'
+        } bg-navy-900 text-white transition-all duration-300 overflow-hidden flex flex-col border-r border-navy-800 shadow-xl z-20`}
     >
       {/* Logo Section */}
-      <div className="flex items-center gap-3 h-16 px-6 border-b border-gray-800">
-        <img src={logo} alt="Grupo Megatlon" className="h-10 object-contain" />
+      <div className="flex items-center gap-3 h-16 px-6 border-b border-navy-800 bg-navy-950/50">
+        <img src={logo} alt="Grupo Megatlon" className="h-8 object-contain opacity-90 hover:opacity-100 transition-opacity" />
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto py-6">
         {menuItems.map((item, index) => (
-          <div key={index}>
+          <div key={index} className="mb-1">
             {item.submenu ? (
               <>
                 <button
                   onClick={() => toggleMenu(item.label)}
-                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-colors ${
-                    expandedMenu === item.label ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
-                  <span className="text-gray-400">{item.icon}</span>
-                  <span className="flex-1 font-medium">{item.label}</span>
-                  <svg
-                    className={`w-4 h-4 transition-transform text-gray-400 ${
-                      expandedMenu === item.label ? 'rotate-180' : ''
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-all duration-200 group ${expandedMenu === item.label
+                      ? 'bg-navy-800 text-white border-l-4 border-accent-500'
+                      : 'text-navy-300 hover:bg-navy-800/50 hover:text-white border-l-4 border-transparent'
                     }`}
+                >
+                  <span className={`transition-colors duration-200 ${expandedMenu === item.label ? 'text-accent-500' : 'text-navy-400 group-hover:text-white'}`}>
+                    {item.icon}
+                  </span>
+                  <span className="flex-1 font-medium tracking-wide text-sm">{item.label}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 text-navy-500 ${expandedMenu === item.label ? 'rotate-180 text-white' : ''
+                      }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -157,43 +158,46 @@ function Sidebar({ isOpen, onNavigate }) {
                 </button>
 
                 {/* Submenu */}
-                {expandedMenu === item.label && (
-                  <div className="bg-gray-800/50 py-2">
-                    {item.submenu.map((subitem, subindex) => (
-                      <Link
-                        key={subindex}
-                        to={subitem.href}
-                        className={`block px-12 py-2 text-sm transition-colors ${
-                          location.pathname === subitem.href
-                            ? 'text-primary-500 bg-gray-700/50'
-                            : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                <div
+                  className={`bg-navy-950 overflow-hidden transition-all duration-300 ease-in-out ${expandedMenu === item.label ? 'max-h-96 opacity-100 py-2' : 'max-h-0 opacity-0 py-0'
+                    }`}
+                >
+                  {item.submenu.map((subitem, subindex) => (
+                    <Link
+                      key={subindex}
+                      to={subitem.href}
+                      className={`block pl-16 pr-6 py-2.5 text-sm transition-all duration-200 border-l-2 ml-6 ${location.pathname === subitem.href
+                          ? 'text-white border-accent-500 bg-white/5'
+                          : 'text-navy-400 border-navy-800 hover:text-white hover:border-gray-500 hover:bg-white/5'
                         }`}
-                      >
-                        {subitem.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                    >
+                      {subitem.label}
+                    </Link>
+                  ))}
+                </div>
               </>
             ) : (
               <Link
                 to={item.href}
-                className={`flex items-center gap-3 px-6 py-3 transition-colors ${
-                  location.pathname === item.href
-                    ? 'bg-primary-500/10 text-primary-500 border-r-2 border-primary-500'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
+                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 group border-l-4 ${location.pathname === item.href
+                    ? 'bg-navy-800 text-white border-accent-500'
+                    : 'text-navy-300 hover:bg-navy-800/50 hover:text-white border-transparent'
+                  }`}
               >
-                <span className={location.pathname === item.href ? 'text-primary-500' : 'text-gray-400'}>
+                <span className={`transition-colors duration-200 ${location.pathname === item.href ? 'text-accent-500' : 'text-navy-400 group-hover:text-white'}`}>
                   {item.icon}
                 </span>
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium tracking-wide text-sm">{item.label}</span>
               </Link>
             )}
           </div>
         ))}
       </nav>
 
+      {/* User Info Footer (Optional, refined) */}
+      <div className="p-4 border-t border-navy-800 bg-navy-950/30">
+        <p className="text-xs text-navy-500 text-center font-medium">Megasys v2.0</p>
+      </div>
     </aside>
   )
 }

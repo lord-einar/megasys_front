@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
-/* Design System Profesional */
 @theme {
-  /* Colores corporativos */
+  /* Corporate Navy Palette */
   --color-primary-50: #f0f9ff;
   --color-primary-100: #e0f2fe;
   --color-primary-200: #bae6fd;
@@ -12,56 +11,103 @@
   --color-primary-600: #0284c7;
   --color-primary-700: #0369a1;
   --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
-  
-  /* Colores neutros empresariales */
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #94a3b8;
-  --color-gray-500: #64748b;
-  --color-gray-600: #475569;
-  --color-gray-700: #334155;
-  --color-gray-800: #1e293b;
-  --color-gray-900: #0f172a;
-  
-  /* Colores semánticos */
+  --color-primary-900: #0f172a;
+  --color-primary-950: #082f49;
+
+  /* Corporate Navy Brand */
+  --color-navy-50: #f5f7fa;
+  --color-navy-100: #eaedf2;
+  --color-navy-200: #d0d7de;
+  --color-navy-300: #aab6c5;
+  --color-navy-400: #7f92a9;
+  --color-navy-500: #5c728e;
+  --color-navy-600: #465870;
+  --color-navy-700: #384659;
+  --color-navy-800: #2f3a49;
+  --color-navy-900: #0f172a;
+  --color-navy-950: #020617;
+
+  /* Accent & Semantics */
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+
+  --color-success-50: #ecfdf5;
   --color-success-500: #10b981;
+  --color-success-700: #047857;
+
+  --color-warning-50: #fffbeb;
   --color-warning-500: #f59e0b;
+  --color-warning-700: #b45309;
+
+  --color-error-50: #fef2f2;
   --color-error-500: #ef4444;
+  --color-error-700: #b91c1c;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Tipografía empresarial */
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-feature-settings: 'cv11', 'ss01';
-  font-variation-settings: 'opsz' 32;
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight text-slate-900;
+  }
 }
 
-/* Mejoras de scroll suave */
+@layer components {
+
+  /* Modern Card Styles */
+  .card-base {
+    @apply bg-white rounded-xl border border-slate-100 shadow-sm transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply hover:shadow-md hover:border-slate-200;
+  }
+
+  /* Glassmorphism Utilities */
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+
+  /* Form Elements */
+  .input-primary {
+    @apply w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none placeholder:text-slate-400 hover:border-slate-300;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/20 active:transform active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 active:bg-slate-100;
+  }
+}
+
+/* Scrollbar Customization */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-gray-100);
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gray-300);
-  border-radius: 3px;
+  @apply bg-slate-200 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-400);
-}
-
-/* Efectos de elevación profesional */
-.shadow-card {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-}
-
-.shadow-card-hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  @apply bg-slate-300;
 }
