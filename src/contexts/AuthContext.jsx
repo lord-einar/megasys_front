@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
 
             if (!response.ok) {
               // Si el token no es válido, limpiar localStorage
-              console.warn('Token validation failed, clearing session');
               localStorage.removeItem('authToken');
               localStorage.removeItem('authUser');
               setUser(null);
@@ -47,16 +46,9 @@ export const AuthProvider = ({ children }) => {
             }
           } catch (fetchErr) {
             clearTimeout(timeoutId);
-            if (fetchErr.name === 'AbortError') {
-              console.warn('Token validation timeout, keeping cached session');
-              // Mantener la sesión en caso de timeout - mejor UX
-            } else {
-              console.warn('Token validation error, keeping cached session:', fetchErr.message);
-              // Mantener la sesión en caso de error de red - mejor UX
-            }
+            // Mantener la sesión en caso de timeout o error de red - mejor UX
           }
         } catch (err) {
-          console.error('Error initializing auth:', err);
           localStorage.removeItem('authToken');
           localStorage.removeItem('authUser');
           setUser(null);
@@ -102,7 +94,7 @@ export const AuthProvider = ({ children }) => {
         });
       }
     } catch (err) {
-      console.error('Error during logout:', err);
+      // Error silenciado en producción
     } finally {
       setUser(null);
       setToken(null);
@@ -129,7 +121,6 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
     } catch (err) {
-      console.error('Error refreshing token:', err);
       logout();
       return null;
     }

@@ -19,16 +19,12 @@ export default function Login() {
     const handleCallback = async () => {
       // Prevent double processing usando ref persistente
       if (hasProcessedRef.current) {
-        console.log('Callback already processed, skipping...');
         return;
       }
 
       const authData = searchParams.get('auth_data');
       const errorParam = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
-
-      console.log('🔍 Checking for auth_data:', authData ? 'YES' : 'NO');
-      console.log('🔍 Checking for error:', errorParam ? 'YES' : 'NO');
 
       if (errorParam) {
         hasProcessedRef.current = true;
@@ -46,36 +42,17 @@ export default function Login() {
         }
 
         try {
-          console.log('📦 Processing auth_data from URL...');
-
           // Decodificar los datos del Base64 (usando atob para el navegador)
           const decodedString = atob(authData);
           const decodedData = JSON.parse(decodedString);
 
-          console.log('✅ Decoded auth data:', decodedData);
-          console.log('👤 User:', decodedData.user);
-          console.log('🔑 Token:', decodedData.token?.substring(0, 20) + '...');
-
           if (decodedData.user && decodedData.token) {
-            console.log('✅ Auth data is valid');
-            console.log('📝 Calling login() with user:', {
-              id: decodedData.user.id,
-              email: decodedData.user.email,
-              firstName: decodedData.user.firstName,
-              lastName: decodedData.user.lastName,
-              role: decodedData.user.role,
-              tokenLength: decodedData.token.length
-            });
-
             // Guardar token en localStorage antes de navegar
             localStorage.setItem('authToken', decodedData.token);
             localStorage.setItem('authUser', JSON.stringify(decodedData.user));
 
             // Llamar login para actualizar el contexto
             login(decodedData.user, decodedData.token, decodedData.profilePhotoUrl);
-
-            console.log('✅ login() executed');
-            console.log('🚀 Navigating to /dashboard');
 
             // Limpiar parámetros de URL para evitar reprocessing
             setSearchParams('');
@@ -86,17 +63,12 @@ export default function Login() {
               navigate('/dashboard', { replace: true });
             }
           } else {
-            console.error('❌ Auth data validation failed');
-            console.error('   - User present:', !!decodedData.user);
-            console.error('   - Token present:', !!decodedData.token);
-
             if (isMounted) {
               setError('Respuesta de autenticación incompleta');
               setIsLoggingIn(false);
             }
           }
         } catch (err) {
-          console.error('❌ Error processing auth_data:', err);
           if (isMounted) {
             setError('Error al procesar la autenticación: ' + err.message);
             setIsLoggingIn(false);
@@ -136,7 +108,6 @@ export default function Login() {
       }
     } catch (err) {
       setError('Error de conexión con el servidor');
-      console.error('Login error:', err);
       setIsLoggingIn(false);
     }
   };

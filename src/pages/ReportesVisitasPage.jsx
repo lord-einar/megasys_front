@@ -55,23 +55,16 @@ export default function ReportesVisitasPage() {
             const allSedes = sedesRes.data.data.sedes || sedesRes.data.data;
             const allPersonal = personalRes.data.data.personal || personalRes.data.data;
 
-            console.log('🏢 Total sedes cargadas:', allSedes?.length);
-            console.log('👥 Total personal cargado:', allPersonal?.length);
-            console.log('👥 Primer personal:', allPersonal?.[0]);
-
             // Filtrar solo técnicos con rol "soporte técnico" o "sistemas"
             const tecnicosSoporte = allPersonal.filter(p => {
                 const rolNombre = p.rol?.nombre?.toLowerCase();
-                console.log('Rol encontrado:', rolNombre, 'para', p.nombre, p.apellido);
                 return rolNombre === 'soporte técnico' || rolNombre === 'soporte tecnico' || rolNombre === 'support' || rolNombre === 'sistemas';
             });
-
-            console.log('🔧 Técnicos de soporte filtrados:', tecnicosSoporte.length);
 
             setSedes(allSedes);
             setTecnicos(tecnicosSoporte);
         } catch (error) {
-            console.error('Error cargando opciones:', error);
+            // Error silenciado en producción
         }
     };
 
@@ -89,11 +82,9 @@ export default function ReportesVisitasPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            console.log('📊 Dashboard response:', response.data);
             setData(response.data.data);
         } catch (error) {
-            console.error('Error cargando dashboard:', error);
-            console.error('Error details:', error.response?.data);
+            // Error silenciado en producción
         } finally {
             setLoading(false);
         }
