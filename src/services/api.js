@@ -378,4 +378,48 @@ export const visitasAPI = {
   }),
 }
 
+// Checklist Items Endpoints
+export const checklistItemsAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/visitas/checklist-items${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/visitas/checklist-items/${id}`),
+  create: (data) => apiCall('/visitas/checklist-items', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/visitas/checklist-items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/visitas/checklist-items/${id}`, { method: 'DELETE' }),
+  reordenar: (items) => apiCall('/visitas/checklist-items/reordenar', {
+    method: 'PATCH',
+    body: JSON.stringify({ items })
+  }),
+}
+
+// Categorias Problemas Endpoints
+export const categoriasProblemasAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/visitas/categorias-problemas${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/visitas/categorias-problemas/${id}`),
+  create: (data) => apiCall('/visitas/categorias-problemas', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/visitas/categorias-problemas/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/visitas/categorias-problemas/${id}`, { method: 'DELETE' }),
+  reordenar: (categorias) => apiCall('/visitas/categorias-problemas/reordenar', {
+    method: 'PATCH',
+    body: JSON.stringify({ categorias })
+  }),
+}
+
 export default apiCall

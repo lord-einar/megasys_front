@@ -98,6 +98,7 @@ function Sidebar({ isOpen, onNavigate }) {
       submenu: [
         { label: 'Calendario', href: '/visitas' },
         { label: 'Reportes', href: '/reportes/visitas' },
+        { label: 'Configuracion', href: '/configuracion/visitas' },
       ],
     },
     {

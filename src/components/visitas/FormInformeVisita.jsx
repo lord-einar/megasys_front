@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { visitasAPI } from '../../services/api';
+import { visitasAPI, categoriasProblemasAPI } from '../../services/api';
 import LoadingOverlay from '../LoadingOverlay';
 import Swal from 'sweetalert2';
 
@@ -13,31 +13,48 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [categoriasProblemas, setCategoriasProblemas] = useState([]);
 
     // Inputs temporales
     const [extraInput, setExtraInput] = useState('');
     const [casoInput, setCasoInput] = useState('');
     const [problemaInput, setProblemaInput] = useState({
         descripcion: '',
-        categoria: 'otro',
+        categoria_id: '',
         causado_por_usuario: false
     });
 
     useEffect(() => {
-        cargarChecklistBase();
+        cargarDatosIniciales();
     }, []);
 
-    const cargarChecklistBase = async () => {
+    const cargarDatosIniciales = async () => {
         try {
-            const response = await visitasAPI.getChecklistItems();
-            if (response.data) {
-                setChecklistItems(response.data.map(item => ({
+            // Cargar checklist y categorías en paralelo
+            const [checklistRes, categoriasRes] = await Promise.all([
+                visitasAPI.getChecklistItems(),
+                categoriasProblemasAPI.list({ activo: true })
+            ]);
+
+            if (checklistRes.data) {
+                setChecklistItems(checklistRes.data.map(item => ({
                     ...item,
                     completado: false
                 })));
             }
+
+            if (categoriasRes.data) {
+                setCategoriasProblemas(categoriasRes.data);
+                // Establecer categoría por defecto (la primera ordenada o 'otro')
+                const categoriaOtro = categoriasRes.data.find(c => c.codigo === 'otro');
+                if (categoriaOtro) {
+                    setProblemaInput(prev => ({ ...prev, categoria_id: categoriaOtro.id }));
+                } else if (categoriasRes.data.length > 0) {
+                    setProblemaInput(prev => ({ ...prev, categoria_id: categoriasRes.data[0].id }));
+                }
+            }
         } catch (err) {
-            console.error('Error cargando checklist:', err);
+            console.error('Error cargando datos iniciales:', err);
         }
     };
 
@@ -62,9 +79,20 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
     };
 
     const handleAddProblema = () => {
-        if (problemaInput.descripcion.trim()) {
-            setProblemasResueltos([...problemasResueltos, { ...problemaInput }]);
-            setProblemaInput({ descripcion: '', categoria: 'otro', causado_por_usuario: false });
+        if (problemaInput.descripcion.trim() && problemaInput.categoria_id) {
+            // Encontrar la categoría para guardar también el nombre
+            const categoria = categoriasProblemas.find(c => c.id === problemaInput.categoria_id);
+            setProblemasResueltos([...problemasResueltos, {
+                ...problemaInput,
+                categoria_nombre: categoria?.nombre || 'Sin categoría'
+            }]);
+            // Resetear con la categoría "otro" por defecto
+            const categoriaOtro = categoriasProblemas.find(c => c.codigo === 'otro');
+            setProblemaInput({
+                descripcion: '',
+                categoria_id: categoriaOtro?.id || categoriasProblemas[0]?.id || '',
+                causado_por_usuario: false
+            });
         }
     };
 
@@ -139,7 +167,11 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                 checklist_items: checklistItems.map(i => ({ nombre: i.nombre, completado: i.completado })),
                 checklist_extra: checklistExtra,
                 casos_resueltos: casosResueltos,
-                problemas_resueltos: problemasResueltos,
+                problemas_resueltos: problemasResueltos.map(p => ({
+                    descripcion: p.descripcion,
+                    categoria_id: p.categoria_id,
+                    causado_por_usuario: p.causado_por_usuario
+                })),
                 solicitudes_resueltas: solicitudesResueltas,
                 observaciones
             };
@@ -240,15 +272,16 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                             />
                             <div className="flex gap-4">
                                 <select
-                                    value={problemaInput.categoria}
-                                    onChange={(e) => setProblemaInput({ ...problemaInput, categoria: e.target.value })}
+                                    value={problemaInput.categoria_id}
+                                    onChange={(e) => setProblemaInput({ ...problemaInput, categoria_id: e.target.value })}
                                     className="select flex-1"
                                 >
-                                    <option value="otro">Otro</option>
-                                    <option value="telefonia">Telefonía</option>
-                                    <option value="red">Red / Internet</option>
-                                    <option value="camaras_seguridad">Cámaras de Seguridad</option>
-                                    <option value="grabaciones">Grabaciones (NVR/DVR)</option>
+                                    <option value="">Seleccionar categoría...</option>
+                                    {categoriasProblemas.map(cat => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.nombre}
+                                        </option>
+                                    ))}
                                 </select>
                                 <label className="flex items-center space-x-2">
                                     <input
@@ -271,7 +304,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                     <div>
                                         <p className="font-medium text-slate-900">{prob.descripcion}</p>
                                         <div className="flex gap-2 text-xs mt-1">
-                                            <span className="badge badge-primary">{prob.categoria}</span>
+                                            <span className="badge badge-primary">{prob.categoria_nombre}</span>
                                             {prob.causado_por_usuario && <span className="badge badge-danger">Usuario</span>}
                                         </div>
                                     </div>

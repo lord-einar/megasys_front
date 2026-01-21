@@ -29,6 +29,7 @@ import VisitasPage from './pages/VisitasPage'
 import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
 import VisitaFeedbackPublico from './pages/VisitaFeedbackPublico'
 import ReportesVisitasPage from './pages/ReportesVisitasPage'
+import ConfiguracionVisitasPage from './pages/ConfiguracionVisitasPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -120,6 +121,7 @@ function App() {
                   {/* Visitas routes */}
                   <Route path="/visitas" element={<VisitasPage />} />
                   <Route path="/reportes/visitas" element={<ReportesVisitasPage />} />
+                  <Route path="/configuracion/visitas" element={<ConfiguracionVisitasPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

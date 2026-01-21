@@ -148,29 +148,125 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                     {/* Informe (si existe) */}
                     {visita.informe && (
                         <div className="mt-6 border-t border-slate-100 pt-6">
-                            <h4 className="text-lg font-bold text-slate-900 mb-4">Informe de Visita</h4>
+                            <h4 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Informe de Visita
+                            </h4>
 
-                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">
-                                <h5 className="text-sm font-bold text-emerald-800 mb-2">Problemas Resueltos</h5>
-                                <ul className="list-disc list-inside space-y-1">
-                                    {visita.informe.problemasResueltos?.map((p, i) => (
-                                        <li key={i} className="text-sm text-emerald-700">
-                                            <span className="font-semibold">{p.categoria}:</span> {p.descripcion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                            {/* Checklist de Control */}
+                            {visita.informe.checklist_items && visita.informe.checklist_items.length > 0 && (
+                                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        </svg>
+                                        Checklist de Control
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {visita.informe.checklist_items.map((item, i) => (
+                                            <div key={i} className={`flex items-center gap-2 text-sm p-2 rounded ${item.completado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                                                {item.completado ? (
+                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                    </svg>
+                                                )}
+                                                <span>{item.nombre}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-                            <div className="space-y-2">
-                                <h5 className="text-sm font-bold text-slate-700">Observaciones Finales</h5>
-                                <p className="text-sm text-slate-600 italic">
-                                    "{visita.informe.observaciones || 'Sin observaciones'}"
-                                </p>
-                            </div>
+                            {/* Items Adicionales del Checklist */}
+                            {visita.informe.checklist_extra && visita.informe.checklist_extra.length > 0 && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-blue-800 mb-2">Items Adicionales</h5>
+                                    <div className="flex flex-wrap gap-2">
+                                        {visita.informe.checklist_extra.map((item, i) => (
+                                            <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                {item.nombre}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Problemas Resueltos */}
+                            {visita.informe.problemasResueltos && visita.informe.problemasResueltos.length > 0 && (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Problemas Resueltos ({visita.informe.problemasResueltos.length})
+                                    </h5>
+                                    <div className="space-y-2">
+                                        {visita.informe.problemasResueltos.map((p, i) => (
+                                            <div key={i} className="bg-white border border-emerald-200 rounded-lg p-3">
+                                                <p className="text-sm text-slate-800 mb-2">{p.descripcion}</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <span
+                                                        className="px-2 py-0.5 rounded text-xs font-medium"
+                                                        style={{
+                                                            backgroundColor: p.categoriaProblema?.color ? `${p.categoriaProblema.color}20` : '#e5e7eb',
+                                                            color: p.categoriaProblema?.color || '#374151'
+                                                        }}
+                                                    >
+                                                        {p.categoriaProblema?.nombre || 'Sin categoría'}
+                                                    </span>
+                                                    {p.causado_por_usuario && (
+                                                        <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
+                                                            Causado por usuario
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Casos/Tickets Cerrados */}
+                            {visita.informe.casos_resueltos && visita.informe.casos_resueltos.length > 0 && (
+                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        Casos/Tickets Cerrados ({visita.informe.casos_resueltos.length})
+                                    </h5>
+                                    <div className="flex flex-wrap gap-2">
+                                        {visita.informe.casos_resueltos.map((caso, i) => (
+                                            <span key={i} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                                                {caso}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Observaciones Finales */}
+                            {visita.informe.observaciones && (
+                                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-slate-700 mb-2">Observaciones Finales</h5>
+                                    <p className="text-sm text-slate-600 italic leading-relaxed">
+                                        "{visita.informe.observaciones}"
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Comentarios del Responsable de Sede */}
                             {visita.informe.comentarios_responsable_sede && (
-                                <div className="mt-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-lg p-5 shadow-sm">
+                                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-lg p-5 shadow-sm">
                                     <div className="flex items-start gap-3">
                                         <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
                                             <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +275,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                                         </div>
                                         <div className="flex-1">
                                             <h5 className="text-sm font-bold text-amber-900 mb-1 flex items-center gap-2">
-                                                💭 Comentarios del Responsable de Sede
+                                                Comentarios del Responsable de Sede
                                                 {visita.informe.comentarios_responsable_fecha && (
                                                     <span className="text-xs font-normal text-amber-600">
                                                         ({new Date(visita.informe.comentarios_responsable_fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
