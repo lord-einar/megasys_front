@@ -47,13 +47,16 @@ const FormRol = ({ onClose, onSave, rolEditar = null, roles = [] }) => {
         setError(null);
 
         try {
-            // Preparar datos: convertir string vacío a null para parent_id
+            // Preparar datos según lo que el backend espera
             const dataToSend = {
-                ...formData,
+                nombre: formData.nombre,
+                descripcion: formData.descripcion || null,
                 parent_id: formData.parent_id || null
             };
 
+            // Solo incluir 'activo' al editar, no al crear
             if (rolEditar) {
+                dataToSend.activo = formData.activo;
                 await rolesAPI.update(rolEditar.id, dataToSend);
             } else {
                 await rolesAPI.create(dataToSend);
@@ -61,6 +64,7 @@ const FormRol = ({ onClose, onSave, rolEditar = null, roles = [] }) => {
             onSave();
             onClose();
         } catch (err) {
+            console.error('Error completo:', err);
             setError(err.message || 'Error guardando el rol');
         } finally {
             setLoading(false);
