@@ -186,6 +186,31 @@ export const personalAPI = {
   getEstadisticasAsignaciones: () => apiCall('/personal/sedes/estadisticas'),
 }
 
+// Roles Endpoints (Configuración)
+export const rolesAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/personal/configuracion/roles${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/personal/configuracion/roles/${id}`),
+  getPersonalPorRol: (id) => apiCall(`/personal/configuracion/roles/${id}/personal`),
+  create: (data) => apiCall('/personal/configuracion/roles', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/personal/configuracion/roles/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/personal/configuracion/roles/${id}`, {
+    method: 'DELETE'
+  }),
+  asignarRol: (personalId, rolId) => apiCall('/personal/configuracion/asignar-rol', {
+    method: 'POST',
+    body: JSON.stringify({ personalId, rolId })
+  }),
+}
+
 // Inventario Endpoints
 export const inventarioAPI = {
   list: (params = {}) => {
@@ -294,24 +319,6 @@ export const proveedoresAPI = {
     body: JSON.stringify(data)
   }),
   delete: (id) => apiCall(`/proveedores/${id}`, { method: 'DELETE' }),
-}
-
-// Roles Endpoints
-export const rolesAPI = {
-  list: (params = {}) => {
-    const query = new URLSearchParams(params).toString()
-    return apiCall(`/roles${query ? '?' + query : ''}`)
-  },
-  getById: (id) => apiCall(`/roles/${id}`),
-  create: (data) => apiCall('/roles', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  update: (id, data) => apiCall(`/roles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => apiCall(`/roles/${id}`, { method: 'DELETE' }),
 }
 
 // TipoArticulo Endpoints

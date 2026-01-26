@@ -69,19 +69,26 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                 });
             }
 
-            // Filtrar solo personal con rol 'Soporte Técnico' o 'Sistemas'
-            const tecnicosSoporte = (tecnicosRes.data || []).filter(p =>
-                p.rol?.nombre === 'Soporte Técnico' || p.rol?.nombre === 'Sistemas'
-            );
-            logger.debug('✅ Técnicos filtrados:', tecnicosSoporte);
+            // Filtrar personal con roles de la categoría "Sistemas" o rol específico "Soporte Técnico"
+            const personalSistemas = (tecnicosRes.data || []).filter(p => {
+                if (!p.rol) return false;
 
-            // Si no hay técnicos filtrados, mostrar todos temporalmente para debug
-            if (tecnicosSoporte.length === 0) {
-                logger.warn('⚠️ No se encontraron técnicos con rol "Soporte Técnico" o "Sistemas". Mostrando todos los usuarios temporalmente.');
-                setTecnicos(tecnicosRes.data || []);
-            } else {
-                setTecnicos(tecnicosSoporte);
-            }
+                // Si el rol es específicamente "Soporte Técnico"
+                if (p.rol.nombre === 'Soporte Técnico') return true;
+
+                // Si el rol pertenece a la categoría "Sistemas" (tiene parent_id de Sistemas)
+                // O si el rol ES "Sistemas" (categoría principal)
+                if (p.rol.nombre === 'Sistemas') return true;
+
+                // TODO: Aquí podríamos agregar lógica para verificar si el parent_id corresponde a Sistemas
+                // Por ahora, incluimos también "Mesa de Ayuda" e "Infraestructura" manualmente
+                if (p.rol.nombre === 'Mesa de Ayuda' || p.rol.nombre === 'Infraestructura') return true;
+
+                return false;
+            });
+            logger.debug('✅ Técnicos filtrados (Sistemas):', personalSistemas);
+
+            setTecnicos(personalSistemas);
         } catch (err) {
             logger.error('Error cargando datos:', err);
             setError('Error cargando listas de sedes o técnicos');
@@ -283,9 +290,14 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                             >
                                 <option value="">Seleccionar Técnico</option>
                                 {tecnicos.map(t => (
-                                    <option key={t.id} value={t.id}>{t.nombre} {t.apellido}</option>
+                                    <option key={t.id} value={t.id}>
+                                        {t.nombre} {t.apellido} {t.rol?.nombre ? `• ${t.rol.nombre}` : ''}
+                                    </option>
                                 ))}
                             </select>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Personal del área de Sistemas
+                            </p>
                         </div>
 
                         <div className="space-y-1">

@@ -30,6 +30,7 @@ import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
 import VisitaFeedbackPublico from './pages/VisitaFeedbackPublico'
 import ReportesVisitasPage from './pages/ReportesVisitasPage'
 import ConfiguracionVisitasPage from './pages/ConfiguracionVisitasPage'
+import ConfiguracionRolesPage from './pages/ConfiguracionRolesPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -106,6 +107,7 @@ function App() {
                   <Route path="/personal/:id/editar" element={<EditPersonal />} />
                   <Route path="/personal/:id" element={<PersonalDetailPage />} />
                   <Route path="/personal" element={<PersonalPage />} />
+                  <Route path="/configuracion/roles" element={<ConfiguracionRolesPage />} />
 
                   {/* Inventario routes - más específicas primero */}
                   <Route path="/inventario/crear" element={<CreateArticulo />} />

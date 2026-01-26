@@ -61,6 +61,7 @@ function Sidebar({ isOpen, onNavigate }) {
       submenu: [
         { label: 'Listar Personal', href: '/personal' },
         { label: 'Nuevo Personal', href: '/personal/crear' },
+        { label: 'Configuración de Roles', href: '/configuracion/roles' },
       ],
     },
     {

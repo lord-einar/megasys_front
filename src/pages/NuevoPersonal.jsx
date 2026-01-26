@@ -343,7 +343,23 @@ export default function NuevoPersonal() {
               className={`form-control ${errors.rol_id || hasFieldError('rol_id', serverFieldErrors) ? 'is-invalid' : ''}`}
             >
               <option value="">-- Seleccionar rol --</option>
-              {roles.map((rol) => (
+              {/* Roles principales (categorías) */}
+              {roles.filter(r => !r.parent_id && r.activo).map((categoria) => (
+                <optgroup key={categoria.id} label={`📁 ${categoria.nombre.toUpperCase()}`}>
+                  {/* La categoría misma como opción */}
+                  <option value={categoria.id}>
+                    {categoria.nombre} (Categoría)
+                  </option>
+                  {/* Especializaciones de esta categoría */}
+                  {roles.filter(r => r.parent_id === categoria.id && r.activo).map((especializa) => (
+                    <option key={especializa.id} value={especializa.id}>
+                      ↳ {especializa.nombre}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+              {/* Roles sin categoría (por si existen) */}
+              {roles.filter(r => !r.parent_id && r.activo).length === 0 && roles.filter(r => r.activo).map((rol) => (
                 <option key={rol.id} value={rol.id}>
                   {rol.nombre}
                 </option>
@@ -352,6 +368,9 @@ export default function NuevoPersonal() {
             {(errors.rol_id || hasFieldError('rol_id', serverFieldErrors)) && (
               <div className="invalid-feedback">{getFieldError('rol_id', serverFieldErrors) || errors.rol_id?.message}</div>
             )}
+            <small className="form-text text-muted">
+              📁 Categorías principales | ↳ Especializaciones
+            </small>
           </div>
 
           {/* Sedes */}
