@@ -3,8 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+import { API_BASE_URL } from '../config/api';
 
 // Colores para los gráficos
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
@@ -44,11 +43,11 @@ export default function ReportesVisitasPage() {
             const token = localStorage.getItem('authToken');
 
             // Cargar sedes y personal con límite alto para traer todos
-            const sedesRes = await axios.get(`${API_BASE}/sedes?limit=1000`, {
+            const sedesRes = await axios.get(`${API_BASE_URL}/sedes?limit=1000`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            const personalRes = await axios.get(`${API_BASE}/personal?limit=1000`, {
+            const personalRes = await axios.get(`${API_BASE_URL}/personal?limit=1000`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -78,7 +77,7 @@ export default function ReportesVisitasPage() {
                 if (filtros[key]) params.append(key, filtros[key]);
             });
 
-            const response = await axios.get(`${API_BASE}/visitas/reportes/dashboard?${params}`, {
+            const response = await axios.get(`${API_BASE_URL}/visitas/reportes/dashboard?${params}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -241,21 +240,19 @@ export default function ReportesVisitasPage() {
                 <div className="flex gap-2">
                     <button
                         onClick={() => setVistaActual('dashboard')}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                            vistaActual === 'dashboard'
+                        className={`px-6 py-3 rounded-lg font-medium transition-all ${vistaActual === 'dashboard'
                                 ? 'bg-blue-600 text-white shadow-md'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
+                            }`}
                     >
                         📊 Dashboard
                     </button>
                     <button
                         onClick={() => setVistaActual('lista')}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                            vistaActual === 'lista'
+                        className={`px-6 py-3 rounded-lg font-medium transition-all ${vistaActual === 'lista'
                                 ? 'bg-blue-600 text-white shadow-md'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
+                            }`}
                     >
                         📋 Lista de Visitas ({visitasFiltradas.length})
                     </button>
@@ -267,41 +264,41 @@ export default function ReportesVisitasPage() {
                 <>
                     {/* Métricas Generales */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard
-                    title="Total Visitas"
-                    value={data?.metricas?.totalVisitas || 0}
-                    icon="📅"
-                    color="blue"
-                />
-                <MetricCard
-                    title="Visitas Realizadas"
-                    value={data?.metricas?.visitasRealizadas || 0}
-                    icon="✅"
-                    color="green"
-                />
-                <MetricCard
-                    title="Problemas Resueltos"
-                    value={data?.metricas?.problemasResueltos || 0}
-                    icon="🔧"
-                    color="purple"
-                />
-                <MetricCard
-                    title="Casos Cerrados"
-                    value={data?.metricas?.totalCasos || 0}
-                    icon="🎫"
-                    color="orange"
-                />
-            </div>
+                        <MetricCard
+                            title="Total Visitas"
+                            value={data?.metricas?.totalVisitas || 0}
+                            icon="📅"
+                            color="blue"
+                        />
+                        <MetricCard
+                            title="Visitas Realizadas"
+                            value={data?.metricas?.visitasRealizadas || 0}
+                            icon="✅"
+                            color="green"
+                        />
+                        <MetricCard
+                            title="Problemas Resueltos"
+                            value={data?.metricas?.problemasResueltos || 0}
+                            icon="🔧"
+                            color="purple"
+                        />
+                        <MetricCard
+                            title="Casos Cerrados"
+                            value={data?.metricas?.totalCasos || 0}
+                            icon="🎫"
+                            color="orange"
+                        />
+                    </div>
 
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartCard title="Visitas por Sede" data={data?.graficos?.sedes} />
-                <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
-                <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
-                <ChartCard title="Problemas Causados por Usuario" data={data?.graficos?.problemasUsuario} />
-                <ChartCard title="Estados de Visitas" data={data?.graficos?.estados} />
-                <ChartCard title="Tipos de Visitas" data={data?.graficos?.tipos} />
-            </div>
+                    {/* Gráficos */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <ChartCard title="Visitas por Sede" data={data?.graficos?.sedes} />
+                        <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
+                        <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
+                        <ChartCard title="Problemas Causados por Usuario" data={data?.graficos?.problemasUsuario} />
+                        <ChartCard title="Estados de Visitas" data={data?.graficos?.estados} />
+                        <ChartCard title="Tipos de Visitas" data={data?.graficos?.tipos} />
+                    </div>
 
                     {/* Tabla de Casos Cerrados */}
                     <CasosTable casos={data?.casos} />
