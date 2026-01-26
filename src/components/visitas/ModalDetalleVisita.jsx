@@ -25,15 +25,28 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
     if (!visita) return null;
 
     const getEstadoBadge = (estado) => {
-        const styles = {
-            programada: 'bg-blue-100 text-blue-800 border-blue-200',
-            realizada: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-            cancelada: 'bg-slate-100 text-slate-800 border-slate-200',
-            urgencia: 'bg-rose-100 text-rose-800 border-rose-200'
+        const config = {
+            programada: {
+                style: 'bg-blue-100 text-blue-800 border-blue-200',
+                label: 'Programada'
+            },
+            recordatorio_enviado: {
+                style: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+                label: 'Recordatorio Enviado'
+            },
+            realizada: {
+                style: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                label: 'Realizada'
+            },
+            cancelada: {
+                style: 'bg-slate-100 text-slate-800 border-slate-200',
+                label: 'Cancelada'
+            }
         };
+        const item = config[estado] || { style: 'bg-gray-100 text-gray-800', label: estado };
         return (
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[estado] || 'bg-gray-100 text-gray-800'}`}>
-                {estado.charAt(0).toUpperCase() + estado.slice(1)}
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${item.style}`}>
+                {item.label}
             </span>
         );
     };
@@ -300,7 +313,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
 
                 {/* Footer Actions */}
                 <div className="px-6 py-4 bg-slate-50 rounded-b-xl border-t border-slate-100 flex justify-end gap-3">
-                    {visita.estado === 'programada' && (
+                    {(visita.estado === 'programada' || visita.estado === 'recordatorio_enviado') && (
                         <>
                             <button
                                 onClick={handleEnviarAviso}

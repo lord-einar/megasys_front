@@ -11,6 +11,7 @@ const ModalVisitasDelDia = ({ fecha, visitas, onClose, onSelectVisita }) => {
     const getEstadoBadge = (estado) => {
         const badges = {
             programada: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Programada' },
+            recordatorio_enviado: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Recordatorio Enviado' },
             realizada: { bg: 'bg-green-100', text: 'text-green-700', label: 'Realizada' },
             cancelada: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Cancelada' },
         };
