@@ -316,13 +316,18 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                     </div>
 
                     <div className="space-y-1">
-                        <label className="block text-sm font-semibold text-slate-700">Motivo de la Visita</label>
+                        <label className="block text-sm font-semibold text-slate-700">
+                            Motivo de la Visita
+                            {formData.tipo === 'programada' && (
+                                <span className="ml-2 text-xs font-normal text-slate-500">(Opcional - por defecto: "Visita periódica preventiva")</span>
+                            )}
+                        </label>
                         <textarea
                             name="motivo"
                             value={formData.motivo}
                             onChange={handleChange}
                             rows="2"
-                            placeholder="Describa brevemente el motivo..."
+                            placeholder={formData.tipo === 'programada' ? 'Visita periódica preventiva' : 'Describa brevemente el motivo...'}
                             className="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                         />
                     </div>
