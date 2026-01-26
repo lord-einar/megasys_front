@@ -6,6 +6,7 @@ import CalendarioMensual from '../components/visitas/CalendarioMensual';
 import FormVisita from '../components/visitas/FormVisita';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
 import FormInformeVisita from '../components/visitas/FormInformeVisita';
+import ModalVisitasDelDia from '../components/visitas/ModalVisitasDelDia';
 import LoadingOverlay from '../components/LoadingOverlay';
 
 const VisitasPage = () => {
@@ -21,10 +22,12 @@ const VisitasPage = () => {
     const [showFormVisita, setShowFormVisita] = useState(false);
     const [showDetalleVisita, setShowDetalleVisita] = useState(false);
     const [showInformeVisita, setShowInformeVisita] = useState(false);
+    const [showVisitasDelDia, setShowVisitasDelDia] = useState(false);
 
     const [selectedVisitaId, setSelectedVisitaId] = useState(null);
     const [selectedVisitaObj, setSelectedVisitaObj] = useState(null);
     const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
+    const [visitasDelDia, setVisitasDelDia] = useState([]);
 
     useEffect(() => {
         cargarTecnicos();
@@ -123,6 +126,12 @@ const VisitasPage = () => {
     const handleSaveVisita = () => {
         cargarEventos();
         cargarEstadisticas();
+    };
+
+    const handleShowMore = (eventos, fecha) => {
+        setVisitasDelDia(eventos);
+        setFechaSeleccionada(fecha);
+        setShowVisitasDelDia(true);
     };
 
     return (
@@ -226,6 +235,7 @@ const VisitasPage = () => {
                         eventos={eventos}
                         onSelectEvent={handleSelectEvent}
                         onSelectSlot={handleSelectSlot}
+                        onShowMore={handleShowMore}
                         date={fechaActual}
                         onNavigate={(newDate) => setFechaActual(newDate)}
                         view={vistaActual}
@@ -258,6 +268,15 @@ const VisitasPage = () => {
                     visita={selectedVisitaObj}
                     onClose={() => setShowInformeVisita(false)}
                     onSave={handleSaveVisita}
+                />
+            )}
+
+            {showVisitasDelDia && (
+                <ModalVisitasDelDia
+                    fecha={fechaSeleccionada}
+                    visitas={visitasDelDia}
+                    onClose={() => setShowVisitasDelDia(false)}
+                    onSelectVisita={handleSelectEvent}
                 />
             )}
         </div>

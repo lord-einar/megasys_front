@@ -35,7 +35,7 @@ const messages = {
     noEventsInRange: 'No hay visitas en este rango',
 };
 
-const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavigate, view, onView }) => {
+const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavigate, view, onView, onShowMore }) => {
 
     const eventPropGetter = (event) => {
         let className = 'rbc-event';
@@ -71,6 +71,7 @@ const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavig
                 onView={onView}
                 onSelectEvent={onSelectEvent}
                 onSelectSlot={onSelectSlot}
+                onShowMore={onShowMore}
                 selectable
                 eventPropGetter={eventPropGetter}
                 views={['month', 'agenda']}
