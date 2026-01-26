@@ -47,10 +47,16 @@ const FormRol = ({ onClose, onSave, rolEditar = null, roles = [] }) => {
         setError(null);
 
         try {
+            // Preparar datos: convertir string vacío a null para parent_id
+            const dataToSend = {
+                ...formData,
+                parent_id: formData.parent_id || null
+            };
+
             if (rolEditar) {
-                await rolesAPI.update(rolEditar.id, formData);
+                await rolesAPI.update(rolEditar.id, dataToSend);
             } else {
-                await rolesAPI.create(formData);
+                await rolesAPI.create(dataToSend);
             }
             onSave();
             onClose();
