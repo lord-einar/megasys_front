@@ -64,59 +64,66 @@ const ModalVisitasDelDia = ({ fecha, visitas, onClose, onSelectVisita }) => {
                     </div>
                 </div>
 
-                {/* Lista de Visitas */}
+                {/* Grid de Cards de Visitas */}
                 <div className="flex-1 overflow-y-auto p-6">
-                    <div className="space-y-3">
-                        {visitas.map((visita) => (
-                            <div
-                                key={visita.id}
-                                onClick={() => handleVisitaClick(visita)}
-                                className="group bg-white border border-slate-200 rounded-lg p-4 hover:shadow-lg hover:border-primary-300 transition-all cursor-pointer"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    {/* Contenido Principal */}
-                                    <div className="flex-1 min-w-0">
-                                        {/* Título y Badges */}
-                                        <div className="flex items-start gap-2 mb-2 flex-wrap">
-                                            <h3 className="font-bold text-navy-900 group-hover:text-primary-600 transition-colors">
-                                                {visita.title}
-                                            </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {visitas.map((visita) => {
+                            const sede = visita.extendedProps?.sedeNombre || 'Sede no especificada';
+                            const tecnico = visita.title?.split(' - ')[1] || 'Técnico';
+
+                            return (
+                                <div
+                                    key={visita.id}
+                                    onClick={() => handleVisitaClick(visita)}
+                                    className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-primary-300 hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                                >
+                                    {/* Header con color del técnico */}
+                                    <div
+                                        className="h-2"
+                                        style={{ backgroundColor: visita.backgroundColor || '#3b82f6' }}
+                                    />
+
+                                    <div className="p-4">
+                                        {/* Badges superiores */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            {getEstadoBadge(visita.extendedProps?.estado)}
                                             {getTipoBadge(visita.extendedProps?.tipo)}
                                         </div>
 
                                         {/* Sede */}
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-                                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            <span className="font-medium">{visita.extendedProps?.sedeNombre || 'Sede no especificada'}</span>
+                                        <div className="mb-3">
+                                            <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <span className="uppercase tracking-wide font-semibold">Sede</span>
+                                            </div>
+                                            <h3 className="font-bold text-navy-900 text-lg group-hover:text-primary-600 transition-colors line-clamp-2">
+                                                {sede}
+                                            </h3>
                                         </div>
 
                                         {/* Técnico */}
-                                        {visita.title && (
-                                            <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-                                                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                                <span>{visita.title.split(' - ')[1] || visita.title}</span>
+                                        <div className="flex items-center gap-2 text-sm text-slate-600 pt-3 border-t border-slate-100">
+                                            <div
+                                                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs"
+                                                style={{ backgroundColor: visita.backgroundColor || '#3b82f6' }}
+                                            >
+                                                {tecnico.charAt(0).toUpperCase()}
                                             </div>
-                                        )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs text-slate-500 font-medium">Técnico asignado</p>
+                                                <p className="font-semibold text-slate-700 truncate">{tecnico}</p>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* Estado */}
-                                    <div className="flex-shrink-0">
-                                        {getEstadoBadge(visita.extendedProps?.estado)}
-                                    </div>
+                                    {/* Indicador hover */}
+                                    <div className="h-0 group-hover:h-1 bg-primary-500 transition-all duration-200" />
                                 </div>
-
-                                {/* Indicador visual del color del técnico */}
-                                <div
-                                    className="h-1 w-full rounded-full mt-3"
-                                    style={{ backgroundColor: visita.backgroundColor || '#3b82f6' }}
-                                />
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
