@@ -135,7 +135,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                             Motivo
                         </h4>
                         <p className="text-slate-600 bg-white p-3 border border-slate-200 rounded-lg text-sm leading-relaxed">
-                            {visita.motivo || (visita.tipo === 'programada' ? 'Visita periódica preventiva' : 'Sin motivo especificado')}
+                            {visita.motivo || (visita.es_recurrente ? 'Visita periódica preventiva' : 'Sin motivo especificado')}
                         </p>
                     </div>
 
