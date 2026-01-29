@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { checklistItemsAPI } from '../../services/api'
 import ModalChecklistItem from './ModalChecklistItem'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../../hooks/usePermissions'
 
 export default function TablaChecklistItems() {
   const [items, setItems] = useState([])
@@ -10,6 +11,7 @@ export default function TablaChecklistItems() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [mostrarInactivos, setMostrarInactivos] = useState(false)
+  const { hasPermission } = usePermissions()
 
   useEffect(() => {
     cargarItems()
@@ -147,7 +149,13 @@ export default function TablaChecklistItems() {
           </label>
           <button
             onClick={handleNuevo}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            disabled={!hasPermission('visitas', 'config_checklist')}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              hasPermission('visitas', 'config_checklist')
+                ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!hasPermission('visitas', 'config_checklist') ? 'No tienes permiso para configurar checklist' : ''}
           >
             + Nuevo Item
           </button>
@@ -224,21 +232,39 @@ export default function TablaChecklistItems() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                     <button
                       onClick={() => handleEditar(item)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      disabled={!hasPermission('visitas', 'config_checklist')}
+                      className={`font-medium ${
+                        hasPermission('visitas', 'config_checklist')
+                          ? 'text-blue-600 hover:text-blue-800 cursor-pointer'
+                          : 'text-slate-400 cursor-not-allowed'
+                      }`}
+                      title={!hasPermission('visitas', 'config_checklist') ? 'No tienes permiso' : ''}
                     >
                       Editar
                     </button>
                     {item.activo ? (
                       <button
                         onClick={() => handleEliminar(item)}
-                        className="text-yellow-600 hover:text-yellow-800 font-medium"
+                        disabled={!hasPermission('visitas', 'config_checklist')}
+                        className={`font-medium ${
+                          hasPermission('visitas', 'config_checklist')
+                            ? 'text-yellow-600 hover:text-yellow-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!hasPermission('visitas', 'config_checklist') ? 'No tienes permiso' : ''}
                       >
                         Desactivar
                       </button>
                     ) : (
                       <button
                         onClick={() => handleReactivar(item)}
-                        className="text-green-600 hover:text-green-800 font-medium"
+                        disabled={!hasPermission('visitas', 'config_checklist')}
+                        className={`font-medium ${
+                          hasPermission('visitas', 'config_checklist')
+                            ? 'text-green-600 hover:text-green-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!hasPermission('visitas', 'config_checklist') ? 'No tienes permiso' : ''}
                       >
                         Reactivar
                       </button>

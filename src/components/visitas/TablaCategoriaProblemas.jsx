@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { categoriasProblemasAPI } from '../../services/api'
 import ModalCategoriaProblema from './ModalCategoriaProblema'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../../hooks/usePermissions'
 
 export default function TablaCategoriaProblemas() {
   const [categorias, setCategorias] = useState([])
@@ -10,6 +11,7 @@ export default function TablaCategoriaProblemas() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCategoria, setEditingCategoria] = useState(null)
   const [mostrarInactivos, setMostrarInactivos] = useState(false)
+  const { hasPermission } = usePermissions()
 
   useEffect(() => {
     cargarCategorias()
@@ -147,7 +149,13 @@ export default function TablaCategoriaProblemas() {
           </label>
           <button
             onClick={handleNuevo}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            disabled={!hasPermission('visitas', 'config_categorias')}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              hasPermission('visitas', 'config_categorias')
+                ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!hasPermission('visitas', 'config_categorias') ? 'No tienes permiso para configurar categorías' : ''}
           >
             + Nueva Categoria
           </button>
@@ -240,21 +248,39 @@ export default function TablaCategoriaProblemas() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                     <button
                       onClick={() => handleEditar(categoria)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      disabled={!hasPermission('visitas', 'config_categorias')}
+                      className={`font-medium ${
+                        hasPermission('visitas', 'config_categorias')
+                          ? 'text-blue-600 hover:text-blue-800 cursor-pointer'
+                          : 'text-slate-400 cursor-not-allowed'
+                      }`}
+                      title={!hasPermission('visitas', 'config_categorias') ? 'No tienes permiso' : ''}
                     >
                       Editar
                     </button>
                     {categoria.activo ? (
                       <button
                         onClick={() => handleEliminar(categoria)}
-                        className="text-yellow-600 hover:text-yellow-800 font-medium"
+                        disabled={!hasPermission('visitas', 'config_categorias')}
+                        className={`font-medium ${
+                          hasPermission('visitas', 'config_categorias')
+                            ? 'text-yellow-600 hover:text-yellow-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!hasPermission('visitas', 'config_categorias') ? 'No tienes permiso' : ''}
                       >
                         Desactivar
                       </button>
                     ) : (
                       <button
                         onClick={() => handleReactivar(categoria)}
-                        className="text-green-600 hover:text-green-800 font-medium"
+                        disabled={!hasPermission('visitas', 'config_categorias')}
+                        className={`font-medium ${
+                          hasPermission('visitas', 'config_categorias')
+                            ? 'text-green-600 hover:text-green-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!hasPermission('visitas', 'config_categorias') ? 'No tienes permiso' : ''}
                       >
                         Reactivar
                       </button>
