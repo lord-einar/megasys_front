@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import api from '../services/api'
 import { remitosAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../hooks/usePermissions'
 
 function RemitoDetailPage() {
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ function RemitoDetailPage() {
   const [receptorNombre, setReceptorNombre] = useState('')
   const [receptorEmail, setReceptorEmail] = useState('')
   const [asignandoReceptor, setAsignandoReceptor] = useState(false)
+  const { canUpdate } = usePermissions()
 
   useEffect(() => {
     cargarDetalle()
@@ -443,16 +445,27 @@ function RemitoDetailPage() {
                         <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => handleEditarFecha(detalle)}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            title="Editar fecha"
+                            disabled={!canUpdate('remitos')}
+                            className={`text-sm font-medium ${
+                              canUpdate('remitos')
+                                ? 'text-blue-600 hover:text-blue-800 cursor-pointer'
+                                : 'text-slate-400 cursor-not-allowed'
+                            }`}
+                            title={!canUpdate('remitos') ? 'No tienes permiso' : 'Editar fecha'}
                           >
                             📅
                           </button>
                           <button
                             onClick={() => handleMarcarDevuelto(detalle.id)}
-                            disabled={markingReturned}
-                            className="text-green-600 hover:text-green-800 text-sm font-medium disabled:opacity-50"
-                            title="Marcar como devuelto"
+                            disabled={markingReturned || !canUpdate('remitos')}
+                            className={`text-sm font-medium ${
+                              !canUpdate('remitos')
+                                ? 'text-slate-400 cursor-not-allowed'
+                                : markingReturned
+                                ? 'text-green-400 cursor-wait opacity-50'
+                                : 'text-green-600 hover:text-green-800 cursor-pointer'
+                            }`}
+                            title={!canUpdate('remitos') ? 'No tienes permiso' : 'Marcar como devuelto'}
                           >
                             ✓
                           </button>
@@ -490,8 +503,15 @@ function RemitoDetailPage() {
             </select>
             <button
               onClick={handleCambiarEstado}
-              disabled={!newState || changingState}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded transition-colors"
+              disabled={!newState || changingState || !canUpdate('remitos')}
+              className={`font-medium py-2 px-6 rounded transition-colors ${
+                !canUpdate('remitos')
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : !newState || changingState
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+              }`}
+              title={!canUpdate('remitos') ? 'No tienes permiso para cambiar estados' : ''}
             >
               {changingState ? 'Actualizando...' : 'Actualizar'}
             </button>
@@ -508,8 +528,15 @@ function RemitoDetailPage() {
           </p>
           <button
             onClick={handleReenviarEmails}
-            disabled={reenviandoEmails}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded transition-colors"
+            disabled={reenviandoEmails || !canUpdate('remitos')}
+            className={`font-medium py-2 px-6 rounded transition-colors ${
+              !canUpdate('remitos')
+                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                : reenviandoEmails
+                ? 'bg-gray-400 text-white cursor-wait'
+                : 'bg-orange-600 hover:bg-orange-700 text-white cursor-pointer'
+            }`}
+            title={!canUpdate('remitos') ? 'No tienes permiso' : ''}
           >
             {reenviandoEmails ? 'Reenviando...' : '📧 Reenviar Email'}
           </button>
@@ -543,7 +570,13 @@ function RemitoDetailPage() {
           </p>
           <button
             onClick={() => setShowReceptorModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded transition-colors"
+            disabled={!canUpdate('remitos')}
+            className={`font-medium py-2 px-6 rounded transition-colors ${
+              canUpdate('remitos')
+                ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!canUpdate('remitos') ? 'No tienes permiso' : ''}
           >
             👤 Asignar Receptor
           </button>

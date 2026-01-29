@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function InventarioDetailPage() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function InventarioDetailPage() {
   const [changingState, setChangingState] = useState(false)
   const [newState, setNewState] = useState('')
   const [observaciones, setObservaciones] = useState('')
+  const { canUpdate, canDelete } = usePermissions()
 
   useEffect(() => {
     cargarDetalle()
@@ -176,13 +178,25 @@ export default function InventarioDetailPage() {
         <div className="flex gap-2">
           <button
             onClick={handleEditar}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+            disabled={!canUpdate('inventario')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              canUpdate('inventario')
+                ? 'bg-yellow-600 text-white hover:bg-yellow-700 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!canUpdate('inventario') ? 'No tienes permiso para editar' : ''}
           >
             Editar
           </button>
           <button
             onClick={handleEliminar}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            disabled={!canDelete('inventario')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              canDelete('inventario')
+                ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!canDelete('inventario') ? 'No tienes permiso para dar de baja' : ''}
           >
             Dar de Baja
           </button>
