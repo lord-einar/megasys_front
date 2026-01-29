@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { personalAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function PersonalPage() {
   const navigate = useNavigate()
@@ -14,6 +15,7 @@ export default function PersonalPage() {
   const [limit] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
+  const { canCreate, canUpdate, canDelete } = usePermissions()
 
   useEffect(() => {
     cargarPersonal()
@@ -147,7 +149,13 @@ export default function PersonalPage() {
         </div>
         <button
           onClick={() => navigate('/personal/crear')}
-          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+          disabled={!canCreate('personal')}
+          className={`px-6 py-2 rounded-lg transition-colors font-medium ${
+            canCreate('personal')
+              ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+              : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+          }`}
+          title={!canCreate('personal') ? 'No tienes permiso para crear personal' : ''}
         >
           + Nuevo Personal
         </button>
@@ -276,13 +284,25 @@ export default function PersonalPage() {
                       </button>
                       <button
                         onClick={() => navigate(`/personal/${persona.id}/editar`)}
-                        className="text-yellow-600 hover:text-yellow-800 transition-colors font-medium"
+                        disabled={!canUpdate('personal')}
+                        className={`transition-colors font-medium ${
+                          canUpdate('personal')
+                            ? 'text-yellow-600 hover:text-yellow-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!canUpdate('personal') ? 'No tienes permiso' : ''}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => eliminarPersona(persona)}
-                        className="text-red-600 hover:text-red-800 transition-colors font-medium"
+                        disabled={!canDelete('personal')}
+                        className={`transition-colors font-medium ${
+                          canDelete('personal')
+                            ? 'text-red-600 hover:text-red-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!canDelete('personal') ? 'No tienes permiso' : ''}
                       >
                         Eliminar
                       </button>

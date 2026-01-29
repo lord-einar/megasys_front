@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function InventarioPage() {
   const navigate = useNavigate()
@@ -16,6 +17,7 @@ export default function InventarioPage() {
   const [limit] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
+  const { canCreate, canUpdate, canDelete } = usePermissions()
 
   useEffect(() => {
     // Update estado when URL query params change
@@ -169,7 +171,13 @@ export default function InventarioPage() {
         </div>
         <button
           onClick={() => navigate('/inventario/crear')}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          disabled={!canCreate('inventario')}
+          className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+            canCreate('inventario')
+              ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+              : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+          }`}
+          title={!canCreate('inventario') ? 'No tienes permiso para crear artículos' : ''}
         >
           + Nuevo Artículo
         </button>
@@ -313,13 +321,25 @@ export default function InventarioPage() {
                       </button>
                       <button
                         onClick={() => navigate(`/inventario/${item.id}/editar`)}
-                        className="text-yellow-600 hover:text-yellow-800 transition-colors font-medium"
+                        disabled={!canUpdate('inventario')}
+                        className={`transition-colors font-medium ${
+                          canUpdate('inventario')
+                            ? 'text-yellow-600 hover:text-yellow-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!canUpdate('inventario') ? 'No tienes permiso' : ''}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => eliminarItem(item)}
-                        className="text-red-600 hover:text-red-800 transition-colors font-medium"
+                        disabled={!canDelete('inventario')}
+                        className={`transition-colors font-medium ${
+                          canDelete('inventario')
+                            ? 'text-red-600 hover:text-red-800 cursor-pointer'
+                            : 'text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={!canDelete('inventario') ? 'No tienes permiso' : ''}
                       >
                         Eliminar
                       </button>

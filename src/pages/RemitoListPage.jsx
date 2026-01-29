@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { remitosAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 
 function RemitoListPage() {
   const [remitos, setRemitos] = useState([])
@@ -19,6 +20,7 @@ function RemitoListPage() {
     currentPage: 1
   })
   const navigate = useNavigate()
+  const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchRemitos()
@@ -94,7 +96,13 @@ function RemitoListPage() {
         <h1 className="text-3xl font-bold text-gray-900">Remitos</h1>
         <button
           onClick={() => navigate('/remitos/crear')}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          disabled={!canCreate('remitos')}
+          className={`font-medium py-2 px-4 rounded-lg transition-colors ${
+            canCreate('remitos')
+              ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+              : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+          }`}
+          title={!canCreate('remitos') ? 'No tienes permiso para crear remitos' : ''}
         >
           + Nuevo Remito
         </button>
