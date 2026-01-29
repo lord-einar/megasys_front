@@ -1,9 +1,11 @@
 import React from 'react';
 import { visitasAPI } from '../../services/api';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
     const [visita, setVisita] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
+    const { hasPermission } = usePermissions();
 
     React.useEffect(() => {
         if (visitaId) {
@@ -317,7 +319,13 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                         <>
                             <button
                                 onClick={handleEnviarAviso}
-                                className="px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors shadow-sm flex items-center gap-2"
+                                disabled={!hasPermission('visitas', 'enviar_aviso')}
+                                className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2 ${
+                                    hasPermission('visitas', 'enviar_aviso')
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer'
+                                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                }`}
+                                title={!hasPermission('visitas', 'enviar_aviso') ? 'No tienes permiso para enviar avisos' : ''}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -326,13 +334,25 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar }) => {
                             </button>
                             <button
                                 onClick={() => onEdit(visita)}
-                                className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
+                                disabled={!hasPermission('visitas', 'update')}
+                                className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors shadow-sm ${
+                                    hasPermission('visitas', 'update')
+                                        ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer'
+                                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                }`}
+                                title={!hasPermission('visitas', 'update') ? 'No tienes permiso para editar visitas' : ''}
                             >
                                 Editar
                             </button>
                             <button
                                 onClick={() => onCompletar(visita)}
-                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                                disabled={!hasPermission('visitas', 'completar_informe')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2 ${
+                                    hasPermission('visitas', 'completar_informe')
+                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer'
+                                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                }`}
+                                title={!hasPermission('visitas', 'completar_informe') ? 'No tienes permiso para completar informes' : ''}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

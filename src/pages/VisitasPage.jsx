@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { visitasAPI, personalAPI } from '../services/api';
 import { getLocalDateString, parseLocalDate } from '../utils/dateUtils';
+import { usePermissions } from '../hooks/usePermissions';
 import CalendarioMensual from '../components/visitas/CalendarioMensual';
 import FormVisita from '../components/visitas/FormVisita';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
@@ -17,6 +18,7 @@ const VisitasPage = () => {
     const [fechaActual, setFechaActual] = useState(new Date());
     const [vistaActual, setVistaActual] = useState('month');
     const [stats, setStats] = useState(null);
+    const { canCreate } = usePermissions();
 
     // Modals state
     const [showFormVisita, setShowFormVisita] = useState(false);
@@ -153,7 +155,13 @@ const VisitasPage = () => {
                     </button>
                     <button
                         onClick={() => handleSelectSlot({ start: new Date() })}
-                        className="btn-primary flex items-center gap-2 shadow-lg hover:shadow-xl"
+                        disabled={!canCreate('visitas')}
+                        className={`flex items-center gap-2 shadow-lg ${
+                            canCreate('visitas')
+                                ? 'btn-primary hover:shadow-xl cursor-pointer'
+                                : 'bg-slate-300 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed'
+                        }`}
+                        title={!canCreate('visitas') ? 'No tienes permiso para crear visitas' : ''}
                     >
                         <span className="text-lg font-bold">+</span> Nueva Visita
                     </button>
