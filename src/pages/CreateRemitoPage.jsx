@@ -295,7 +295,7 @@ function CreateRemitoPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Técnico (Soporte Técnico) *
+                Técnico *
               </label>
               <select
                 name="tecnico_id"
@@ -305,9 +305,15 @@ function CreateRemitoPage() {
                 required
               >
                 <option value="">Selecciona un técnico</option>
-                {personal.filter(p => p.rol?.nombre === 'Soporte Técnico' || p.rol?.nombre === 'Sistemas').map(p => (
+                {personal.filter(p => {
+                  const rolNombre = p.rol?.nombre?.toLowerCase() || '';
+                  return rolNombre.includes('soporte') ||
+                         rolNombre.includes('tecnico') ||
+                         rolNombre.includes('técnico') ||
+                         rolNombre.includes('sistemas');
+                }).map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido}
+                    {p.nombre} {p.apellido} ({p.rol?.nombre})
                   </option>
                 ))}
               </select>
