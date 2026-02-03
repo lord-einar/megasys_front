@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { personalAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 
 export default function PersonalPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [personal, setPersonal] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -21,6 +22,20 @@ export default function PersonalPage() {
     cargarPersonal()
     cargarEstadisticas()
   }, [page])
+
+  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  useEffect(() => {
+    if (location.state?.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: location.state.error,
+        confirmButtonColor: '#3b82f6'
+      })
+      // Limpiar el state para que no se muestre de nuevo
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
 
   const cargarPersonal = async () => {
     try {

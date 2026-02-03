@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { empresasAPI, sedesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
+import { usePermissions } from '../hooks/usePermissions'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -67,6 +68,7 @@ const sedeSchema = yup.object().shape({
 
 export default function NuevaSede() {
   const navigate = useNavigate()
+  const { canCreate } = usePermissions()
   const [empresas, setEmpresas] = useState([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [error, setError] = useState(null)
@@ -111,6 +113,17 @@ export default function NuevaSede() {
       ip_sede: ''
     }
   })
+
+  // Validar permisos al cargar el componente
+  useEffect(() => {
+    if (!canCreate('sedes')) {
+      navigate('/sedes', {
+        state: {
+          error: 'No tienes permiso para crear sedes'
+        }
+      })
+    }
+  }, [canCreate, navigate])
 
   // Cargar empresas activas
   useEffect(() => {
@@ -174,6 +187,10 @@ export default function NuevaSede() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!canCreate('sedes')) {
+    return <div>Cargando...</div>
   }
 
   if (loadingEmpresas) {

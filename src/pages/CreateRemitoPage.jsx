@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { personalAPI, sedesAPI, tipoArticuloAPI, inventarioAPI, remitosAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 
 function CreateRemitoPage() {
   const navigate = useNavigate()
+  const { canCreate } = usePermissions()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -33,6 +35,16 @@ function CreateRemitoPage() {
     observaciones: '',
     articulos: []
   })
+
+  useEffect(() => {
+    if (!canCreate('remitos')) {
+      navigate('/remitos', {
+        state: {
+          error: 'No tienes permiso para crear remitos'
+        }
+      })
+    }
+  }, [canCreate, navigate])
 
   useEffect(() => {
     loadInitialData()
@@ -202,6 +214,10 @@ function CreateRemitoPage() {
 
   const modalPages = Math.ceil(modalArticulosTotal / 50)
 
+  if (!canCreate('remitos')) {
+    return <div>Cargando...</div>
+  }
+
   if (loading && personal.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -279,7 +295,7 @@ function CreateRemitoPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Técnico (Sistemas) *
+                Técnico (Soporte Técnico) *
               </label>
               <select
                 name="tecnico_id"
@@ -289,7 +305,7 @@ function CreateRemitoPage() {
                 required
               >
                 <option value="">Selecciona un técnico</option>
-                {personal.filter(p => p.rol?.nombre === 'Sistemas').map(p => (
+                {personal.filter(p => p.rol?.nombre === 'Soporte Técnico').map(p => (
                   <option key={p.id} value={p.id}>
                     {p.nombre} {p.apellido}
                   </option>

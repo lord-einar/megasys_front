@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 import Swal from 'sweetalert2'
 
 export default function CreateArticulo() {
   const navigate = useNavigate()
+  const { canCreate } = usePermissions()
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])
@@ -20,6 +22,16 @@ export default function CreateArticulo() {
     observaciones: ''
   })
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (!canCreate('inventario')) {
+      navigate('/inventario', {
+        state: {
+          error: 'No tienes permiso para crear artículos de inventario'
+        }
+      })
+    }
+  }, [canCreate, navigate])
 
   useEffect(() => {
     cargarDatosIniciales()
@@ -152,6 +164,10 @@ export default function CreateArticulo() {
     focus:ring-2 focus:ring-blue-500 focus:border-transparent
     ${errors[fieldName] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
   `
+
+  if (!canCreate('inventario')) {
+    return <div>Cargando...</div>
+  }
 
   if (loading && tiposArticulo.length === 0) {
     return (

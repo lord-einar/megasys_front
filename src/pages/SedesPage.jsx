@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { sedesAPI, empresasAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 import Swal from 'sweetalert2'
 
 export default function SedesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { canUpdate, canDelete } = usePermissions()
   const [sedes, setSedes] = useState([])
   const [empresas, setEmpresas] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
@@ -21,6 +24,20 @@ export default function SedesPage() {
     cargarSedes()
     cargarEstadisticas()
   }, [page, empresaSeleccionada])
+
+  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  useEffect(() => {
+    if (location.state?.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: location.state.error,
+        confirmButtonColor: '#3b82f6'
+      })
+      // Limpiar el state para que no se muestre de nuevo
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
 
   const cargarEmpresas = async () => {
     try {
@@ -303,13 +320,25 @@ export default function SedesPage() {
                   </button>
                   <button
                     onClick={() => navigate(`/sedes/${sede.id}/editar`)}
-                    className="flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm font-medium"
+                    disabled={!canUpdate('sedes')}
+                    className={`flex-1 px-3 py-2 rounded transition-colors text-sm font-medium ${
+                      canUpdate('sedes')
+                        ? 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer'
+                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    }`}
+                    title={!canUpdate('sedes') ? 'No tienes permiso para editar sedes' : ''}
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => eliminarSede(sede)}
-                    className="flex-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+                    disabled={!canDelete('sedes')}
+                    className={`flex-1 px-3 py-2 rounded transition-colors text-sm font-medium ${
+                      canDelete('sedes')
+                        ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
+                        : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    }`}
+                    title={!canDelete('sedes') ? 'No tienes permiso para eliminar sedes' : ''}
                   >
                     Eliminar
                   </button>

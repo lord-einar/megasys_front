@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { rolesAPI, personalAPI } from '../services/api';
+import { usePermissions } from '../hooks/usePermissions';
 import FormRol from '../components/FormRol';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Swal from 'sweetalert2';
 
 const ConfiguracionRolesPage = () => {
+    const navigate = useNavigate();
+    const { isSuperAdmin, isHelpdesk, hasRole } = usePermissions();
+    const canAccessRoles = isSuperAdmin || isHelpdesk;
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -12,6 +17,16 @@ const ConfiguracionRolesPage = () => {
     const [rolEditar, setRolEditar] = useState(null);
     const [busqueda, setBusqueda] = useState('');
     const [filtroActivo, setFiltroActivo] = useState('todos');
+
+    useEffect(() => {
+        if (!canAccessRoles) {
+            navigate('/', {
+                state: {
+                    error: 'No tienes permiso para acceder a la configuración de roles.'
+                }
+            });
+        }
+    }, [canAccessRoles, navigate]);
 
     useEffect(() => {
         cargarRoles();
@@ -128,6 +143,10 @@ const ConfiguracionRolesPage = () => {
             subRolesMap[rol.parent_id].push(rol);
         }
     });
+
+    if (!canAccessRoles) {
+        return <div>Cargando...</div>;
+    }
 
     return (
         <div className="p-6 max-w-7xl mx-auto">

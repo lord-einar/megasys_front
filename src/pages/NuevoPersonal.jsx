@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { personalAPI, sedesAPI, rolesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
+import { usePermissions } from '../hooks/usePermissions'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -59,6 +60,7 @@ const personalSchema = yup.object().shape({
 
 export default function NuevoPersonal() {
   const navigate = useNavigate()
+  const { canCreate } = usePermissions()
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
@@ -96,6 +98,17 @@ export default function NuevoPersonal() {
       rol_id: ''
     }
   })
+
+  // Validar permisos al cargar el componente
+  useEffect(() => {
+    if (!canCreate('personal')) {
+      navigate('/personal', {
+        state: {
+          error: 'No tienes permiso para crear personal'
+        }
+      })
+    }
+  }, [canCreate, navigate])
 
   // Cargar sedes y roles
   useEffect(() => {
@@ -171,6 +184,10 @@ export default function NuevoPersonal() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!canCreate('personal')) {
+    return <div>Cargando...</div>
   }
 
   if (loading) {

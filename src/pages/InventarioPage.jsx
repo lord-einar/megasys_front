@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 
 export default function InventarioPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const [inventario, setInventario] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
@@ -32,6 +33,20 @@ export default function InventarioPage() {
     cargarInventario()
     cargarEstadisticas()
   }, [page, estado])
+
+  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  useEffect(() => {
+    if (location.state?.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: location.state.error,
+        confirmButtonColor: '#3b82f6'
+      })
+      // Limpiar el state para que no se muestre de nuevo
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
 
   const cargarInventario = async () => {
     try {

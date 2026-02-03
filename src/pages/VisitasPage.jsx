@@ -18,7 +18,7 @@ const VisitasPage = () => {
     const [fechaActual, setFechaActual] = useState(new Date());
     const [vistaActual, setVistaActual] = useState('month');
     const [stats, setStats] = useState(null);
-    const { canCreate } = usePermissions();
+    const { canCreate, canUpdate } = usePermissions();
 
     // Modals state
     const [showFormVisita, setShowFormVisita] = useState(false);
@@ -108,12 +108,18 @@ const VisitasPage = () => {
     };
 
     const handleSelectSlot = ({ start }) => {
+        if (!canCreate('visitas')) {
+            return; // No hacer nada si no tiene permiso
+        }
         setFechaSeleccionada(start);
         setSelectedVisitaObj(null);
         setShowFormVisita(true);
     };
 
     const handleEditVisita = (visita) => {
+        if (!canUpdate('visitas')) {
+            return; // No hacer nada si no tiene permiso
+        }
         setSelectedVisitaObj(visita);
         setShowDetalleVisita(false);
         setShowFormVisita(true);

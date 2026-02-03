@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { sedesAPI, authAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 import TablaInventarioSede from '../components/TablaInventarioSede'
 
 export default function SedeDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { canUpdate } = usePermissions()
   const [sede, setSede] = useState(null)
   const [tecnico, setTecnico] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -456,7 +458,16 @@ export default function SedeDetallePage() {
 
         {/* Acciones */}
         <div className="flex gap-4">
-          <button className="flex-1 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold">
+          <button
+            onClick={() => navigate(`/sedes/${id}/editar`)}
+            disabled={!canUpdate('sedes')}
+            className={`flex-1 px-6 py-3 rounded-lg transition-colors font-semibold ${
+              canUpdate('sedes')
+                ? 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!canUpdate('sedes') ? 'No tienes permiso para editar sedes' : ''}
+          >
             Editar Sede
           </button>
           <button

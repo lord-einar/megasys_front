@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 import Swal from 'sweetalert2'
 
 export default function EditArticulo() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { canUpdate } = usePermissions()
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])
@@ -22,6 +24,16 @@ export default function EditArticulo() {
     observaciones: ''
   })
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (!canUpdate('inventario')) {
+      navigate('/inventario', {
+        state: {
+          error: 'No tienes permiso para editar artículos de inventario'
+        }
+      })
+    }
+  }, [canUpdate, navigate])
 
   useEffect(() => {
     cargarDatos()
@@ -166,6 +178,10 @@ export default function EditArticulo() {
     focus:ring-2 focus:ring-blue-500 focus:border-transparent
     ${errors[fieldName] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
   `
+
+  if (!canUpdate('inventario')) {
+    return <div>Cargando...</div>
+  }
 
   if (loading && !formData.marca) {
     return (

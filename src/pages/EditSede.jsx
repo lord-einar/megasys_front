@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { empresasAPI, sedesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
+import { usePermissions } from '../hooks/usePermissions'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -68,6 +69,7 @@ const sedeSchema = yup.object().shape({
 export default function EditSede() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { canUpdate } = usePermissions()
 
   const [empresas, setEmpresas] = useState([])
   const [sedeData, setSedeData] = useState(null)
@@ -114,6 +116,17 @@ export default function EditSede() {
       ip_sede: ''
     }
   })
+
+  // Validar permisos al cargar el componente
+  useEffect(() => {
+    if (!canUpdate('sedes')) {
+      navigate('/sedes', {
+        state: {
+          error: 'No tienes permiso para editar sedes'
+        }
+      })
+    }
+  }, [canUpdate, navigate])
 
   // Cargar empresas y datos de la sede existente
   useEffect(() => {
@@ -214,6 +227,10 @@ export default function EditSede() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!canUpdate('sedes')) {
+    return <div>Cargando...</div>
   }
 
   if (loadingEmpresas) {

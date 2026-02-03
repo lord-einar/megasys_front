@@ -3,10 +3,12 @@ import { sedesAPI, personalAPI, inventarioAPI, remitosAPI } from '../services/ap
 import StatCard from '../components/StatCard'
 import RecentActivityCard from '../components/RecentActivityCard'
 import LoansAboutToExpireCard from '../components/LoansAboutToExpireCard'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import Swal from 'sweetalert2'
 
 function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [stats, setStats] = useState({
     sedes: 0,
     personal: 0,
@@ -19,6 +21,20 @@ function Dashboard() {
   useEffect(() => {
     cargarEstadisticas()
   }, [])
+
+  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  useEffect(() => {
+    if (location.state?.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: location.state.error,
+        confirmButtonColor: '#3b82f6'
+      })
+      // Limpiar el state para que no se muestre de nuevo
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
 
   const cargarEstadisticas = async () => {
     try {

@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { personalAPI, sedesAPI, rolesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
+import { usePermissions } from '../hooks/usePermissions'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -60,6 +61,7 @@ const personalSchema = yup.object().shape({
 export default function EditPersonal() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { canUpdate } = usePermissions()
 
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
@@ -100,6 +102,17 @@ export default function EditPersonal() {
       rol_id: ''
     }
   })
+
+  // Validar permisos al cargar el componente
+  useEffect(() => {
+    if (!canUpdate('personal')) {
+      navigate('/personal', {
+        state: {
+          error: 'No tienes permiso para editar personal'
+        }
+      })
+    }
+  }, [canUpdate, navigate])
 
   // Cargar datos iniciales: sedes, roles y personal existente
   useEffect(() => {
@@ -204,6 +217,10 @@ export default function EditPersonal() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!canUpdate('personal')) {
+    return <div>Cargando...</div>
   }
 
   if (loading) {

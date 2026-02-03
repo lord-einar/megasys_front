@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../services/api'
 import { remitosAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import Swal from 'sweetalert2'
 
 function RemitoListPage() {
   const [remitos, setRemitos] = useState([])
@@ -20,11 +21,26 @@ function RemitoListPage() {
     currentPage: 1
   })
   const navigate = useNavigate()
+  const location = useLocation()
   const { canCreate } = usePermissions()
 
   useEffect(() => {
     fetchRemitos()
   }, [filters])
+
+  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  useEffect(() => {
+    if (location.state?.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Acceso Denegado',
+        text: location.state.error,
+        confirmButtonColor: '#3b82f6'
+      })
+      // Limpiar el state para que no se muestre de nuevo
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
 
   const fetchRemitos = async () => {
     try {
