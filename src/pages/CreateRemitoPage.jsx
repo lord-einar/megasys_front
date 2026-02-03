@@ -305,7 +305,7 @@ function CreateRemitoPage() {
                 required
               >
                 <option value="">Selecciona un técnico</option>
-                {personal.filter(p => p.rol?.nombre === 'Soporte Técnico').map(p => (
+                {personal.filter(p => p.rol?.nombre === 'Soporte Técnico' || p.rol?.nombre === 'Sistemas').map(p => (
                   <option key={p.id} value={p.id}>
                     {p.nombre} {p.apellido}
                   </option>
