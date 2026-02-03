@@ -19,5 +19,16 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
+    chunkSizeWarningLimit: 1000, // Aumentar límite a 1000kb
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separar vendor libraries en chunks individuales
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'sweetalert': ['sweetalert2'],
+          'chart-vendor': ['recharts'],
+        },
+      },
+    },
   },
 })
