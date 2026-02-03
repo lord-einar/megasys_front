@@ -305,15 +305,11 @@ function CreateRemitoPage() {
                 required
               >
                 <option value="">Selecciona un técnico</option>
-                {personal.filter(p => {
-                  const rolNombre = p.rol?.nombre?.toLowerCase() || '';
-                  return rolNombre.includes('soporte') ||
-                         rolNombre.includes('tecnico') ||
-                         rolNombre.includes('técnico') ||
-                         rolNombre.includes('sistemas');
-                }).map(p => (
+                {personal.filter(p =>
+                  p.rol?.nombre === 'Sistemas' || p.rol?.nombre === 'Tecnico sede'
+                ).map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} {p.apellido} ({p.rol?.nombre})
+                    {p.nombre} {p.apellido}
                   </option>
                 ))}
               </select>

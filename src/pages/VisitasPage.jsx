@@ -55,10 +55,10 @@ const VisitasPage = () => {
 
     const cargarTecnicos = async () => {
         try {
-            const response = await personalAPI.list({ limit: 100 });
+            const response = await personalAPI.list({ limit: 500 });
             if (response.data) {
                 const tecnicosSoporte = response.data.filter(p =>
-                    p.rol?.nombre === 'Soporte Técnico' || p.rol?.nombre === 'Sistemas'
+                    p.rol?.nombre === 'Sistemas' || p.rol?.nombre === 'Tecnico sede'
                 );
                 setTecnicos(tecnicosSoporte.length > 0 ? tecnicosSoporte : response.data);
             }
