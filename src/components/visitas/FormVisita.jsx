@@ -55,7 +55,7 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
         try {
             const [sedesRes, tecnicosRes] = await Promise.all([
                 sedesAPI.list({ limit: 100 }), // Obtener todas las sedes disponibles
-                personalAPI.list({ limit: 100 }) // Obtener usuarios con límite máximo permitido
+                personalAPI.list({ limit: 500 }) // Obtener usuarios con límite aumentado
             ]);
             setSedes(sedesRes.data || []);
 
@@ -69,22 +69,12 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                 });
             }
 
-            // Filtrar personal con roles de la categoría "Sistemas" o rol específico "Soporte Técnico"
+            // Filtrar personal solo con roles "Sistemas" o "Tecnico sede"
             const personalSistemas = (tecnicosRes.data || []).filter(p => {
                 if (!p.rol) return false;
 
-                // Si el rol es específicamente "Soporte Técnico"
-                if (p.rol.nombre === 'Soporte Técnico') return true;
-
-                // Si el rol pertenece a la categoría "Sistemas" (tiene parent_id de Sistemas)
-                // O si el rol ES "Sistemas" (categoría principal)
-                if (p.rol.nombre === 'Sistemas') return true;
-
-                // TODO: Aquí podríamos agregar lógica para verificar si el parent_id corresponde a Sistemas
-                // Por ahora, incluimos también "Mesa de Ayuda" e "Infraestructura" manualmente
-                if (p.rol.nombre === 'Mesa de Ayuda' || p.rol.nombre === 'Infraestructura') return true;
-
-                return false;
+                // Solo incluir roles "Sistemas" o "Tecnico sede"
+                return p.rol.nombre === 'Sistemas' || p.rol.nombre === 'Tecnico sede';
             });
             logger.debug('✅ Técnicos filtrados (Sistemas):', personalSistemas);
 
