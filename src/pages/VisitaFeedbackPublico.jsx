@@ -123,6 +123,18 @@ export default function VisitaFeedbackPublico() {
         );
     }
 
+    // Si no hay información de visita, no renderizar el formulario
+    if (!visitaInfo) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                    <p className="text-slate-600 font-medium">Cargando información...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full overflow-hidden">
