@@ -88,7 +88,8 @@ export default function NuevaSede() {
     provincia: '',
     pais: 'Argentina',
     telefono: '',
-    ip_sede: ''
+    ip_sede: '',
+    es_prueba: false
   })
 
   // Hooks para validación en tiempo real
@@ -115,7 +116,8 @@ export default function NuevaSede() {
       provincia: '',
       pais: 'Argentina',
       telefono: '',
-      ip_sede: ''
+      ip_sede: '',
+      es_prueba: false
     }
   })
 
@@ -482,6 +484,24 @@ export default function NuevaSede() {
                 fieldName="ip_sede"
               />
               <ValidationIndicator isValid={ipSedeValidation.isValid} label="IP válida" />
+            </div>
+
+            {/* Sede de Prueba */}
+            <div className="form-group" style={{ marginTop: '20px' }}>
+              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  {...register('es_prueba')}
+                  disabled={isLoading}
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                />
+                <span>
+                  <strong>Sede de Prueba</strong>
+                  <small style={{ display: 'block', color: '#666', marginTop: '4px' }}>
+                    Marcar esta opción excluirá la sede de reportes y estadísticas
+                  </small>
+                </span>
+              </label>
             </div>
           </div>
 
