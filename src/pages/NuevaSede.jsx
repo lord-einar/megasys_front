@@ -7,6 +7,7 @@ import { empresasAPI, sedesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
 import { usePermissions } from '../hooks/usePermissions'
+import { usePermissionError } from '../hooks/usePermissionError'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -69,6 +70,10 @@ const sedeSchema = yup.object().shape({
 export default function NuevaSede() {
   const navigate = useNavigate()
   const { canCreate } = usePermissions()
+
+  // Hook para manejar errores de permisos
+  usePermissionError()
+
   const [empresas, setEmpresas] = useState([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [error, setError] = useState(null)

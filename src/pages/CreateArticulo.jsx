@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
 
 export default function CreateArticulo() {
   const navigate = useNavigate()
   const { canCreate } = usePermissions()
+
+  // Hook para manejar errores de permisos
+  usePermissionError()
+
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])

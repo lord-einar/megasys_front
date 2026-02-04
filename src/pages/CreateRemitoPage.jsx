@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { personalAPI, sedesAPI, tipoArticuloAPI, inventarioAPI, remitosAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import { usePermissionError } from '../hooks/usePermissionError'
 
 function CreateRemitoPage() {
   const navigate = useNavigate()
   const { canCreate } = usePermissions()
+
+  // Hook para manejar errores de permisos
+  usePermissionError()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)

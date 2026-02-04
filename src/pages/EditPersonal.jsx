@@ -7,6 +7,7 @@ import { personalAPI, sedesAPI, rolesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError, getSuccessMessage } from '../services/errorHandler'
 import { useFieldValidation } from '../hooks/useFieldValidation'
 import { usePermissions } from '../hooks/usePermissions'
+import { usePermissionError } from '../hooks/usePermissionError'
 import Toast from '../components/Toast'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
@@ -62,6 +63,9 @@ export default function EditPersonal() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { canUpdate } = usePermissions()
+
+  // Hook para manejar errores de permisos
+  usePermissionError()
 
   const [sedes, setSedes] = useState([])
   const [roles, setRoles] = useState([])
