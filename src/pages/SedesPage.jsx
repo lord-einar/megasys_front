@@ -1,88 +1,70 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { sedesAPI, empresasAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import { useListData } from '../hooks/useListData'
+import { usePermissionError } from '../hooks/usePermissionError'
+import { normalizeStatsResponse, normalizeApiResponse } from '../utils/apiResponseNormalizer'
+import { getPaginationNumbers } from '../utils/paginationHelper'
 import Swal from 'sweetalert2'
 
 export default function SedesPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { canUpdate, canDelete } = usePermissions()
-  const [sedes, setSedes] = useState([])
+
+  // Hook para manejar errores de permisos
+  usePermissionError()
+
+  // Estados locales
   const [empresas, setEmpresas] = useState([])
   const [estadisticas, setEstadisticas] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [filtro, setFiltro] = useState('')
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null)
-  const [page, setPage] = useState(1)
-  const [limit] = useState(9)
-  const [totalPages, setTotalPages] = useState(1)
+
+  // Hook para manejar listado con paginación
+  const {
+    data: sedes,
+    loading,
+    error,
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage,
+    reload
+  } = useListData(sedesAPI.list, {
+    initialLimit: 9,
+    initialFilters: { search: '', empresa_id: null }
+  })
 
   useEffect(() => {
     cargarEmpresas()
-    cargarSedes()
     cargarEstadisticas()
-  }, [page, empresaSeleccionada])
+  }, [])
 
-  // Mostrar mensaje de error si fue redirigido por falta de permisos
+  // Actualizar filtros cuando cambie la empresa seleccionada
   useEffect(() => {
-    if (location.state?.error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Acceso Denegado',
-        text: location.state.error,
-        confirmButtonColor: '#3b82f6'
-      })
-      // Limpiar el state para que no se muestre de nuevo
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  }, [location.state, navigate, location.pathname])
+    updateFilters({ empresa_id: empresaSeleccionada })
+  }, [empresaSeleccionada])
 
   const cargarEmpresas = async () => {
     try {
       const response = await empresasAPI.getActivas()
-      const empresasArray = response?.data || response || []
-      setEmpresas(Array.isArray(empresasArray) ? empresasArray : [])
+      const normalized = normalizeApiResponse(response)
+      setEmpresas(normalized.data)
     } catch (err) {
       console.error('Error cargando empresas:', err)
       setEmpresas([])
     }
   }
 
-  const cargarSedes = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Construir parámetros de la consulta incluyendo empresa_id si está seleccionada
-      const params = { page, limit, search: filtro }
-      if (empresaSeleccionada) {
-        params.empresa_id = empresaSeleccionada
-      }
-
-      const data = await sedesAPI.list(params)
-      const sedesFiltradas = data.data || []
-
-      setSedes(sedesFiltradas)
-
-      // Calcular total de páginas basado en la respuesta
-      const total = data.pagination?.total || data.total || 0
-      const calculatedPages = Math.max(1, Math.ceil(total / limit))
-      setTotalPages(calculatedPages)
-    } catch (err) {
-      setError(err.message)
-      console.error('Error cargando sedes:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const cargarEstadisticas = async () => {
     try {
       const response = await sedesAPI.getEstadisticas()
-      const estadisticasData = response?.data || response
-      setEstadisticas(estadisticasData)
+      setEstadisticas(normalizeStatsResponse(response))
     } catch (err) {
       console.error('Error cargando estadísticas:', err)
     }
@@ -90,13 +72,11 @@ export default function SedesPage() {
 
   const handleBuscar = (e) => {
     e.preventDefault()
-    setPage(1)
-    cargarSedes()
+    updateFilters({ search: filtro })
   }
 
   const cambiarEmpresa = (empresaId) => {
     setEmpresaSeleccionada(empresaId === empresaSeleccionada ? null : empresaId)
-    setPage(1)
   }
 
   const eliminarSede = async (sede) => {
@@ -129,7 +109,7 @@ export default function SedesPage() {
                 icon: 'success',
                 confirmButtonColor: '#3b82f6'
               })
-              cargarSedes()
+              reload()
             } catch (err) {
               console.error('Error eliminando sede:', err)
               await Swal.fire({
@@ -198,7 +178,7 @@ export default function SedesPage() {
               type="button"
               onClick={() => {
                 setFiltro('')
-                setPage(1)
+                updateFilters({ search: '' })
               }}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             >
@@ -351,7 +331,7 @@ export default function SedesPage() {
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-8">
               <button
-                onClick={() => setPage(Math.max(1, page - 1))}
+                onClick={previousPage}
                 disabled={page === 1}
                 className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
               >
@@ -359,39 +339,29 @@ export default function SedesPage() {
               </button>
 
               <div className="flex gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                  // Mostrar solo páginas cercanas para no saturar
-                  const showPage =
-                    pageNum === 1 ||
-                    pageNum === totalPages ||
-                    (pageNum >= page - 1 && pageNum <= page + 1)
-
-                  if (!showPage && pageNum === page - 2) {
-                    return <span key="dots-left" className="px-2 py-2">...</span>
-                  }
-                  if (!showPage && pageNum === page + 2) {
-                    return <span key="dots-right" className="px-2 py-2">...</span>
-                  }
-                  if (!showPage) return null
-
-                  return (
+                {getPaginationNumbers(page, totalPages).map((num, i) =>
+                  num === '...' ? (
+                    <span key={`dots-${i}`} className="px-2 py-2 text-gray-600">
+                      ...
+                    </span>
+                  ) : (
                     <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
+                      key={num}
+                      onClick={() => goToPage(num)}
                       className={`px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
-                        page === pageNum
+                        page === num
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      {pageNum}
+                      {num}
                     </button>
                   )
-                })}
+                )}
               </div>
 
               <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                onClick={nextPage}
                 disabled={page === totalPages}
                 className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
               >

@@ -1,69 +1,49 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import api from '../services/api'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { remitosAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import { useListData } from '../hooks/useListData'
+import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
 
 function RemitoListPage() {
-  const [remitos, setRemitos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filters, setFilters] = useState({
-    estado: '',
-    es_prestamo: '',
-    page: 1,
-    limit: 10
-  })
-  const [pagination, setPagination] = useState({
-    total: 0,
-    pages: 0,
-    currentPage: 1
-  })
   const navigate = useNavigate()
-  const location = useLocation()
   const { canCreate } = usePermissions()
 
-  useEffect(() => {
-    fetchRemitos()
-  }, [filters])
+  // Hook para manejar errores de permisos
+  usePermissionError()
 
-  // Mostrar mensaje de error si fue redirigido por falta de permisos
-  useEffect(() => {
-    if (location.state?.error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Acceso Denegado',
-        text: location.state.error,
-        confirmButtonColor: '#3b82f6'
-      })
-      // Limpiar el state para que no se muestre de nuevo
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  }, [location.state, navigate, location.pathname])
+  // Estados de filtros específicos
+  const [estadoFiltro, setEstadoFiltro] = useState('')
+  const [esPrestamoFiltro, setEsPrestamoFiltro] = useState('')
 
-  const fetchRemitos = async () => {
-    try {
-      setLoading(true)
-      const response = await remitosAPI.list(filters)
-      setRemitos(response.data || [])
-      setPagination(response.pagination || {})
-      setError(null)
-    } catch (err) {
-      console.error('Error fetching remitos:', err)
-      setError(err.message || 'Error al cargar remitos')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Hook para manejar listado con paginación
+  const {
+    data: remitos,
+    loading,
+    error,
+    page,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage
+  } = useListData(remitosAPI.list, {
+    initialLimit: 10,
+    initialFilters: { estado: '', es_prestamo: '' }
+  })
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-      page: 1
-    }))
+
+    if (name === 'estado') {
+      setEstadoFiltro(value)
+      updateFilters({ estado: value })
+    } else if (name === 'es_prestamo') {
+      setEsPrestamoFiltro(value)
+      updateFilters({ es_prestamo: value })
+    }
   }
 
   const getEstadoBadgeClass = (estado) => {
@@ -139,7 +119,7 @@ function RemitoListPage() {
             </label>
             <select
               name="estado"
-              value={filters.estado}
+              value={estadoFiltro}
               onChange={handleFilterChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -157,7 +137,7 @@ function RemitoListPage() {
             </label>
             <select
               name="es_prestamo"
-              value={filters.es_prestamo}
+              value={esPrestamoFiltro}
               onChange={handleFilterChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -267,21 +247,21 @@ function RemitoListPage() {
       </div>
 
       {/* Pagination */}
-      {pagination.pages > 1 && (
+      {totalPages > 1 && (
         <div className="mt-6 flex justify-center items-center gap-2">
           <button
-            onClick={() => setFilters(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-            disabled={filters.page === 1}
+            onClick={previousPage}
+            disabled={page === 1}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
           >
             Anterior
           </button>
           <span className="text-gray-600">
-            Página {pagination.currentPage} de {pagination.pages}
+            Página {page} de {totalPages}
           </span>
           <button
-            onClick={() => setFilters(prev => ({ ...prev, page: Math.min(pagination.pages, prev.page + 1) }))}
-            disabled={filters.page === pagination.pages}
+            onClick={nextPage}
+            disabled={page === totalPages}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
           >
             Siguiente

@@ -1,71 +1,53 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { personalAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
+import { useListData } from '../hooks/useListData'
+import { usePermissionError } from '../hooks/usePermissionError'
+import { normalizeStatsResponse } from '../utils/apiResponseNormalizer'
+import { getPaginationNumbers, getRecordRange } from '../utils/paginationHelper'
 
 export default function PersonalPage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const [personal, setPersonal] = useState([])
-  const [estadisticas, setEstadisticas] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filtro, setFiltro] = useState('')
-  const [page, setPage] = useState(1)
-  const [limit] = useState(10)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalRecords, setTotalRecords] = useState(0)
   const { canCreate, canUpdate, canDelete } = usePermissions()
 
+  // Hook para manejar errores de permisos
+  usePermissionError()
+
+  // Estado de búsqueda
+  const [filtro, setFiltro] = useState('')
+
+  // Hook para manejar listado con paginación
+  const {
+    data: personal,
+    loading,
+    error,
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage,
+    reload
+  } = useListData(personalAPI.list, {
+    initialLimit: 10,
+    initialFilters: { search: '' }
+  })
+
+  // Estadísticas (no incluidas en useListData porque es un endpoint diferente)
+  const [estadisticas, setEstadisticas] = useState(null)
+
   useEffect(() => {
-    cargarPersonal()
     cargarEstadisticas()
-  }, [page])
-
-  // Mostrar mensaje de error si fue redirigido por falta de permisos
-  useEffect(() => {
-    if (location.state?.error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Acceso Denegado',
-        text: location.state.error,
-        confirmButtonColor: '#3b82f6'
-      })
-      // Limpiar el state para que no se muestre de nuevo
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  }, [location.state, navigate, location.pathname])
-
-  const cargarPersonal = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await personalAPI.list({ page, limit, search: filtro })
-      const datos = response?.data || response || []
-      setPersonal(Array.isArray(datos) ? datos : [])
-
-      // Calcular paginación desde la respuesta
-      if (response?.pagination) {
-        setTotalRecords(response.pagination.total || 0)
-        setTotalPages(Math.ceil(response.pagination.total / limit) || 1)
-      } else if (response?.meta) {
-        setTotalRecords(response.meta.total || 0)
-        setTotalPages(response.meta.pages || 1)
-      }
-    } catch (err) {
-      setError(err.message)
-      console.error('Error cargando personal:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [])
 
   const cargarEstadisticas = async () => {
     try {
       const response = await personalAPI.getEstadisticas()
-      const datos = response?.data || response
-      setEstadisticas(datos)
+      setEstadisticas(normalizeStatsResponse(response))
     } catch (err) {
       console.error('Error cargando estadísticas:', err)
     }
@@ -73,37 +55,7 @@ export default function PersonalPage() {
 
   const handleBuscar = (e) => {
     e.preventDefault()
-    setPage(1)
-    cargarPersonal()
-  }
-
-  const getPaginacionNumeros = () => {
-    const numeros = []
-    const maxVisible = 5
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        numeros.push(i)
-      }
-    } else {
-      numeros.push(1)
-
-      if (page > 3) numeros.push('...')
-
-      const inicio = Math.max(2, page - 1)
-      const fin = Math.min(totalPages - 1, page + 1)
-      for (let i = inicio; i <= fin; i++) {
-        if (!numeros.includes(i)) numeros.push(i)
-      }
-
-      if (page < totalPages - 2) numeros.push('...')
-
-      if (!numeros.includes(totalPages)) {
-        numeros.push(totalPages)
-      }
-    }
-
-    return numeros
+    updateFilters({ search: filtro })
   }
 
   const eliminarPersona = async (persona) => {
@@ -136,7 +88,7 @@ export default function PersonalPage() {
                 icon: 'success',
                 confirmButtonColor: '#3b82f6'
               })
-              cargarPersonal()
+              reload()
             } catch (err) {
               console.error('Error eliminando personal:', err)
               await Swal.fire({
@@ -214,7 +166,7 @@ export default function PersonalPage() {
             type="button"
             onClick={() => {
               setFiltro('')
-              setPage(1)
+              updateFilters({ search: '' })
             }}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
           >
@@ -334,13 +286,13 @@ export default function PersonalPage() {
       {!loading && personal.length > 0 && (
         <div className="mt-6 flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            Mostrando <span className="font-medium">{(page - 1) * limit + 1}</span> a{' '}
-            <span className="font-medium">{Math.min(page * limit, totalRecords)}</span> de{' '}
+            Mostrando <span className="font-medium">{getRecordRange(page, limit, totalRecords).start}</span> a{' '}
+            <span className="font-medium">{getRecordRange(page, limit, totalRecords).end}</span> de{' '}
             <span className="font-medium">{totalRecords}</span> registros
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage(Math.max(1, page - 1))}
+              onClick={previousPage}
               disabled={page === 1}
               className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -348,7 +300,7 @@ export default function PersonalPage() {
             </button>
 
             <div className="flex gap-1">
-              {getPaginacionNumeros().map((num, i) =>
+              {getPaginationNumbers(page, totalPages).map((num, i) =>
                 num === '...' ? (
                   <span key={`dots-${i}`} className="px-2 py-2 text-gray-600">
                     ...
@@ -356,7 +308,7 @@ export default function PersonalPage() {
                 ) : (
                   <button
                     key={num}
-                    onClick={() => setPage(num)}
+                    onClick={() => goToPage(num)}
                     className={`px-3 py-2 rounded-lg transition-colors ${
                       page === num
                         ? 'bg-blue-600 text-white font-medium'
@@ -370,7 +322,7 @@ export default function PersonalPage() {
             </div>
 
             <button
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              onClick={nextPage}
               disabled={page === totalPages}
               className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >

@@ -1,127 +1,77 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
+import { useListData } from '../hooks/useListData'
+import { usePermissionError } from '../hooks/usePermissionError'
+import { normalizeStatsResponse } from '../utils/apiResponseNormalizer'
+import { getPaginationNumbers, getRecordRange } from '../utils/paginationHelper'
 
 export default function InventarioPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams] = useSearchParams()
-  const [inventario, setInventario] = useState([])
-  const [estadisticas, setEstadisticas] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filtro, setFiltro] = useState('')
-  const [estado, setEstado] = useState(searchParams.get('estado') || '')
-  const [page, setPage] = useState(1)
-  const [limit] = useState(10)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalRecords, setTotalRecords] = useState(0)
   const { canCreate, canUpdate, canDelete } = usePermissions()
 
+  // Hook para manejar errores de permisos
+  usePermissionError()
+
+  // Estado de filtros
+  const [filtro, setFiltro] = useState('')
+  const [estado, setEstado] = useState(searchParams.get('estado') || '')
+
+  // Hook para manejar listado con paginación
+  const {
+    data: inventario,
+    loading,
+    error,
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage,
+    reload
+  } = useListData(inventarioAPI.list, {
+    initialLimit: 10,
+    initialFilters: { search: '', estado: searchParams.get('estado') || '' }
+  })
+
+  // Estadísticas
+  const [estadisticas, setEstadisticas] = useState(null)
+
   useEffect(() => {
-    // Update estado when URL query params change
+    cargarEstadisticas()
+  }, [])
+
+  // Actualizar estado desde URL params
+  useEffect(() => {
     const estadoParam = searchParams.get('estado')
-    if (estadoParam) {
+    if (estadoParam && estadoParam !== estado) {
       setEstado(estadoParam)
-      setPage(1)
+      updateFilters({ estado: estadoParam })
     }
   }, [searchParams])
 
+  // Actualizar filtros cuando cambie el estado
   useEffect(() => {
-    cargarInventario()
-    cargarEstadisticas()
-  }, [page, estado])
-
-  // Mostrar mensaje de error si fue redirigido por falta de permisos
-  useEffect(() => {
-    if (location.state?.error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Acceso Denegado',
-        text: location.state.error,
-        confirmButtonColor: '#3b82f6'
-      })
-      // Limpiar el state para que no se muestre de nuevo
-      navigate(location.pathname, { replace: true, state: {} })
-    }
-  }, [location.state, navigate, location.pathname])
-
-  const cargarInventario = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const params = { page, limit, search: filtro }
-      if (estado) params.estado = estado
-      const response = await inventarioAPI.list(params)
-
-      // El backend devuelve { success, data: { rows, pagination } }
-      const datos = response?.data?.rows || response?.rows || response?.data || response || []
-      setInventario(Array.isArray(datos) ? datos : [])
-
-      // Calcular paginación desde la respuesta
-      if (response?.data?.pagination) {
-        setTotalRecords(response.data.pagination.total || 0)
-        setTotalPages(Math.ceil(response.data.pagination.total / limit) || 1)
-      } else if (response?.pagination) {
-        setTotalRecords(response.pagination.total || 0)
-        setTotalPages(Math.ceil(response.pagination.total / limit) || 1)
-      } else if (response?.meta) {
-        setTotalRecords(response.meta.total || 0)
-        setTotalPages(response.meta.pages || 1)
-      }
-    } catch (err) {
-      setError(err.message)
-      console.error('Error cargando inventario:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    updateFilters({ estado })
+  }, [estado])
 
   const cargarEstadisticas = async () => {
     try {
       const response = await inventarioAPI.getEstadisticas()
-      const datos = response?.data || response
-      setEstadisticas(datos)
+      setEstadisticas(normalizeStatsResponse(response))
     } catch (err) {
       console.error('Error cargando estadísticas:', err)
     }
   }
 
-  const getPaginacionNumeros = () => {
-    const numeros = []
-    const maxVisible = 5
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        numeros.push(i)
-      }
-    } else {
-      numeros.push(1)
-
-      if (page > 3) numeros.push('...')
-
-      const inicio = Math.max(2, page - 1)
-      const fin = Math.min(totalPages - 1, page + 1)
-      for (let i = inicio; i <= fin; i++) {
-        if (!numeros.includes(i)) numeros.push(i)
-      }
-
-      if (page < totalPages - 2) numeros.push('...')
-
-      if (!numeros.includes(totalPages)) {
-        numeros.push(totalPages)
-      }
-    }
-
-    return numeros
-  }
-
   const handleBuscar = (e) => {
     e.preventDefault()
-    setPage(1)
-    cargarInventario()
+    updateFilters({ search: filtro })
   }
 
   const eliminarItem = async (item) => {
@@ -146,7 +96,7 @@ export default function InventarioPage() {
           timer: 1500,
           timerProgressBar: true
         }).then(() => {
-          cargarInventario()
+          reload()
         })
       } catch (err) {
         // Verificar si es un error de autenticación
@@ -257,7 +207,7 @@ export default function InventarioPage() {
             onClick={() => {
               setFiltro('')
               setEstado('')
-              setPage(1)
+              updateFilters({ search: '', estado: '' })
             }}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
           >
@@ -371,28 +321,28 @@ export default function InventarioPage() {
       {totalPages > 1 && (
         <div className="mt-6 flex justify-between items-center">
           <div className="text-sm text-gray-600">
-            Mostrando <strong>{(page - 1) * limit + 1}</strong> a <strong>{Math.min(page * limit, totalRecords)}</strong> de <strong>{totalRecords}</strong> registros
+            Mostrando <strong>{getRecordRange(page, limit, totalRecords).start}</strong> a <strong>{getRecordRange(page, limit, totalRecords).end}</strong> de <strong>{totalRecords}</strong> registros
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setPage(1)}
+              onClick={() => goToPage(1)}
               disabled={page === 1}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Primera
             </button>
             <button
-              onClick={() => setPage(page - 1)}
+              onClick={previousPage}
               disabled={page === 1}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Anterior
             </button>
 
-            {getPaginacionNumeros().map((num, idx) => (
+            {getPaginationNumbers(page, totalPages).map((num, idx) => (
               <button
                 key={idx}
-                onClick={() => typeof num === 'number' && setPage(num)}
+                onClick={() => typeof num === 'number' && goToPage(num)}
                 disabled={typeof num !== 'number'}
                 className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                   num === page
@@ -405,14 +355,14 @@ export default function InventarioPage() {
             ))}
 
             <button
-              onClick={() => setPage(page + 1)}
+              onClick={nextPage}
               disabled={page === totalPages}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Siguiente
             </button>
             <button
-              onClick={() => setPage(totalPages)}
+              onClick={() => goToPage(totalPages)}
               disabled={page === totalPages}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
