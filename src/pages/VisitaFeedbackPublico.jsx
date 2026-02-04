@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+import { API_BASE_URL } from '../config/api';
 
 export default function VisitaFeedbackPublico() {
     const { token } = useParams();
@@ -28,7 +27,7 @@ export default function VisitaFeedbackPublico() {
             setLoading(true);
             setError(null);
 
-            const response = await axios.get(`${API_BASE}/visitas/feedback/${token}`);
+            const response = await axios.get(`${API_BASE_URL}/visitas/feedback/${token}`);
             setVisitaInfo(response.data.data);
         } catch (err) {
             console.error('Error cargando información:', err);
@@ -51,7 +50,7 @@ export default function VisitaFeedbackPublico() {
             setSubmitting(true);
             setError(null);
 
-            await axios.post(`${API_BASE}/visitas/feedback/${token}`, {
+            await axios.post(`${API_BASE_URL}/visitas/feedback/${token}`, {
                 nombre: formData.nombre.trim(),
                 comentarios: formData.comentarios.trim()
             });
