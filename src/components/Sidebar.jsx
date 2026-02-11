@@ -111,7 +111,11 @@ function Sidebar({ isOpen, onNavigate }) {
       ),
       submenu: [
         { label: 'Listar Proveedores', href: '/proveedores' },
-        { label: 'Nuevo Proveedor', href: '/proveedores/crear' },
+        { label: 'Servicios', href: '/proveedores/servicios' },
+        { label: 'Equipos', href: '/proveedores/equipos' },
+        { label: 'Ejecutivos', href: '/proveedores/ejecutivos' },
+        { label: 'Tipos de Servicio', href: '/proveedores/tipos-servicio' },
+        { label: 'Reclamos', href: '/proveedores/reclamos' },
       ],
     },
   ]

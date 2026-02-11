@@ -31,6 +31,20 @@ import VisitaFeedbackPublico from './pages/VisitaFeedbackPublico'
 import ReportesVisitasPage from './pages/ReportesVisitasPage'
 import ConfiguracionVisitasPage from './pages/ConfiguracionVisitasPage'
 import ConfiguracionRolesPage from './pages/ConfiguracionRolesPage'
+import ProveedoresPage from './pages/ProveedoresPage'
+import ProveedorDetailPage from './pages/ProveedorDetailPage'
+import ProveedorFormPage from './pages/ProveedorFormPage'
+import ServiciosPage from './pages/ServiciosPage'
+import ServicioFormPage from './pages/ServicioFormPage'
+import ReclamosPage from './pages/ReclamosPage'
+import ReclamoDetailPage from './pages/ReclamoDetailPage'
+import ReclamoFormPage from './pages/ReclamoFormPage'
+import EquiposPage from './pages/EquiposPage'
+import EquipoFormPage from './pages/EquipoFormPage'
+import EjecutivosPage from './pages/EjecutivosPage'
+import EjecutivoFormPage from './pages/EjecutivoFormPage'
+import TiposServicioPage from './pages/TiposServicioPage'
+import TipoServicioFormPage from './pages/TipoServicioFormPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -124,6 +138,27 @@ function App() {
                   <Route path="/visitas" element={<VisitasPage />} />
                   <Route path="/reportes/visitas" element={<ReportesVisitasPage />} />
                   <Route path="/configuracion/visitas" element={<ConfiguracionVisitasPage />} />
+
+                  {/* Proveedores routes - más específicas primero */}
+                  <Route path="/proveedores/reclamos/nuevo" element={<ReclamoFormPage />} />
+                  <Route path="/proveedores/reclamos/:id" element={<ReclamoDetailPage />} />
+                  <Route path="/proveedores/reclamos" element={<ReclamosPage />} />
+                  <Route path="/proveedores/servicios/nuevo" element={<ServicioFormPage />} />
+                  <Route path="/proveedores/servicios/:id/editar" element={<ServicioFormPage />} />
+                  <Route path="/proveedores/servicios" element={<ServiciosPage />} />
+                  <Route path="/proveedores/equipos/nuevo" element={<EquipoFormPage />} />
+                  <Route path="/proveedores/equipos/:id/editar" element={<EquipoFormPage />} />
+                  <Route path="/proveedores/equipos" element={<EquiposPage />} />
+                  <Route path="/proveedores/ejecutivos/nuevo" element={<EjecutivoFormPage />} />
+                  <Route path="/proveedores/ejecutivos/:id/editar" element={<EjecutivoFormPage />} />
+                  <Route path="/proveedores/ejecutivos" element={<EjecutivosPage />} />
+                  <Route path="/proveedores/tipos-servicio/nuevo" element={<TipoServicioFormPage />} />
+                  <Route path="/proveedores/tipos-servicio/:id/editar" element={<TipoServicioFormPage />} />
+                  <Route path="/proveedores/tipos-servicio" element={<TiposServicioPage />} />
+                  <Route path="/proveedores/nuevo" element={<ProveedorFormPage />} />
+                  <Route path="/proveedores/:id/editar" element={<ProveedorFormPage />} />
+                  <Route path="/proveedores/:id" element={<ProveedorDetailPage />} />
+                  <Route path="/proveedores" element={<ProveedoresPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

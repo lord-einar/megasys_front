@@ -274,6 +274,7 @@ const VisitasPage = () => {
                     onClose={() => setShowDetalleVisita(false)}
                     onEdit={handleEditVisita}
                     onCompletar={handleCompletarInforme}
+                    onEditarInforme={handleCompletarInforme}
                 />
             )}
 

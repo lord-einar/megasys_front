@@ -37,10 +37,22 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             ]);
 
             if (checklistRes.data) {
-                setChecklistItems(checklistRes.data.map(item => ({
-                    ...item,
-                    completado: false
-                })));
+                // Si la visita ya tiene informe, pre-cargar el checklist con los valores existentes
+                if (visita.informe?.checklist_items) {
+                    const checklistConEstados = checklistRes.data.map(item => {
+                        const itemGuardado = visita.informe.checklist_items.find(i => i.nombre === item.nombre);
+                        return {
+                            ...item,
+                            completado: itemGuardado ? itemGuardado.completado : false
+                        };
+                    });
+                    setChecklistItems(checklistConEstados);
+                } else {
+                    setChecklistItems(checklistRes.data.map(item => ({
+                        ...item,
+                        completado: false
+                    })));
+                }
             }
 
             if (categoriasRes.data) {
@@ -51,6 +63,44 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                     setProblemaInput(prev => ({ ...prev, categoria_id: categoriaOtro.id }));
                 } else if (categoriasRes.data.length > 0) {
                     setProblemaInput(prev => ({ ...prev, categoria_id: categoriasRes.data[0].id }));
+                }
+            }
+
+            // Pre-cargar datos del informe existente si existe
+            if (visita.informe) {
+                console.log('📋 Pre-cargando informe existente:', visita.informe);
+
+                if (visita.informe.checklist_extra) {
+                    setChecklistExtra(visita.informe.checklist_extra);
+                }
+                if (visita.informe.casos_resueltos) {
+                    setCasosResueltos(visita.informe.casos_resueltos);
+                }
+
+                // Verificar ambos nombres posibles (camelCase y snake_case)
+                const problemasExistentes = visita.informe.problemasResueltos || visita.informe.problemas_resueltos;
+                console.log('🔧 Problemas existentes:', problemasExistentes);
+
+                if (problemasExistentes && problemasExistentes.length > 0) {
+                    // Necesitamos agregar el nombre de la categoría desde categoriasRes
+                    const problemasConCategoria = problemasExistentes.map(prob => {
+                        const categoria = categoriasRes.data?.find(c => c.id === prob.categoria_id);
+                        return {
+                            descripcion: prob.descripcion,
+                            categoria_id: prob.categoria_id,
+                            causado_por_usuario: prob.causado_por_usuario || false,
+                            categoria_nombre: categoria?.nombre || prob.categoriaProblema?.nombre || 'Sin categoría'
+                        };
+                    });
+                    console.log('✅ Problemas pre-cargados:', problemasConCategoria);
+                    setProblemasResueltos(problemasConCategoria);
+                }
+
+                if (visita.informe.solicitudes_resueltas) {
+                    setSolicitudesResueltas(visita.informe.solicitudes_resueltas);
+                }
+                if (visita.informe.observaciones) {
+                    setObservaciones(visita.informe.observaciones);
                 }
             }
         } catch (err) {
@@ -142,14 +192,17 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             }
         }
 
+        const esEdicion = !!visita.informe;
         const result = await Swal.fire({
-            title: '¿Finalizar visita?',
-            html: 'Se enviará la minuta a <strong>Infraestructura</strong> y a la <strong>Sede</strong>.<br/><br/>¿Confirmas que la visita está terminada?',
+            title: esEdicion ? '¿Actualizar informe?' : '¿Finalizar visita?',
+            html: esEdicion
+                ? 'Se actualizará el informe de la visita.<br/><br/>¿Confirmas los cambios?'
+                : 'Se enviará la minuta a <strong>Infraestructura</strong> y a la <strong>Sede</strong>.<br/><br/>¿Confirmas que la visita está terminada?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Sí, finalizar',
+            confirmButtonText: esEdicion ? 'Sí, actualizar' : 'Sí, finalizar',
             cancelButtonText: 'Cancelar',
             backdrop: true,
             allowOutsideClick: false
@@ -176,6 +229,9 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                 observaciones
             };
 
+            console.log('📤 Enviando payload:', payload);
+            console.log('📤 Problemas en el estado:', problemasResueltos);
+
             await visitasAPI.marcarRealizada(visita.id, payload);
             onSave();
             onClose();
@@ -189,11 +245,13 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
             <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full m-4 max-h-[90vh] overflow-y-auto">
-                {loading && <LoadingOverlay message="Guardando informe y enviando minuta..." />}
+                {loading && <LoadingOverlay message={visita.informe ? "Actualizando informe..." : "Guardando informe y enviando minuta..."} />}
 
                 <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-emerald-50/50 rounded-t-xl">
                     <div>
-                        <h3 className="text-xl font-bold text-emerald-800">Completar Informe de Visita</h3>
+                        <h3 className="text-xl font-bold text-emerald-800">
+                            {visita.informe ? 'Editar Informe de Visita' : 'Completar Informe de Visita'}
+                        </h3>
                         <p className="text-sm text-emerald-600">{visita.sedePrincipal?.nombre_sede} - {new Date(visita.fecha).toLocaleDateString()}</p>
                     </div>
                     <button
@@ -206,6 +264,25 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                         </svg>
                     </button>
                 </div>
+
+                {/* Banner de advertencia para ediciones */}
+                {visita.informe && (
+                    <div className="mx-6 mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                        <div className="flex items-start gap-3">
+                            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-yellow-900 mb-1">
+                                    ⚠️ Modo de Edición
+                                </h4>
+                                <p className="text-xs text-yellow-800">
+                                    Está editando un informe existente. Todos los cambios realizados quedarán registrados en el historial de ediciones con su nombre y fecha.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-8">
                     {error && (
@@ -406,7 +483,10 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            {loading ? 'Finalizando...' : 'Finalizar Visita y Enviar Minuta'}
+                            {loading
+                                ? (visita.informe ? 'Guardando...' : 'Finalizando...')
+                                : (visita.informe ? 'Actualizar Informe' : 'Finalizar Visita y Enviar Minuta')
+                            }
                         </button>
                     </div>
                 </form>

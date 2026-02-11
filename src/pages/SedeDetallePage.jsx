@@ -32,6 +32,12 @@ export default function SedeDetallePage() {
       // Load sede
       const response = await sedesAPI.getById(id)
       const sedeData = response?.data || response
+
+      // DEBUG: Ver qué trae el backend
+      console.log('🔍 Sede cargada:', sedeData)
+      console.log('📦 Servicios:', sedeData?.servicios)
+      console.log('📊 Cantidad de servicios:', sedeData?.servicios?.length || 0)
+
       setSede(sedeData)
 
       // Load assigned technician
@@ -156,6 +162,16 @@ export default function SedeDetallePage() {
                 }`}
               >
                 Personal ({sede.personalSede?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveTab('servicios')}
+                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
+                  activeTab === 'servicios'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Servicios ({sede.servicios?.length || 0})
               </button>
               <button
                 onClick={() => setActiveTab('inventario')}
@@ -360,6 +376,130 @@ export default function SedeDetallePage() {
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-gray-500">No hay personal asignado a esta sede</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Servicios */}
+            {activeTab === 'servicios' && (
+              <div>
+                {sede.servicios && sede.servicios.length > 0 ? (
+                  <div className="space-y-6">
+                    {sede.servicios.map((servicio) => (
+                      <div key={servicio.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        {/* Header del Servicio */}
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b border-gray-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-gray-900">{servicio.nombre}</h3>
+                              <p className="text-sm text-gray-600 mt-1">
+                                <span className="font-semibold">Proveedor:</span> {servicio.proveedor?.empresa || 'N/A'}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-semibold">Tipo:</span> {servicio.tipoServicio?.nombre || 'N/A'}
+                              </p>
+                              {servicio.id_servicio && (
+                                <p className="text-xs text-gray-500 mt-1 font-mono">ID: {servicio.id_servicio}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              {servicio.SedeServicio?.activo !== false ? (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                  ✓ Activo
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                                  Inactivo
+                                </span>
+                              )}
+                              {servicio.SedeServicio?.fecha_contratacion && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Contratado: {new Date(servicio.SedeServicio.fecha_contratacion).toLocaleDateString('es-AR')}
+                                </p>
+                              )}
+                              {servicio.SedeServicio?.fecha_vencimiento && (
+                                <p className="text-xs text-gray-500">
+                                  Vence: {new Date(servicio.SedeServicio.fecha_vencimiento).toLocaleDateString('es-AR')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {servicio.descripcion && (
+                            <p className="text-sm text-gray-700 mt-3 bg-white/50 p-3 rounded">{servicio.descripcion}</p>
+                          )}
+                        </div>
+
+                        {/* Niveles de Soporte */}
+                        <div className="p-6">
+                          <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            📞 Niveles de Soporte Técnico
+                          </h4>
+                          {servicio.nivelessoporte && servicio.nivelessoporte.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {servicio.nivelessoporte.map((nivel) => (
+                                <div
+                                  key={nivel.id}
+                                  className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                >
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-bold text-blue-600 uppercase">Nivel {nivel.nivel}</span>
+                                    <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
+                                      N{nivel.nivel}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div>
+                                      <p className="text-xs text-gray-600 font-semibold">Email:</p>
+                                      <a
+                                        href={`mailto:${nivel.email}`}
+                                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all"
+                                      >
+                                        {nivel.email}
+                                      </a>
+                                    </div>
+                                    {nivel.telefono && (
+                                      <div>
+                                        <p className="text-xs text-gray-600 font-semibold">Teléfono:</p>
+                                        <a
+                                          href={`tel:${nivel.telefono}`}
+                                          className="text-sm text-gray-900 hover:text-blue-600"
+                                        >
+                                          {nivel.telefono}
+                                        </a>
+                                      </div>
+                                    )}
+                                    {nivel.web && (
+                                      <div>
+                                        <p className="text-xs text-gray-600 font-semibold">Web:</p>
+                                        <a
+                                          href={nivel.web}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all"
+                                        >
+                                          {nivel.web}
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                              <p className="text-yellow-800 text-sm">
+                                No hay niveles de soporte configurados para este servicio
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500 text-lg">No hay servicios contratados para esta sede</p>
                   </div>
                 )}
               </div>

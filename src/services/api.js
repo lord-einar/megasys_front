@@ -309,6 +309,7 @@ export const proveedoresAPI = {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/proveedores${query ? '?' + query : ''}`)
   },
+  getEstadisticas: () => apiCall('/proveedores/estadisticas'),
   getById: (id) => apiCall(`/proveedores/${id}`),
   create: (data) => apiCall('/proveedores', {
     method: 'POST',
@@ -319,6 +320,122 @@ export const proveedoresAPI = {
     body: JSON.stringify(data)
   }),
   delete: (id) => apiCall(`/proveedores/${id}`, { method: 'DELETE' }),
+}
+
+// Ejecutivos de Cuentas Endpoints
+export const ejecutivosAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/ejecutivos${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/proveedores/ejecutivos/${id}`),
+  create: (data) => apiCall('/proveedores/ejecutivos', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/ejecutivos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/proveedores/ejecutivos/${id}`, { method: 'DELETE' }),
+}
+
+// Tipos de Servicio Endpoints
+export const tiposServicioAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/tipos-servicio${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/proveedores/tipos-servicio/${id}`),
+  create: (data) => apiCall('/proveedores/tipos-servicio', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/tipos-servicio/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/proveedores/tipos-servicio/${id}`, { method: 'DELETE' }),
+}
+
+// Servicios Endpoints
+export const serviciosAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/servicios${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/proveedores/servicios/${id}`),
+  create: (data) => apiCall('/proveedores/servicios', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/servicios/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/proveedores/servicios/${id}`, { method: 'DELETE' }),
+}
+
+// Niveles de Soporte Endpoints
+export const nivelesServiciosAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/soporte-niveles${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/proveedores/soporte-niveles/${id}`),
+  create: (data) => apiCall('/proveedores/soporte-niveles', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/soporte-niveles/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/proveedores/soporte-niveles/${id}`, { method: 'DELETE' }),
+}
+
+// Equipos de Servicio Endpoints
+export const equiposServicioAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/equipos${query ? '?' + query : ''}`)
+  },
+  getById: (id) => apiCall(`/proveedores/equipos/${id}`),
+  create: (data) => apiCall('/proveedores/equipos', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/equipos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (id) => apiCall(`/proveedores/equipos/${id}`, { method: 'DELETE' }),
+}
+
+// Reclamos Endpoints
+export const reclamosAPI = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/reclamos${query ? '?' + query : ''}`)
+  },
+  getEstadisticas: () => apiCall('/proveedores/reclamos/estadisticas'),
+  getById: (id) => apiCall(`/proveedores/reclamos/${id}`),
+  create: (data) => apiCall('/proveedores/reclamos', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  update: (id, data) => apiCall(`/proveedores/reclamos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  cambiarEstado: (id, estado) => apiCall(`/proveedores/reclamos/${id}/estado`, {
+    method: 'PUT',
+    body: JSON.stringify({ estado })
+  }),
+  asignarTecnico: (id, tecnico_id) => apiCall(`/proveedores/reclamos/${id}/asignar`, {
+    method: 'PUT',
+    body: JSON.stringify({ tecnico_id })
+  }),
 }
 
 // TipoArticulo Endpoints
