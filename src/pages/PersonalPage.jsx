@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { personalAPI } from '../services/api'
+import { personalAPI, empresasAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
@@ -17,6 +17,9 @@ export default function PersonalPage() {
 
   // Estado de búsqueda
   const [filtro, setFiltro] = useState('')
+  const [empresaFiltro, setEmpresaFiltro] = useState('')
+  const [empresas, setEmpresas] = useState([])
+  const [exportando, setExportando] = useState(false)
 
   // Hook para manejar listado con paginación
   const {
@@ -34,7 +37,7 @@ export default function PersonalPage() {
     reload
   } = useListData(personalAPI.list, {
     initialLimit: 10,
-    initialFilters: { search: '' }
+    initialFilters: { search: '', empresa_id: '' }
   })
 
   // Estadísticas (no incluidas en useListData porque es un endpoint diferente)
@@ -42,6 +45,7 @@ export default function PersonalPage() {
 
   useEffect(() => {
     cargarEstadisticas()
+    cargarEmpresas()
   }, [])
 
   const cargarEstadisticas = async () => {
@@ -53,9 +57,55 @@ export default function PersonalPage() {
     }
   }
 
+  const cargarEmpresas = async () => {
+    try {
+      const response = await empresasAPI.getActivas()
+      setEmpresas(response.data || [])
+    } catch (err) {
+      console.error('Error cargando empresas:', err)
+    }
+  }
+
   const handleBuscar = (e) => {
     e.preventDefault()
-    updateFilters({ search: filtro })
+    updateFilters({ search: filtro, empresa_id: empresaFiltro })
+  }
+
+  const handleExportar = async () => {
+    try {
+      setExportando(true)
+      const params = {
+        search: filtro,
+        ...(empresaFiltro && { empresa_id: empresaFiltro })
+      }
+
+      const blob = await personalAPI.export(params)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `personal_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      Swal.fire({
+        title: 'Exportado',
+        text: 'El archivo CSV se ha descargado correctamente',
+        icon: 'success',
+        confirmButtonColor: '#3b82f6'
+      })
+    } catch (err) {
+      console.error('Error exportando:', err)
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo exportar el personal',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      })
+    } finally {
+      setExportando(false)
+    }
   }
 
   const eliminarPersona = async (persona) => {
@@ -114,18 +164,27 @@ export default function PersonalPage() {
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Personal</h1>
           <p className="text-gray-600 mt-2">Administra el personal de la empresa</p>
         </div>
-        <button
-          onClick={() => navigate('/personal/crear')}
-          disabled={!canCreate('personal')}
-          className={`px-6 py-2 rounded-lg transition-colors font-medium ${
-            canCreate('personal')
-              ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
-              : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-          }`}
-          title={!canCreate('personal') ? 'No tienes permiso para crear personal' : ''}
-        >
-          + Nuevo Personal
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportar}
+            disabled={exportando}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportando ? 'Exportando...' : '📥 Exportar CSV'}
+          </button>
+          <button
+            onClick={() => navigate('/personal/crear')}
+            disabled={!canCreate('personal')}
+            className={`px-6 py-2 rounded-lg transition-colors font-medium ${
+              canCreate('personal')
+                ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+            }`}
+            title={!canCreate('personal') ? 'No tienes permiso para crear personal' : ''}
+          >
+            + Nuevo Personal
+          </button>
+        </div>
       </div>
 
       {/* Estadísticas */}
@@ -148,30 +207,45 @@ export default function PersonalPage() {
 
       {/* Buscador y Filtros */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <form onSubmit={handleBuscar} className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Buscar personal por nombre, email, teléfono..."
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Buscar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFiltro('')
-              updateFilters({ search: '' })
-            }}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Limpiar
-          </button>
+        <form onSubmit={handleBuscar} className="space-y-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Buscar personal por nombre, email, teléfono..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <select
+              value={empresaFiltro}
+              onChange={(e) => setEmpresaFiltro(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[200px]"
+            >
+              <option value="">Todas las empresas</option>
+              {empresas.map(empresa => (
+                <option key={empresa.id} value={empresa.id}>
+                  {empresa.nombre_empresa}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Buscar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFiltro('')
+                setEmpresaFiltro('')
+                updateFilters({ search: '', empresa_id: '' })
+              }}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Limpiar
+            </button>
+          </div>
         </form>
       </div>
 
@@ -206,13 +280,10 @@ export default function PersonalPage() {
                     Teléfono
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Cargo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Sede
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                    Rol
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                    Remitos
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Acciones
@@ -232,15 +303,10 @@ export default function PersonalPage() {
                       {persona.telefono || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {persona.sede?.nombre_sede || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {persona.rol?.nombre || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {persona.estadisticas?.remitosSolicitados || 0} solicitados
-                      <br />
-                      {persona.estadisticas?.remitosAsignados || 0} asignados
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {persona.sede?.nombre_sede || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                       <button

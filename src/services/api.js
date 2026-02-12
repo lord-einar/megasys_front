@@ -161,6 +161,18 @@ export const personalAPI = {
     body: JSON.stringify(data)
   }),
   delete: (id) => apiCall(`/personal/${id}`, { method: 'DELETE' }),
+  export: async (params = {}) => {
+    const token = localStorage.getItem('authToken')
+    const query = new URLSearchParams(params).toString()
+    const response = await fetch(`${API_BASE_URL}/personal/export${query ? '?' + query : ''}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    if (!response.ok) throw new Error('Error al exportar')
+    const blob = await response.blob()
+    return blob
+  },
   getRemitos: (id, params = {}) => {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/personal/${id}/remitos${query ? '?' + query : ''}`)
