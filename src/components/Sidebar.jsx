@@ -28,6 +28,15 @@ function Sidebar({ isOpen, onNavigate }) {
     setExpandedMenu(expandedMenu === menu ? null : menu)
   }
 
+  // Helper to check if a menu or any of its submenus is active
+  const isMenuActive = (item) => {
+    if (location.pathname === item.href) return true
+    if (item.submenu) {
+      return item.submenu.some(sub => location.pathname.startsWith(sub.href))
+    }
+    return false
+  }
+
   const menuItems = [
     {
       label: 'Dashboard',
@@ -37,7 +46,6 @@ function Sidebar({ isOpen, onNavigate }) {
         </svg>
       ),
       href: '/',
-      active: true
     },
     {
       label: 'Sedes',
@@ -122,87 +130,126 @@ function Sidebar({ isOpen, onNavigate }) {
 
   return (
     <aside
-      className={`${isOpen ? 'w-64' : 'w-0'
-        } bg-navy-900 text-white transition-all duration-300 overflow-hidden flex flex-col border-r border-navy-800 shadow-xl z-20`}
+      className={`
+        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:translate-x-0 md:w-20 lg:w-64'} 
+        fixed md:static inset-y-0 left-0 bg-surface-950 text-white transition-all duration-300 ease-out z-30 flex flex-col border-r border-surface-800 shadow-2xl overflow-hidden
+      `}
     >
       {/* Logo Section */}
-      <div className="flex items-center gap-3 h-16 px-6 border-b border-navy-800 bg-navy-950/50">
-        <img src={logo} alt="Grupo Megatlon" className="h-8 object-contain opacity-90 hover:opacity-100 transition-opacity" />
+      <div className="h-16 flex items-center justify-center border-b border-surface-800 bg-surface-950 relative overflow-hidden shrink-0">
+        <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 scale-100 px-6' : 'opacity-0 scale-90 px-0'}`}>
+          {/* Replace with your logo or text */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
+            <span className="font-bold text-lg tracking-tight">Megasys</span>
+          </div>
+        </div>
+        {!isOpen && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
+          </div>
+        )}
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 overflow-y-auto py-6">
-        {menuItems.map((item, index) => (
-          <div key={index} className="mb-1">
-            {item.submenu ? (
-              <>
-                <button
-                  onClick={() => toggleMenu(item.label)}
-                  className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-all duration-200 group ${expandedMenu === item.label
-                      ? 'bg-navy-800 text-white border-l-4 border-accent-500'
-                      : 'text-navy-300 hover:bg-navy-800/50 hover:text-white border-l-4 border-transparent'
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-1 custom-scrollbar scrollbar-thin scrollbar-thumb-surface-700 scrollbar-track-transparent">
+        {menuItems.map((item, index) => {
+          const active = isMenuActive(item);
+          const isMenuExpanded = expandedMenu === item.label || active;
+
+          return (
+            <div key={index} className="px-3">
+              {item.submenu ? (
+                <>
+                  <button
+                    onClick={() => toggleMenu(item.label)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${expandedMenu === item.label || active
+                        ? 'bg-surface-800/50 text-white shadow-inner'
+                        : 'text-surface-400 hover:bg-surface-800 hover:text-white'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`flex-shrink-0 transition-colors duration-200 ${active ? 'text-primary-400' : 'text-surface-500 group-hover:text-white'}`}>
+                        {item.icon}
+                      </span>
+                      <span className={`font-medium text-sm truncate transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                    {isOpen && (
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 text-surface-500 ${expandedMenu === item.label ? 'rotate-180 text-white' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* Submenu */}
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedMenu === item.label && isOpen ? 'max-h-96 opacity-100 mt-1 mb-2' : 'max-h-0 opacity-0'}`}
+                  >
+                    <div className="pl-3 space-y-0.5 border-l border-surface-700 ml-4.5 my-1">
+                      {item.submenu.map((subitem, subindex) => {
+                        const isSubActive = location.pathname === subitem.href;
+                        return (
+                          <Link
+                            key={subindex}
+                            to={subitem.href}
+                            className={`block pl-4 pr-3 py-2 text-sm rounded-r-lg transition-all duration-200 block truncate ${isSubActive
+                                ? 'text-white font-medium bg-primary-500/10 border-l-2 border-primary-500 -ml-[1px]'
+                                : 'text-surface-400 hover:text-white hover:bg-surface-800/50'
+                              }`}
+                          >
+                            {subitem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <Link
+                  to={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${active
+                      ? 'bg-primary-600 text-white shadow-md shadow-primary-900/20'
+                      : 'text-surface-400 hover:bg-surface-800 hover:text-white'
                     }`}
                 >
-                  <span className={`transition-colors duration-200 ${expandedMenu === item.label ? 'text-accent-500' : 'text-navy-400 group-hover:text-white'}`}>
+                  <span className={`flex-shrink-0 ${!active && 'text-surface-500 group-hover:text-white'}`}>
                     {item.icon}
                   </span>
-                  <span className="flex-1 font-medium tracking-wide text-sm">{item.label}</span>
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 text-navy-500 ${expandedMenu === item.label ? 'rotate-180 text-white' : ''
-                      }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                </button>
-
-                {/* Submenu */}
-                <div
-                  className={`bg-navy-950 overflow-hidden transition-all duration-300 ease-in-out ${expandedMenu === item.label ? 'max-h-96 opacity-100 py-2' : 'max-h-0 opacity-0 py-0'
-                    }`}
-                >
-                  {item.submenu.map((subitem, subindex) => (
-                    <Link
-                      key={subindex}
-                      to={subitem.href}
-                      className={`block pl-16 pr-6 py-2.5 text-sm transition-all duration-200 border-l-2 ml-6 ${location.pathname === subitem.href
-                          ? 'text-white border-accent-500 bg-white/5'
-                          : 'text-navy-400 border-navy-800 hover:text-white hover:border-gray-500 hover:bg-white/5'
-                        }`}
-                    >
-                      {subitem.label}
-                    </Link>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <Link
-                to={item.href}
-                className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 group border-l-4 ${location.pathname === item.href
-                    ? 'bg-navy-800 text-white border-accent-500'
-                    : 'text-navy-300 hover:bg-navy-800/50 hover:text-white border-transparent'
-                  }`}
-              >
-                <span className={`transition-colors duration-200 ${location.pathname === item.href ? 'text-accent-500' : 'text-navy-400 group-hover:text-white'}`}>
-                  {item.icon}
-                </span>
-                <span className="font-medium tracking-wide text-sm">{item.label}</span>
-              </Link>
-            )}
-          </div>
-        ))}
+                  <span className={`font-medium text-sm truncate transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              )}
+            </div>
+          )
+        })}
       </nav>
 
-      {/* User Info Footer (Optional, refined) */}
-      <div className="p-4 border-t border-navy-800 bg-navy-950/30">
-        <p className="text-xs text-navy-500 text-center font-medium">Megasys v2.0</p>
+      {/* Footer / User Profile Snippet */}
+      <div className="p-4 border-t border-surface-800 bg-surface-950 shrink-0">
+        {isOpen ? (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-surface-800 flex items-center justify-center text-xs font-bold text-surface-400 ring-2 ring-surface-700">
+              v2
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">Megasys Platform</p>
+              <p className="text-xs text-surface-500 truncate">Infraestructura</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <span className="text-[10px] font-bold text-surface-600">v2.0</span>
+          </div>
+        )}
+
       </div>
     </aside>
   )

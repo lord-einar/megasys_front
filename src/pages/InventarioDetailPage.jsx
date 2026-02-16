@@ -26,12 +26,10 @@ export default function InventarioDetailPage() {
       setLoading(true)
       setError(null)
       const response = await inventarioAPI.getById(id)
-      // Backend returns { success, data: {...} }
       const data = response?.data || response
       setItem(data)
     } catch (err) {
       setError(err.message || 'Error al cargar el artículo')
-      Swal.fire('Error', err.message || 'No se pudo cargar el artículo', 'error')
     } finally {
       setLoading(false)
     }
@@ -40,7 +38,6 @@ export default function InventarioDetailPage() {
   const cargarHistorial = async () => {
     try {
       const response = await inventarioAPI.getHistorial(id, { limite: 100 })
-      // Backend returns { success, data: {...} }
       const data = response?.data || response
       setHistorial(data?.historial || data || [])
     } catch (err) {
@@ -48,33 +45,56 @@ export default function InventarioDetailPage() {
     }
   }
 
-  const estadoColor = (estado) => {
-    const colores = {
-      'disponible': 'bg-green-100 text-green-800',
-      'en_uso': 'bg-blue-100 text-blue-800',
-      'mantenimiento': 'bg-yellow-100 text-yellow-800',
-      'dado_de_baja': 'bg-red-100 text-red-800',
-      'en_prestamo': 'bg-purple-100 text-purple-800'
+  const estadoBadge = (estado) => {
+    const styles = {
+      'disponible': 'bg-emerald-50 text-emerald-700 border-emerald-100',
+      'en_uso': 'bg-blue-50 text-blue-700 border-blue-100',
+      'mantenimiento': 'bg-amber-50 text-amber-700 border-amber-100',
+      'dado_de_baja': 'bg-rose-50 text-rose-700 border-rose-100',
+      'en_prestamo': 'bg-purple-50 text-purple-700 border-purple-100'
     }
-    return colores[estado] || 'bg-gray-100 text-gray-800'
+    return styles[estado] || 'bg-surface-100 text-surface-600 border-surface-200'
+  }
+
+  const formatEstado = (estado) => {
+    return estado ? estado.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A'
   }
 
   const handleCambiarEstado = async () => {
     if (!newState) {
-      Swal.fire('Error', 'Selecciona un nuevo estado', 'error')
+      // Simple validation, button should be disabled anyway
       return
     }
 
     try {
       setChangingState(true)
       await inventarioAPI.cambiarEstado(id, newState, observaciones)
-      Swal.fire('Éxito', 'Estado actualizado correctamente', 'success')
+
+      await Swal.fire({
+        title: 'Estado Actualizado',
+        text: 'El estado del artículo ha sido modificado correctamente',
+        icon: 'success',
+        timer: 1500,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'rounded-2xl',
+          confirmButton: 'px-4 py-2 bg-emerald-600 text-white rounded-lg'
+        }
+      })
+
       setNewState('')
       setObservaciones('')
       await cargarDetalle()
       await cargarHistorial()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al cambiar el estado', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al cambiar el estado.',
+        icon: 'error',
+        customClass: {
+          popup: 'rounded-2xl'
+        }
+      })
     } finally {
       setChangingState(false)
     }
@@ -89,43 +109,56 @@ export default function InventarioDetailPage() {
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, dar de baja',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      backdrop: true,
+      allowOutsideClick: false,
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'px-4 py-2 bg-rose-600 text-white rounded-lg',
+        cancelButton: 'px-4 py-2 bg-slate-200 text-slate-700 rounded-lg'
+      }
     })
 
     if (result.isConfirmed) {
       try {
         await inventarioAPI.delete(id)
-        Swal.fire({
+        await Swal.fire({
           title: 'Eliminado',
           text: 'El artículo ha sido dado de baja correctamente.',
           icon: 'success',
           timer: 1500,
-          timerProgressBar: true
-        }).then(() => {
-          navigate('/inventario')
+          timerProgressBar: true,
+          customClass: {
+            popup: 'rounded-2xl',
+            confirmButton: 'px-4 py-2 bg-emerald-600 text-white rounded-lg'
+          }
         })
+        navigate('/inventario')
       } catch (err) {
-        // Verificar si es un error de autenticación
-        const isAuthError = err.message && err.message.includes('Token')
         Swal.fire({
           title: 'Error',
           text: err.message || 'Error al dar de baja el artículo.',
           icon: 'error',
-          didClose: () => {
-            if (isAuthError) {
-              // El redirect a login ocurrirá automáticamente en api.js después de 2 segundos
-            }
+          customClass: {
+            popup: 'rounded-2xl'
           }
         })
       }
     }
   }
 
-  const handleEditar = () => {
-    navigate(`/inventario/${id}/editar`)
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
-  const formatDate = (dateString) => {
+  const formatDateSimple = (dateString) => {
     if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleDateString('es-AR', {
       year: 'numeric',
@@ -134,31 +167,33 @@ export default function InventarioDetailPage() {
     })
   }
 
-  const formatCurrency = (value) => {
-    if (!value) return '$0.00'
-    return `$${parseFloat(value).toFixed(2)}`
-  }
-
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="mt-2 text-gray-600">Cargando artículo...</p>
+      <div className="flex items-center justify-center min-h-screen bg-surface-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+          <p className="text-surface-500 font-medium">Cargando artículo...</p>
+        </div>
       </div>
     )
   }
 
   if (error || !item) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded">
-          <p className="text-red-800 font-medium">Error al cargar artículo</p>
-          <p className="text-red-600 text-sm mt-1">{error}</p>
+      <div className="p-6 sm:p-8 bg-surface-50 min-h-screen">
+        <div className="p-8 text-center bg-white rounded-2xl border border-surface-200 shadow-sm max-w-lg mx-auto mt-20">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-rose-800 mb-2">No se pudo cargar el artículo</h3>
+          <p className="text-rose-600 mb-6">{error || 'El artículo solicitado no existe o fue eliminado.'}</p>
           <button
             onClick={() => navigate('/inventario')}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="btn-primary w-full"
           >
-            Volver a Inventario
+            Volver al Inventario
           </button>
         </div>
       </div>
@@ -166,243 +201,310 @@ export default function InventarioDetailPage() {
   }
 
   return (
-    <div className="p-6">
-      {/* Encabezado */}
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{item.descripcionCompleta}</h1>
-          <p className="text-gray-600 mt-2">
-            {item.marca} {item.modelo}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleEditar}
-            disabled={!canUpdate('inventario')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              canUpdate('inventario')
-                ? 'bg-yellow-600 text-white hover:bg-yellow-700 cursor-pointer'
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            }`}
-            title={!canUpdate('inventario') ? 'No tienes permiso para editar' : ''}
-          >
-            Editar
-          </button>
-          <button
-            onClick={handleEliminar}
-            disabled={!canDelete('inventario')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              canDelete('inventario')
-                ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            }`}
-            title={!canDelete('inventario') ? 'No tienes permiso para dar de baja' : ''}
-          >
-            Dar de Baja
-          </button>
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <button
             onClick={() => navigate('/inventario')}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="text-surface-500 hover:text-primary-600 font-medium text-sm flex items-center gap-2 transition-colors w-fit"
           >
-            Volver
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a Inventario
           </button>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Panel Principal */}
-        <div className="lg:col-span-2">
-          {/* Información General */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Información General</h2>
+          <div className="flex gap-3">
+            {canUpdate('inventario') && (
+              <button
+                onClick={() => navigate(`/inventario/${id}/editar`)}
+                className="btn-primary flex items-center gap-2 text-sm shadow-lg shadow-primary-900/20"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar
+              </button>
+            )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-600 text-sm">Marca</p>
-                <p className="text-gray-900 font-semibold">{item.marca}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Modelo</p>
-                <p className="text-gray-900 font-semibold">{item.modelo}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Número de Serie</p>
-                <p className="text-gray-900 font-mono text-sm">{item.numero_serie || 'N/A'}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Service Tag</p>
-                <p className="text-gray-900 font-mono text-sm">{item.service_tag || 'N/A'}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Fecha de Adquisición</p>
-                <p className="text-gray-900 font-semibold">{formatDate(item.fecha_adquisicion)}</p>
-              </div>
-            </div>
-
-            {item.observaciones && (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-gray-600 text-sm">Observaciones</p>
-                <p className="text-gray-900">{item.observaciones}</p>
-              </div>
+            {canDelete('inventario') && (
+              <button
+                onClick={handleEliminar}
+                className="bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold py-2 px-4 rounded-xl transition-all text-sm flex items-center gap-2 shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
             )}
           </div>
+        </div>
 
-          {/* Historial de Movimientos */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Historial de Movimientos</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Header Card */}
+            <div className="card-base bg-white p-6 sm:p-8">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${estadoBadge(item.estado)}`}>
+                      {formatEstado(item.estado)}
+                    </span>
+                    <span className="text-surface-400 text-xs font-mono bg-surface-100 px-1.5 py-0.5 rounded border border-surface-200">
+                      ID: {id.split('-')[0]}...
+                    </span>
+                  </div>
+                  <h1 className="text-2xl font-bold text-surface-900 tracking-tight">{item.descripcionCompleta || 'Sin descripción'}</h1>
+                  <p className="text-surface-500 font-medium mt-1">{item.marca} {item.modelo}</p>
+                </div>
 
-            {historial.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No hay movimientos registrados</p>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {historial.map((mov, idx) => (
-                  <div key={idx} className="flex items-start gap-3 pb-3 border-b last:border-b-0">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className="text-gray-900 font-semibold">
-                          {mov.tipo_movimiento || 'Movimiento'}
-                        </p>
-                        <p className="text-gray-600 text-sm">{formatDate(mov.fecha_movimiento || mov.created_at)}</p>
-                      </div>
-                      {mov.descripcion && (
-                        <p className="text-gray-600 text-sm mt-1">{mov.descripcion}</p>
-                      )}
-                      {mov.usuario_email && (
-                        <p className="text-gray-500 text-xs mt-1">Por: {mov.usuario_email}</p>
-                      )}
+                {item.sedePrincipal && (
+                  <div className="flex items-start gap-3 p-3 bg-surface-50 rounded-xl border border-surface-100 min-w-[200px]">
+                    <div className="w-8 h-8 rounded-full bg-white border border-surface-200 flex items-center justify-center text-surface-400 shadow-sm shrink-0">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-0.5">Ubicación</p>
+                      <p className="text-sm font-bold text-surface-900">{item.sedePrincipal.nombre_sede}</p>
+                      <p className="text-xs text-surface-500">{item.sedePrincipal.localidad}</p>
                     </div>
                   </div>
-                ))}
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 pt-6 border-t border-surface-100">
+                <InfoItem label="Número de Serie" value={item.numero_serie} mono />
+                <InfoItem label="Service Tag" value={item.service_tag} mono />
+                <InfoItem label="Tipo de Artículo" value={item.tipoArticulo?.nombre} />
+                <InfoItem label="Fecha de Adquisición" value={formatDateSimple(item.fecha_adquisicion)} />
+              </div>
+
+              {item.observaciones && (
+                <div className="mt-6 pt-6 border-t border-surface-100">
+                  <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-2">Observaciones</p>
+                  <p className="text-sm text-surface-700 bg-surface-50 p-4 rounded-xl border border-surface-100 italic">
+                    "{item.observaciones}"
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Historial Timeline */}
+            <div className="card-base bg-white p-6 sm:p-8">
+              <h2 className="text-lg font-bold text-surface-900 mb-6 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-surface-100 text-surface-500 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+                Historial de Movimientos
+              </h2>
+
+              {historial.length === 0 ? (
+                <div className="text-center py-10 bg-surface-50 rounded-xl border border-dashed border-surface-200">
+                  <p className="text-surface-500 font-medium text-sm">No hay movimientos registrados para este artículo</p>
+                </div>
+              ) : (
+                <div className="space-y-6 relative before:absolute before:inset-y-0 before:left-[19px] before:w-0.5 before:bg-surface-200 before:z-0">
+                  {historial.map((mov, idx) => (
+                    <div key={idx} className="relative z-10 pl-12 group">
+                      <div className="absolute left-0 top-1 w-10 h-10 rounded-full bg-white border-4 border-surface-50 shadow-sm flex items-center justify-center z-10 group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+                      </div>
+
+                      <div className="bg-surface-50 p-4 rounded-xl border border-surface-200 hover:border-primary-200 hover:shadow-sm transition-all">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                          <p className="font-bold text-surface-900 text-sm">
+                            {mov.tipo_movimiento || 'Movimiento'}
+                          </p>
+                          <span className="text-xs text-surface-500 font-medium bg-white px-2 py-1 rounded border border-surface-200">
+                            {formatDate(mov.fecha_movimiento || mov.created_at)}
+                          </span>
+                        </div>
+
+                        {mov.descripcion && (
+                          <p className="text-surface-600 text-xs mb-2">{mov.descripcion}</p>
+                        )}
+
+                        {mov.usuario_email && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-surface-400 uppercase font-bold tracking-wide">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {mov.usuario_email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Préstamo Activo Card (Re-styled) */}
+            {item.prestamoActivo && (
+              <div className="bg-gradient-to-br from-indigo-600 to-primary-700 rounded-2xl p-6 text-white shadow-xl shadow-primary-900/20 relative overflow-hidden">
+                {/* Decorative circles */}
+                <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-6 -mb-6 w-20 h-20 rounded-full bg-black/10 blur-xl"></div>
+
+                <div className="flex items-center gap-3 mb-4 relative z-10">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg leading-tight">Préstamo Activo</h3>
+                    <p className="text-indigo-100 text-xs font-medium">En circulación actualmente</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 relative z-10">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                    <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Destino</p>
+                    <p className="font-bold text-white text-base">
+                      {item.prestamoActivo.sedeDestino?.nombre_sede}
+                    </p>
+                    <p className="text-indigo-100 text-xs mt-0.5">
+                      {item.prestamoActivo.sedeDestino?.localidad}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Remito</p>
+                      <p className="font-mono text-white text-sm">{item.prestamoActivo.numeroRemito}</p>
+                    </div>
+                    <div>
+                      <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Estado</p>
+                      <span className="inline-block px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-bold text-white border border-white/20">
+                        {item.prestamoActivo.estado}
+                      </span>
+                    </div>
+                  </div>
+
+                  {item.prestamoActivo.fechaDevolucionEsperada && (
+                    <div>
+                      <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">Devolución Estimada</p>
+                      <p className="text-white font-medium text-sm">
+                        {formatDateSimple(item.prestamoActivo.fechaDevolucionEsperada)}
+                      </p>
+                    </div>
+                  )}
+
+                  {item.prestamoActivo.observaciones && (
+                    <div className="pt-2 border-t border-white/10">
+                      <p className="text-indigo-200 text-xs italic">
+                        "{item.prestamoActivo.observaciones}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Stats Card */}
+            <div className="card-base bg-white p-5">
+              <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 mb-4 uppercase tracking-wide">
+                Detalles de Registro
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-surface-500">ID Sistema</span>
+                  <span className="text-surface-900 font-mono text-xs bg-surface-100 px-2 py-0.5 rounded">{item.id}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-surface-500">Creado</span>
+                  <span className="text-surface-900 font-medium">{formatDateSimple(item.created_at)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-surface-500">Actualizado</span>
+                  <span className="text-surface-900 font-medium">{formatDateSimple(item.updated_at)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Change State Box */}
+            {canUpdate('inventario') && (
+              <div className="card-base bg-white p-6 border-l-4 border-l-primary-500">
+                <h2 className="text-lg font-bold text-surface-900 mb-4">Actualizar Estado</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-surface-500 mb-1.5 uppercase tracking-wide">
+                      Nuevo Estado
+                    </label>
+                    <select
+                      value={newState}
+                      onChange={(e) => setNewState(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-surface-900"
+                      disabled={changingState}
+                    >
+                      <option value="">-- Seleccionar --</option>
+                      <option value="disponible">Disponible</option>
+                      <option value="en_uso">En Uso</option>
+                      <option value="mantenimiento">Mantenimiento</option>
+                      <option value="dado_de_baja">Dado de Baja</option>
+                      <option value="en_prestamo">En Préstamo</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-surface-500 mb-1.5 uppercase tracking-wide">
+                      Observaciones de Cambio
+                    </label>
+                    <textarea
+                      value={observaciones}
+                      onChange={(e) => setObservaciones(e.target.value)}
+                      placeholder="Motivo del cambio de estado..."
+                      rows="3"
+                      className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-surface-400 text-surface-900 resize-none"
+                      disabled={changingState}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleCambiarEstado}
+                    disabled={!newState || changingState}
+                    className="w-full btn-primary py-2.5 justify-center shadow-lg shadow-primary-900/10"
+                  >
+                    {changingState ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Actualizando...
+                      </span>
+                    ) : 'Guardar Nuevo Estado'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Panel Lateral */}
-        <div>
-          {/* Estado Actual */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Estado Actual</h2>
-
-            <div className={`px-4 py-3 rounded-lg mb-4 text-center ${estadoColor(item.estado)}`}>
-              <p className="font-semibold uppercase text-sm">{item.estado}</p>
-            </div>
-
-            <div className="space-y-2">
-              <div>
-                <p className="text-gray-600 text-sm">Sede</p>
-                <p className="text-gray-900 font-semibold">{item.sedePrincipal?.nombre_sede || 'N/A'}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Tipo de Artículo</p>
-                <p className="text-gray-900 font-semibold">{item.tipoArticulo?.nombre || 'N/A'}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-600 text-sm">Registrado el</p>
-                <p className="text-gray-900 text-sm">{formatDate(item.created_at)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Información de Préstamo Activo */}
-          {item.prestamoActivo && (
-            <div className="bg-purple-50 border-2 border-purple-200 rounded-lg shadow p-6 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <h2 className="text-xl font-bold text-purple-900">Préstamo Activo</h2>
-              </div>
-
-              <div className="space-y-3">
-                <div className="bg-white rounded p-3">
-                  <p className="text-gray-600 text-sm">En uso en</p>
-                  <p className="text-purple-900 font-bold text-lg">
-                    {item.prestamoActivo.sedeDestino?.nombre_sede}
-                  </p>
-                  <p className="text-gray-600 text-xs">
-                    {item.prestamoActivo.sedeDestino?.localidad}, {item.prestamoActivo.sedeDestino?.provincia}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-gray-700 text-sm">Remito</p>
-                  <p className="text-purple-900 font-semibold font-mono">
-                    {item.prestamoActivo.numeroRemito}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-gray-700 text-sm">Estado del remito</p>
-                  <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                    {item.prestamoActivo.estado}
-                  </span>
-                </div>
-
-                {item.prestamoActivo.fechaDevolucionEsperada && (
-                  <div>
-                    <p className="text-gray-700 text-sm">Fecha de devolución esperada</p>
-                    <p className="text-purple-900 font-semibold">
-                      {formatDate(item.prestamoActivo.fechaDevolucionEsperada)}
-                    </p>
-                  </div>
-                )}
-
-                {item.prestamoActivo.observaciones && (
-                  <div>
-                    <p className="text-gray-700 text-sm">Observaciones</p>
-                    <p className="text-gray-800 text-sm italic">{item.prestamoActivo.observaciones}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Cambiar Estado */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Cambiar Estado</h2>
-
-            <div className="space-y-3">
-              <select
-                value={newState}
-                onChange={(e) => setNewState(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={changingState}
-              >
-                <option value="">Selecciona nuevo estado</option>
-                <option value="disponible">Disponible</option>
-                <option value="en_uso">En Uso</option>
-                <option value="mantenimiento">Mantenimiento</option>
-                <option value="dado_de_baja">Dado de Baja</option>
-                <option value="en_prestamo">En Préstamo</option>
-              </select>
-
-              <textarea
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-                placeholder="Observaciones (opcional)"
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={changingState}
-              />
-
-              <button
-                onClick={handleCambiarEstado}
-                disabled={!newState || changingState}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                {changingState ? 'Actualizando...' : 'Actualizar Estado'}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
+    </div>
+  )
+}
+
+function InfoItem({ label, value, mono = false }) {
+  return (
+    <div>
+      <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">{label}</p>
+      {value ? (
+        <p className={`text-surface-900 font-medium ${mono ? 'font-mono text-sm' : 'text-base'}`}>
+          {value}
+        </p>
+      ) : (
+        <p className="text-surface-400 text-sm italic">No especificado</p>
+      )}
     </div>
   )
 }

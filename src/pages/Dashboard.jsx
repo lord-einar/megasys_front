@@ -31,7 +31,6 @@ function Dashboard() {
         text: location.state.error,
         confirmButtonColor: '#3b82f6'
       })
-      // Limpiar el state para que no se muestre de nuevo
       navigate(location.pathname, { replace: true, state: {} })
     }
   }, [location.state, navigate, location.pathname])
@@ -40,13 +39,12 @@ function Dashboard() {
     try {
       setLoading(true)
 
-      // Cargar cada estadística por separado para que un error no afecte a las otras
       let sedesCount = 0
       let personalCount = 0
       let inventarioCount = 0
       let remitosCount = 0
 
-      // Usar el endpoint de estadísticas para sedes (más eficiente)
+      // Cargar estadísticas
       try {
         const response = await sedesAPI.getEstadisticas()
         const estadisticas = response?.data || response
@@ -57,21 +55,16 @@ function Dashboard() {
         console.error('Error cargando estadísticas generales:', err)
       }
 
-      // Cargar remitos pendientes de confirmación
-      // Estos son remitos que aún no están en estado 'completado'
+      // Cargar remitos
       try {
-        const remitosData = await remitosAPI.list({
-          limit: 100  // Cargar sin filtro de estado para obtener todos
-        })
-
+        const remitosData = await remitosAPI.list({ limit: 100 })
         const remitos = Array.isArray(remitosData.data) ? remitosData.data : remitosData || []
         remitosCount = remitosData?.pagination?.total || remitos.length || 0
-        // Filtrar solo los que NO estén en estado 'completado' (aún no han sido confirmados)
+
         const pendientes = remitos.filter(r => r.estado !== 'completado').slice(0, 5)
         setPendingRemitos(pendientes)
       } catch (err) {
         console.warn('No se pudieron cargar los remitos pendientes:', err.message)
-        setPendingRemitos([])
       }
 
       setStats({
@@ -81,212 +74,225 @@ function Dashboard() {
         remitos: remitosCount,
       })
     } catch (err) {
-      console.error('Error inesperado cargando estadísticas:', err)
-      // Mantener valores anteriores en caso de error
+      console.error('Error inesperado:', err)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="p-8 bg-slate-50 min-h-full">
+    <div className="p-6 sm:p-8 min-h-full animate-fade-in">
       {/* Page Header */}
-      <div className="mb-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-navy-900 tracking-tight">Dashboard</h1>
-            <p className="text-slate-500 mt-1 font-medium">Resumen general del sistema de gestión</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/remitos')}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Ver Remitos
-            </button>
-            <button
-              onClick={() => navigate('/remitos/crear')}
-              className="btn-primary flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Nuevo Remito
-            </button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Dashboard</h1>
+          <p className="text-surface-500 mt-1 font-medium">Resumen general del sistema</p>
         </div>
-
-        {/* Date Filter */}
-        <div className="flex items-center gap-4 mt-6">
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/remitos')}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="text-sm font-medium text-slate-600">Últimos 30 días</span>
-          </div>
+            Ver Remitos
+          </button>
+          <button
+            onClick={() => navigate('/remitos/crear')}
+            className="btn-primary flex items-center gap-2 shadow-lg shadow-surface-900/20"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Nuevo Remito
+          </button>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Sedes Activas"
           value={stats.sedes}
           icon="building"
           trend={12}
-          subtitle="+2 este mes"
+          subtitle="Total operativo"
         />
         <StatCard
           title="Personal"
           value={stats.personal}
           icon="users"
-          trend={8}
-          subtitle="+3 este mes"
+          trend={5}
+          subtitle="Activos hoy"
         />
         <StatCard
           title="Inventario"
           value={stats.inventario}
           icon="package"
-          trend={15}
-          subtitle="+34 este mes"
+          trend={-2}
+          subtitle="Items registrados"
         />
         <StatCard
           title="Remitos"
           value={stats.remitos}
           icon="document"
-          trend={-2}
-          subtitle="-1 este mes"
+          trend={8}
+          subtitle="Movimientos"
         />
       </div>
 
-      {/* Content Grid */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Left column - Recent Activity & Loans */}
+        {/* Left Column (2/3) */}
         <div className="xl:col-span-2 space-y-8">
           <RecentActivityCard />
           <LoansAboutToExpireCard />
 
-          {/* Pending Confirmations Card */}
+          {/* Pending Confirmations Section */}
           {pendingRemitos.length > 0 && (
             <div className="card-base p-6">
-              <h2 className="text-lg font-bold text-navy-900 mb-6 flex items-center gap-2">
-                <div className="p-2 bg-warning-50 rounded-lg">
-                  <svg className="w-5 h-5 text-warning-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                Remitos Pendientes
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-surface-900 flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  Remitos Pendientes
+                </h2>
+                <button
+                  onClick={() => navigate('/remitos')}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                >
+                  Ver todos
+                </button>
+              </div>
+
               <div className="space-y-3">
                 {pendingRemitos.slice(0, 5).map((remito) => (
                   <div
                     key={remito.id}
                     onClick={() => navigate(`/remitos/${remito.id}`)}
-                    className="p-4 bg-white border border-slate-100 rounded-xl hover:border-warning-200 hover:shadow-md transition-all cursor-pointer group"
+                    className="group relative flex items-center justify-between p-4 bg-white border border-surface-100 rounded-xl hover:border-amber-200 hover:shadow-md hover:shadow-amber-500/5 transition-all cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-surface-50 flex items-center justify-center text-surface-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
                       <div>
-                        <p className="font-bold text-navy-900 group-hover:text-primary-600 transition-colors">{remito.numero_remito}</p>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                          Solicitante: <span className="font-medium text-slate-700">{remito.solicitante?.nombre || 'N/A'}</span>
+                        <p className="font-bold text-surface-900 group-hover:text-primary-700 transition-colors">
+                          #{remito.numero_remito}
+                        </p>
+                        <p className="text-sm text-surface-500">
+                          Solicitante: <span className="font-medium text-surface-700">{remito.solicitante?.nombre || 'N/A'}</span>
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className="inline-block px-3 py-1 bg-warning-50 text-warning-700 border border-warning-100 text-xs font-bold rounded-full">
-                          Pendiente
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-xs font-medium text-surface-400">Estado</p>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                          {remito.estado || 'Pendiente'}
                         </span>
                       </div>
+                      <svg className="w-5 h-5 text-surface-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => navigate('/remitos')}
-                className="mt-6 w-full py-3 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-navy-900 rounded-lg font-medium transition-all text-sm border border-slate-200"
-              >
-                Ver todos los remitos pendientes
-              </button>
             </div>
           )}
         </div>
 
-        {/* Right column - Quick Actions & System Status */}
+        {/* Right Column (1/3) */}
         <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="card-base p-6">
-            <h2 className="text-lg font-bold text-navy-900 mb-6 flex items-center gap-2">
-              <div className="p-2 bg-primary-50 rounded-lg">
-                <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Quick Actions Card */}
+          <div className="card-base p-6 sticky top-24">
+            <h2 className="text-lg font-bold text-surface-900 mb-6 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-              </div>
+              </span>
               Acciones Rápidas
             </h2>
-            <div className="space-y-3">
-              <button
+            <div className="grid gap-3">
+              <ActionButton
+                icon="📄"
+                label="Nuevo Remito"
                 onClick={() => navigate('/remitos/crear')}
-                className="w-full px-4 py-3 bg-primary-50 border border-primary-100 text-primary-700 rounded-xl hover:bg-primary-100 hover:shadow-sm transition-all font-medium text-left flex items-center gap-3 group"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">📄</span>
-                <span className="font-semibold">Nuevo Remito</span>
-              </button>
-              <button
+                primary
+              />
+              <ActionButton
+                icon="📦"
+                label="Nuevo Artículo"
                 onClick={() => navigate('/inventario/crear')}
-                className="w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary-200 hover:text-primary-700 hover:shadow-sm transition-all font-medium text-left flex items-center gap-3 group"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">📦</span>
-                <span>Nuevo Artículo</span>
-              </button>
-              <button
+              />
+              <ActionButton
+                icon="👥"
+                label="Nuevo Personal"
                 onClick={() => navigate('/personal/crear')}
-                className="w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary-200 hover:text-primary-700 hover:shadow-sm transition-all font-medium text-left flex items-center gap-3 group"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">👥</span>
-                <span>Nuevo Personal</span>
-              </button>
-              <button
-                onClick={() => navigate('/proveedores/crear')}
-                className="w-full px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary-200 hover:text-primary-700 hover:shadow-sm transition-all font-medium text-left flex items-center gap-3 group"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">🤝</span>
-                <span>Nuevo Proveedor</span>
-              </button>
+              />
+              <ActionButton
+                icon="🤝"
+                label="Nuevo Proveedor"
+                onClick={() => navigate('/proveedores/nuevo')}
+              />
             </div>
-          </div>
 
-          {/* System Status */}
-          <div className="card-base p-6">
-            <h2 className="text-lg font-bold text-navy-900 mb-6 flex items-center gap-2">
-              <div className="p-2 bg-success-50 rounded-lg">
-                <svg className="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              Estado del Sistema
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm font-medium text-slate-600">Servidor API</span>
-                <span className="px-2.5 py-0.5 bg-success-50 text-success-700 border border-success-100 text-xs font-bold rounded-full">Online</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm font-medium text-slate-600">Base de Datos</span>
-                <span className="px-2.5 py-0.5 bg-success-50 text-success-700 border border-success-100 text-xs font-bold rounded-full">Estable</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm font-medium text-slate-600">Sincronización</span>
-                <span className="px-2.5 py-0.5 bg-warning-50 text-warning-700 border border-warning-100 text-xs font-bold rounded-full">Parcial</span>
-              </div>
-              <div className="flex items-center justify-between py-2 last:border-0">
-                <span className="text-sm font-medium text-slate-600">Última Actualización</span>
-                <span className="text-xs font-medium text-slate-400">Hace 5 min</span>
+            {/* Mini System Status */}
+            <div className="mt-8 pt-6 border-t border-surface-100">
+              <h3 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-4">Estado del Sistema</h3>
+              <div className="space-y-3">
+                <StatusItem label="Servidor API" status="online" />
+                <StatusItem label="Base de Datos" status="online" />
+                <StatusItem label="Sincronización" status="warning" />
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ActionButton({ icon, label, onClick, primary = false }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full px-4 py-3.5 rounded-xl border transition-all duration-200 font-medium text-left flex items-center gap-3 group ${primary
+          ? 'bg-primary-50 border-primary-100 text-primary-900 hover:bg-primary-100 hover:shadow-md hover:shadow-primary-900/5'
+          : 'bg-white border-surface-200 text-surface-700 hover:border-primary-200 hover:text-primary-700 hover:shadow-sm'
+        }`}
+    >
+      <span className="text-xl group-hover:scale-110 transition-transform duration-200 filter drop-shadow-sm">{icon}</span>
+      <span className="font-semibold text-sm">{label}</span>
+      <svg className={`w-4 h-4 ml-auto transition-transform ${primary ? 'text-primary-400 group-hover:text-primary-600' : 'text-surface-300 group-hover:text-primary-500'} group-hover:translate-x-1`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  )
+}
+
+function StatusItem({ label, status }) {
+  const colors = {
+    online: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    offline: 'bg-rose-500'
+  }
+
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-surface-600">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${colors[status]} ring-2 ring-white shadow-sm`}></span>
+        <span className="text-xs font-medium text-surface-500 capitalize">{status}</span>
       </div>
     </div>
   )

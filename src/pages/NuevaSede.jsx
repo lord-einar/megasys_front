@@ -13,7 +13,6 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import ValidationIndicator from '../components/ValidationIndicator'
 import CharacterCounter from '../components/CharacterCounter'
 import FieldError from '../components/FieldError'
-import './NuevaSede.css'
 
 // Schema de validación con Yup
 const sedeSchema = yup.object().shape({
@@ -197,345 +196,430 @@ export default function NuevaSede() {
   }
 
   if (!canCreate('sedes')) {
-    return <div>Cargando...</div>
-  }
-
-  if (loadingEmpresas) {
-    return (
-      <div className="nueva-sede-container">
-        <div className="loading-spinner">
-          <p>Cargando empresas...</p>
-        </div>
-      </div>
-    )
+    return <div className="p-8 text-center text-surface-500">Cargando permisos...</div>
   }
 
   return (
-    <div className="nueva-sede-container">
-      <div className="nueva-sede-header">
-        <h1>Nueva Sede</h1>
-        <p>Registrar una nueva sede en el sistema</p>
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-      {submitError && <div className="alert alert-danger">{submitError}</div>}
-
-      {empresas.length === 0 && (
-        <div className="alert alert-danger">
-          No hay empresas disponibles. Por favor crea una empresa primero.
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Nueva Sede</h1>
+            <p className="text-surface-500 mt-1 font-medium">Registra una nueva ubicación física en el sistema</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/sedes')}
+            className="text-surface-500 hover:text-surface-700 font-medium text-sm transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Cancelar y Volver
+          </button>
         </div>
-      )}
 
-      {empresas.length > 0 && (
-        <form className="nueva-sede-form" onSubmit={handleSubmit(onSubmit)}>
-          {/* Sección 1: Información de la Sede */}
-          <div className="form-section">
-            <h2>Información de la Sede</h2>
+        {error && (
+          <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 font-medium flex items-center gap-3">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </div>
+        )}
 
-            {/* Empresa */}
-            <div className="form-group">
-              <label htmlFor="empresa_id">
-                Empresa <span className="required">*</span>
-              </label>
-              <select
-                id="empresa_id"
-                {...register('empresa_id')}
+        {submitError && (
+          <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 font-medium flex items-center gap-3">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {submitError}
+          </div>
+        )}
+
+        {empresas.length === 0 && !loadingEmpresas && !error && (
+          <div className="p-6 bg-amber-50 border border-amber-100 rounded-xl text-center">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-600">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <h3 className="text-amber-800 font-bold mb-2">Se requiere una empresa</h3>
+            <p className="text-amber-700 mb-4 text-sm">No puedes crear una sede sin empresas registradas.</p>
+            <button onClick={() => navigate('/empresas/nueva')} className="btn-primary bg-amber-600 hover:bg-amber-700 border-transparent">
+              Crear Empresa
+            </button>
+          </div>
+        )}
+
+        {loadingEmpresas && (
+          <div className="p-12 text-center bg-white rounded-2xl border border-surface-200 shadow-sm">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+            <p className="text-surface-500 font-medium">Cargando empresas disponibles...</p>
+          </div>
+        )}
+
+        {empresas.length > 0 && !loadingEmpresas && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Sección 1: Información de la Sede */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">1</span>
+                Información Principal
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Empresa */}
+                <div className="space-y-1.5">
+                  <label htmlFor="empresa_id" className="block text-sm font-semibold text-surface-700">
+                    Empresa <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="empresa_id"
+                      {...register('empresa_id')}
+                      disabled={isLoading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.empresa_id || hasFieldError('empresa_id', serverFieldErrors)
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    >
+                      <option value="">-- Seleccionar empresa --</option>
+                      {empresas.map((empresa) => (
+                        <option key={empresa.id} value={empresa.id}>
+                          {empresa.nombre_empresa}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <FieldError
+                    serverError={getFieldError('empresa_id', serverFieldErrors)}
+                    clientError={errors.empresa_id}
+                    fieldName="empresa_id"
+                  />
+                </div>
+
+                {/* Nombre de Sede */}
+                <div className="space-y-1.5">
+                  <label htmlFor="nombre_sede" className="block text-sm font-semibold text-surface-700">
+                    Nombre de la Sede <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="nombre_sede"
+                    {...register('nombre_sede', {
+                      onChange: async (e) => {
+                        const value = e.target.value
+                        setFormValues(prev => ({ ...prev, nombre_sede: value }))
+                        if (value.trim()) {
+                          await nombreSedeValidation.validate(value)
+                        } else {
+                          nombreSedeValidation.clearError()
+                        }
+                      }
+                    })}
+                    placeholder="Ej: Sede Centro, Sede Norte"
+                    disabled={isLoading}
+                    className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.nombre_sede || hasFieldError('nombre_sede', serverFieldErrors) || (nombreSedeValidation.isValid === false)
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      }`}
+                  />
+                  <div className="flex justify-between items-start min-h-[20px]">
+                    <FieldError
+                      serverError={getFieldError('nombre_sede', serverFieldErrors)}
+                      clientError={errors.nombre_sede}
+                      fieldName="nombre_sede"
+                    />
+                    <CharacterCounter currentLength={formValues.nombre_sede.length} maxLength={100} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sección 2: Ubicación */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">2</span>
+                Ubicación
+              </h2>
+
+              <div className="space-y-6">
+                {/* Dirección */}
+                <div className="space-y-1.5">
+                  <label htmlFor="direccion" className="block text-sm font-semibold text-surface-700">
+                    Dirección <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="direccion"
+                    {...register('direccion', {
+                      onChange: async (e) => {
+                        const value = e.target.value
+                        setFormValues(prev => ({ ...prev, direccion: value }))
+                        if (value.trim()) {
+                          await direccionValidation.validate(value)
+                        } else {
+                          direccionValidation.clearError()
+                        }
+                      }
+                    })}
+                    placeholder="Calle y número"
+                    disabled={isLoading}
+                    className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.direccion || hasFieldError('direccion', serverFieldErrors) || (direccionValidation.isValid === false)
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      }`}
+                  />
+                  <div className="flex justify-between items-start">
+                    <FieldError
+                      serverError={getFieldError('direccion', serverFieldErrors)}
+                      clientError={errors.direccion}
+                      fieldName="direccion"
+                    />
+                    <CharacterCounter currentLength={formValues.direccion.length} maxLength={200} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Localidad */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="localidad" className="block text-sm font-semibold text-surface-700">
+                      Localidad <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="localidad"
+                      {...register('localidad', {
+                        onChange: async (e) => {
+                          const value = e.target.value
+                          setFormValues(prev => ({ ...prev, localidad: value }))
+                          if (value.trim()) {
+                            await localidadValidation.validate(value)
+                          } else {
+                            localidadValidation.clearError()
+                          }
+                        }
+                      })}
+                      placeholder="Ej: CABA"
+                      disabled={isLoading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.localidad || hasFieldError('localidad', serverFieldErrors) || (localidadValidation.isValid === false)
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    />
+                    <FieldError
+                      serverError={getFieldError('localidad', serverFieldErrors)}
+                      clientError={errors.localidad}
+                      fieldName="localidad"
+                    />
+                  </div>
+
+                  {/* Provincia */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="provincia" className="block text-sm font-semibold text-surface-700">
+                      Provincia <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="provincia"
+                      {...register('provincia', {
+                        onChange: async (e) => {
+                          const value = e.target.value
+                          setFormValues(prev => ({ ...prev, provincia: value }))
+                          if (value.trim()) {
+                            await provinciaValidation.validate(value)
+                          } else {
+                            provinciaValidation.clearError()
+                          }
+                        }
+                      })}
+                      placeholder="Ej: Buenos Aires"
+                      disabled={isLoading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.provincia || hasFieldError('provincia', serverFieldErrors) || (provinciaValidation.isValid === false)
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    />
+                    <FieldError
+                      serverError={getFieldError('provincia', serverFieldErrors)}
+                      clientError={errors.provincia}
+                      fieldName="provincia"
+                    />
+                  </div>
+                  {/* País */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="pais" className="block text-sm font-semibold text-surface-700">
+                      País <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="pais"
+                      {...register('pais', {
+                        onChange: async (e) => {
+                          const value = e.target.value
+                          setFormValues(prev => ({ ...prev, pais: value }))
+                          if (value.trim()) {
+                            await paisValidation.validate(value)
+                          } else {
+                            paisValidation.clearError()
+                          }
+                        }
+                      })}
+                      disabled={isLoading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.pais || hasFieldError('pais', serverFieldErrors) || (paisValidation.isValid === false)
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    />
+                    <FieldError
+                      serverError={getFieldError('pais', serverFieldErrors)}
+                      clientError={errors.pais}
+                      fieldName="pais"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sección 3: Contacto e Infraestructura */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">3</span>
+                Contacto e Infraestructura
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Teléfono */}
+                <div className="space-y-1.5">
+                  <label htmlFor="telefono" className="block text-sm font-semibold text-surface-700">
+                    Teléfono
+                  </label>
+                  <input
+                    type="tel"
+                    id="telefono"
+                    {...register('telefono', {
+                      onChange: async (e) => {
+                        const value = e.target.value
+                        setFormValues(prev => ({ ...prev, telefono: value }))
+                        if (value.trim()) {
+                          await telefonoValidation.validate(value)
+                        } else {
+                          telefonoValidation.clearError()
+                        }
+                      }
+                    })}
+                    placeholder="Ej: (011) 1234-5678"
+                    disabled={isLoading}
+                    className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.telefono || hasFieldError('telefono', serverFieldErrors) || (telefonoValidation.isValid === false)
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      }`}
+                  />
+                  <FieldError
+                    serverError={getFieldError('telefono', serverFieldErrors)}
+                    clientError={errors.telefono}
+                    fieldName="telefono"
+                  />
+                </div>
+
+                {/* IP Sede */}
+                <div className="space-y-1.5">
+                  <label htmlFor="ip_sede" className="block text-sm font-semibold text-surface-700">
+                    IP de la Sede
+                  </label>
+                  <input
+                    type="text"
+                    id="ip_sede"
+                    {...register('ip_sede', {
+                      onChange: async (e) => {
+                        const value = e.target.value
+                        setFormValues(prev => ({ ...prev, ip_sede: value }))
+                        if (value.trim()) {
+                          await ipSedeValidation.validate(value)
+                        } else {
+                          ipSedeValidation.clearError()
+                        }
+                      }
+                    })}
+                    placeholder="Ej: 192.168.1.1"
+                    disabled={isLoading}
+                    className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.ip_sede || hasFieldError('ip_sede', serverFieldErrors) || (ipSedeValidation.isValid === false)
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      }`}
+                  />
+                  <FieldError
+                    serverError={getFieldError('ip_sede', serverFieldErrors)}
+                    clientError={errors.ip_sede}
+                    fieldName="ip_sede"
+                  />
+                </div>
+              </div>
+
+              {/* Sede de Prueba */}
+              <div className="pt-4 mt-2">
+                <label className="flex items-start gap-3 cursor-pointer group p-4 border border-surface-200 rounded-xl hover:bg-surface-50 transition-colors">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      {...register('es_prueba')}
+                      disabled={isLoading}
+                      className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 transition-all cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-surface-900 group-hover:text-primary-700 transition-colors">Sede de Prueba</span>
+                    <span className="text-xs text-surface-500 mt-1">
+                      Marcar esta opción excluirá la sede de los reportes generales y estadísticas financieras.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4 border-t border-surface-200">
+              <button
+                type="button"
+                onClick={() => navigate('/sedes')}
                 disabled={isLoading}
-                className={`form-control ${errors.empresa_id || hasFieldError('empresa_id', serverFieldErrors) ? 'is-invalid' : ''}`}
+                className="btn-secondary w-full sm:w-auto"
               >
-                <option value="">-- Seleccionar empresa --</option>
-                {empresas.map((empresa) => (
-                  <option key={empresa.id} value={empresa.id}>
-                    {empresa.nombre_empresa}
-                  </option>
-                ))}
-              </select>
-              <FieldError
-                serverError={getFieldError('empresa_id', serverFieldErrors)}
-                clientError={errors.empresa_id}
-                fieldName="empresa_id"
-              />
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || isLoading}
+                className="btn-primary w-full sm:w-auto shadow-lg shadow-primary-900/10"
+              >
+                {isLoading || isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creando...
+                  </span>
+                ) : 'Crear Sede'}
+              </button>
             </div>
+          </form>
+        )}
 
-            {/* Nombre de Sede */}
-            <div className="form-group">
-              <label htmlFor="nombre_sede">
-                Nombre de la Sede <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="nombre_sede"
-                {...register('nombre_sede', {
-                  onChange: async (e) => {
-                    const value = e.target.value
-                    setFormValues(prev => ({ ...prev, nombre_sede: value }))
-                    if (value.trim()) {
-                      await nombreSedeValidation.validate(value)
-                    } else {
-                      nombreSedeValidation.clearError()
-                    }
-                  }
-                })}
-                placeholder="Ej: Sede Centro, Sede Norte"
-                disabled={isLoading}
-                className={`form-control ${errors.nombre_sede || hasFieldError('nombre_sede', serverFieldErrors) || (nombreSedeValidation.isValid === false) ? 'is-invalid' : ''}`}
-              />
-              <FieldError
-                serverError={getFieldError('nombre_sede', serverFieldErrors)}
-                clientError={errors.nombre_sede}
-                fieldName="nombre_sede"
-              />
-              <ValidationIndicator isValid={nombreSedeValidation.isValid} label="Nombre válido" />
-              <CharacterCounter currentLength={formValues.nombre_sede.length} maxLength={100} />
-            </div>
-          </div>
+        <LoadingOverlay isVisible={isLoading} message="Creando sede..." />
 
-          {/* Sección 2: Ubicación */}
-          <div className="form-section">
-            <h2>Ubicación</h2>
-
-            {/* Dirección */}
-            <div className="form-group">
-              <label htmlFor="direccion">
-                Dirección <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="direccion"
-                {...register('direccion', {
-                  onChange: async (e) => {
-                    const value = e.target.value
-                    setFormValues(prev => ({ ...prev, direccion: value }))
-                    if (value.trim()) {
-                      await direccionValidation.validate(value)
-                    } else {
-                      direccionValidation.clearError()
-                    }
-                  }
-                })}
-                placeholder="Calle y número"
-                disabled={isLoading}
-                className={`form-control ${errors.direccion || hasFieldError('direccion', serverFieldErrors) || (direccionValidation.isValid === false) ? 'is-invalid' : ''}`}
-              />
-              <FieldError
-                serverError={getFieldError('direccion', serverFieldErrors)}
-                clientError={errors.direccion}
-                fieldName="direccion"
-              />
-              <ValidationIndicator isValid={direccionValidation.isValid} label="Dirección válida" />
-              <CharacterCounter currentLength={formValues.direccion.length} maxLength={200} />
-            </div>
-
-            {/* Localidad y Provincia */}
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="localidad">
-                  Localidad <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="localidad"
-                  {...register('localidad', {
-                    onChange: async (e) => {
-                      const value = e.target.value
-                      setFormValues(prev => ({ ...prev, localidad: value }))
-                      if (value.trim()) {
-                        await localidadValidation.validate(value)
-                      } else {
-                        localidadValidation.clearError()
-                      }
-                    }
-                  })}
-                  placeholder="Ej: Buenos Aires"
-                  disabled={isLoading}
-                  className={`form-control ${errors.localidad || hasFieldError('localidad', serverFieldErrors) || (localidadValidation.isValid === false) ? 'is-invalid' : ''}`}
-                />
-                <FieldError
-                  serverError={getFieldError('localidad', serverFieldErrors)}
-                  clientError={errors.localidad}
-                  fieldName="localidad"
-                />
-                <ValidationIndicator isValid={localidadValidation.isValid} label="Localidad válida" />
-                <CharacterCounter currentLength={formValues.localidad.length} maxLength={100} />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="provincia">
-                  Provincia <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="provincia"
-                  {...register('provincia', {
-                    onChange: async (e) => {
-                      const value = e.target.value
-                      setFormValues(prev => ({ ...prev, provincia: value }))
-                      if (value.trim()) {
-                        await provinciaValidation.validate(value)
-                      } else {
-                        provinciaValidation.clearError()
-                      }
-                    }
-                  })}
-                  placeholder="Ej: Buenos Aires"
-                  disabled={isLoading}
-                  className={`form-control ${errors.provincia || hasFieldError('provincia', serverFieldErrors) || (provinciaValidation.isValid === false) ? 'is-invalid' : ''}`}
-                />
-                <FieldError
-                  serverError={getFieldError('provincia', serverFieldErrors)}
-                  clientError={errors.provincia}
-                  fieldName="provincia"
-                />
-                <ValidationIndicator isValid={provinciaValidation.isValid} label="Provincia válida" />
-                <CharacterCounter currentLength={formValues.provincia.length} maxLength={100} />
-              </div>
-            </div>
-
-            {/* País */}
-            <div className="form-group">
-              <label htmlFor="pais">
-                País <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="pais"
-                {...register('pais', {
-                  onChange: async (e) => {
-                    const value = e.target.value
-                    setFormValues(prev => ({ ...prev, pais: value }))
-                    if (value.trim()) {
-                      await paisValidation.validate(value)
-                    } else {
-                      paisValidation.clearError()
-                    }
-                  }
-                })}
-                disabled={isLoading}
-                className={`form-control ${errors.pais || hasFieldError('pais', serverFieldErrors) || (paisValidation.isValid === false) ? 'is-invalid' : ''}`}
-              />
-              <FieldError
-                serverError={getFieldError('pais', serverFieldErrors)}
-                clientError={errors.pais}
-                fieldName="pais"
-              />
-              <ValidationIndicator isValid={paisValidation.isValid} label="País válido" />
-              <CharacterCounter currentLength={formValues.pais.length} maxLength={100} />
-            </div>
-          </div>
-
-          {/* Sección 3: Contacto e Infraestructura */}
-          <div className="form-section">
-            <h2>Contacto e Infraestructura</h2>
-
-            {/* Teléfono */}
-            <div className="form-group">
-              <label htmlFor="telefono">Teléfono</label>
-              <input
-                type="tel"
-                id="telefono"
-                {...register('telefono', {
-                  onChange: async (e) => {
-                    const value = e.target.value
-                    setFormValues(prev => ({ ...prev, telefono: value }))
-                    if (value.trim()) {
-                      await telefonoValidation.validate(value)
-                    } else {
-                      telefonoValidation.clearError()
-                    }
-                  }
-                })}
-                placeholder="Ej: (011) 1234-5678"
-                disabled={isLoading}
-                className={`form-control ${errors.telefono || hasFieldError('telefono', serverFieldErrors) || (telefonoValidation.isValid === false) ? 'is-invalid' : ''}`}
-              />
-              <FieldError
-                serverError={getFieldError('telefono', serverFieldErrors)}
-                clientError={errors.telefono}
-                fieldName="telefono"
-              />
-              <ValidationIndicator isValid={telefonoValidation.isValid} label="Teléfono válido" />
-              <CharacterCounter currentLength={formValues.telefono.length} maxLength={20} />
-            </div>
-
-            {/* IP Sede */}
-            <div className="form-group">
-              <label htmlFor="ip_sede">IP de la Sede</label>
-              <input
-                type="text"
-                id="ip_sede"
-                {...register('ip_sede', {
-                  onChange: async (e) => {
-                    const value = e.target.value
-                    setFormValues(prev => ({ ...prev, ip_sede: value }))
-                    if (value.trim()) {
-                      await ipSedeValidation.validate(value)
-                    } else {
-                      ipSedeValidation.clearError()
-                    }
-                  }
-                })}
-                placeholder="Ej: 192.168.1.1"
-                disabled={isLoading}
-                className={`form-control ${errors.ip_sede || hasFieldError('ip_sede', serverFieldErrors) || (ipSedeValidation.isValid === false) ? 'is-invalid' : ''}`}
-              />
-              <FieldError
-                serverError={getFieldError('ip_sede', serverFieldErrors)}
-                clientError={errors.ip_sede}
-                fieldName="ip_sede"
-              />
-              <ValidationIndicator isValid={ipSedeValidation.isValid} label="IP válida" />
-            </div>
-
-            {/* Sede de Prueba */}
-            <div className="form-group" style={{ marginTop: '20px' }}>
-              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  {...register('es_prueba')}
-                  disabled={isLoading}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                />
-                <span>
-                  <strong>Sede de Prueba</strong>
-                  <small style={{ display: 'block', color: '#666', marginTop: '4px' }}>
-                    Marcar esta opción excluirá la sede de reportes y estadísticas
-                  </small>
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              disabled={isSubmitting || isLoading}
-              className="btn btn-primary"
-            >
-              {isLoading || isSubmitting ? 'Creando sede...' : 'Crear Sede'}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/sedes')}
-              disabled={isLoading}
-              className="btn btn-secondary"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
-
-      <LoadingOverlay isVisible={isLoading} message="Creando sede..." />
-
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          duration={3000}
-          onClose={() => setToast(null)}
-        />
-      )}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={3000}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
     </div>
   )
 }

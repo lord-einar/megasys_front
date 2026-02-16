@@ -4,7 +4,6 @@ import { remitosAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
-import Swal from 'sweetalert2'
 
 function RemitoListPage() {
   const navigate = useNavigate()
@@ -26,13 +25,47 @@ function RemitoListPage() {
     totalPages,
     totalRecords,
     updateFilters,
-    goToPage,
     previousPage,
-    nextPage
+    nextPage,
+    goToPage
   } = useListData(remitosAPI.list, {
     initialLimit: 10,
     initialFilters: { estado: '', es_prestamo: '' }
   })
+
+  // Obtener rango de registros mostrados
+  const getRecordRange = () => {
+    const start = (page - 1) * 10 + 1
+    const end = Math.min(page * 10, totalRecords)
+    return { start, end }
+  }
+
+  // Generar números de paginación
+  const getPaginationNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (page <= 3) {
+        for (let i = 1; i <= 3; i++) pages.push(i)
+        pages.push('...')
+        pages.push(totalPages)
+      } else if (page >= totalPages - 2) {
+        pages.push(1)
+        pages.push('...')
+        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i)
+      } else {
+        pages.push(1)
+        pages.push('...')
+        pages.push(page)
+        pages.push('...')
+        pages.push(totalPages)
+      }
+    }
+    return pages
+  }
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
@@ -47,20 +80,20 @@ function RemitoListPage() {
   }
 
   const getEstadoBadgeClass = (estado) => {
-    const baseClass = 'px-3 py-1 rounded-full text-sm font-medium'
+    const baseClass = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border'
     switch (estado) {
       case 'borrador':
-        return `${baseClass} bg-yellow-100 text-yellow-800`
+        return `${baseClass} bg-amber-50 text-amber-700 border-amber-100`
       case 'en_transito':
-        return `${baseClass} bg-blue-100 text-blue-800`
+        return `${baseClass} bg-blue-50 text-blue-700 border-blue-100`
       case 'entregado':
-        return `${baseClass} bg-green-100 text-green-800`
+        return `${baseClass} bg-emerald-50 text-emerald-700 border-emerald-100`
       case 'devuelto':
-        return `${baseClass} bg-purple-100 text-purple-800`
+        return `${baseClass} bg-violet-50 text-violet-700 border-violet-100`
       case 'cancelado':
-        return `${baseClass} bg-red-100 text-red-800`
+        return `${baseClass} bg-rose-50 text-rose-700 border-rose-100`
       default:
-        return baseClass
+        return `${baseClass} bg-surface-100 text-surface-600 border-surface-200`
     }
   }
 
@@ -75,197 +108,267 @@ function RemitoListPage() {
     return labels[estado] || estado
   }
 
-  if (loading && remitos.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando remitos...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Remitos</h1>
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Gestión de Remitos</h1>
+          <p className="text-surface-500 mt-1 font-medium">Administra envíos y préstamos de equipos</p>
+        </div>
+
         <button
           onClick={() => navigate('/remitos/crear')}
           disabled={!canCreate('remitos')}
-          className={`font-medium py-2 px-4 rounded-lg transition-colors ${
-            canCreate('remitos')
-              ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-              : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-          }`}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary-900/10 transition-all ${canCreate('remitos')
+              ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
+              : 'bg-surface-200 text-surface-400 cursor-not-allowed'
+            }`}
           title={!canCreate('remitos') ? 'No tienes permiso para crear remitos' : ''}
         >
-          + Nuevo Remito
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Nuevo Remito
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {error}
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="card-base p-6 mb-8 bg-white border border-surface-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-surface-500 mb-1.5 uppercase tracking-wide">
               Estado
             </label>
-            <select
-              name="estado"
-              value={estadoFiltro}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos los estados</option>
-              <option value="borrador">Borrador</option>
-              <option value="en_transito">En Tránsito</option>
-              <option value="entregado">Entregado</option>
-              <option value="devuelto">Devuelto</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
+            <div className="relative">
+              <select
+                name="estado"
+                value={estadoFiltro}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none text-surface-900"
+              >
+                <option value="">Todos los estados</option>
+                <option value="borrador">Borrador</option>
+                <option value="en_transito">En Tránsito</option>
+                <option value="entregado">Entregado</option>
+                <option value="devuelto">Devuelto</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo
+
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-surface-500 mb-1.5 uppercase tracking-wide">
+              Tipo de Operación
             </label>
-            <select
-              name="es_prestamo"
-              value={esPrestamoFiltro}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <div className="relative">
+              <select
+                name="es_prestamo"
+                value={esPrestamoFiltro}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none text-surface-900"
+              >
+                <option value="">Todos</option>
+                <option value="true">Préstamos</option>
+                <option value="false">Transferencias</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setEstadoFiltro('')
+                setEsPrestamoFiltro('')
+                updateFilters({ estado: '', es_prestamo: '' })
+              }}
+              className="px-4 py-2.5 bg-white border border-surface-200 text-surface-600 rounded-xl hover:bg-surface-50 hover:text-surface-900 transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
             >
-              <option value="">Todos</option>
-              <option value="true">Préstamos</option>
-              <option value="false">Transferencias</option>
-            </select>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Limpiar Filtros
+            </button>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {remitos.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No hay remitos para mostrar
+      <div className="card-base bg-white border border-surface-200 shadow-sm overflow-hidden">
+        {loading && remitos.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+            <p className="text-surface-500 font-medium">Cargando remitos...</p>
+          </div>
+        ) : remitos.length === 0 ? (
+          <div className="p-16 text-center">
+            <div className="w-16 h-16 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-4 text-surface-400">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <p className="text-surface-900 font-medium text-lg">No hay remitos para mostrar</p>
+            <p className="text-surface-500 text-sm mt-1">Intenta ajustar los filtros de búsqueda</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Número
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Fecha
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Devolución
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Solicitante
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {remitos.map(remito => (
-                <tr key={remito.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                    {remito.numero_remito}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {new Date(remito.fecha).toLocaleDateString('es-AR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={getEstadoBadgeClass(remito.estado)}>
-                      {getEstadoLabel(remito.estado)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {remito.es_prestamo ? (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                        Préstamo
+            <table className="min-w-full text-left border-collapse">
+              <thead className="bg-surface-50 border-b border-surface-200">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Número
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Devolución
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Solicitante
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-100">
+                {remitos.map(remito => (
+                  <tr key={remito.id} className="hover:bg-surface-50/60 transition-colors group">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-bold text-surface-900 font-mono text-sm shadow-sm px-1.5 py-0.5 rounded bg-surface-100 border border-surface-200">
+                        {remito.numero_remito}
                       </span>
-                    ) : (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                        Transferencia
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600 font-medium">
+                      {new Date(remito.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={getEstadoBadgeClass(remito.estado)}>
+                        {getEstadoLabel(remito.estado)}
                       </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {remito.es_prestamo && remito.fecha_devolucion_estimada ? (
-                      <span className="text-sm">
-                        {new Date(remito.fecha_devolucion_estimada).toLocaleDateString('es-AR')}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-sm">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {remito.solicitante?.nombre} {remito.solicitante?.apellido}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex gap-3">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600">
+                      {remito.es_prestamo ? (
+                        <div className="flex items-center gap-1.5 text-violet-700 bg-violet-50 px-2 py-1 rounded-md text-xs font-bold w-fit">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          Préstamo
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-surface-600 bg-surface-100 px-2 py-1 rounded-md text-xs font-bold w-fit">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                          Transferencia
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-surface-600 text-sm">
+                      {remito.es_prestamo && remito.fecha_devolucion_estimada ? (
+                        <span className="font-medium text-surface-900">
+                          {new Date(remito.fecha_devolucion_estimada).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
+                        </span>
+                      ) : (
+                        <span className="text-surface-300">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600 font-medium">
+                      {remito.solicitante ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-surface-100 flex items-center justify-center text-[10px] font-bold text-surface-500">
+                            {remito.solicitante.nombre?.[0]}{remito.solicitante.apellido?.[0]}
+                          </div>
+                          {remito.solicitante.nombre} {remito.solicitante.apellido}
+                        </div>
+                      ) : (
+                        <span className="text-surface-400 italic">No especificado</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
                       <button
                         onClick={() => navigate(`/remitos/${remito.id}`)}
-                        className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+                        className="text-surface-500 hover:text-primary-600 transition-colors p-1.5 hover:bg-primary-50 rounded-lg group"
+                        title="Ver Detalles"
                       >
-                        Ver
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                       </button>
-                      {remito.puedeDevolverse && (
-                        <button
-                          onClick={() => {/* Implementar después */}}
-                          className="text-green-600 hover:text-green-900 font-medium text-sm"
-                        >
-                          Devolver
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-            </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center gap-2">
-          <button
-            onClick={previousPage}
-            disabled={page === 1}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="text-gray-600">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            onClick={nextPage}
-            disabled={page === totalPages}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
-          >
-            Siguiente
-          </button>
+      {/* Paginación */}
+      {!loading && remitos.length > 0 && (
+        <div className="px-6 py-4 border-t border-surface-200 bg-surface-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-xs text-surface-500">
+            Mostrando <span className="font-bold text-surface-900">{getRecordRange().start}</span> a <span className="font-bold text-surface-900">{getRecordRange().end}</span> de <span className="font-bold text-surface-900">{totalRecords}</span> registros
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={previousPage}
+              disabled={page === 1}
+              className="p-2 border border-surface-200 rounded-lg bg-white text-surface-500 hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+
+            <div className="flex gap-1">
+              {getPaginationNumbers().map((num, i) =>
+                num === '...' ? (
+                  <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-surface-500">...</span>
+                ) : (
+                  <button
+                    key={num}
+                    onClick={() => goToPage(num)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${num === page
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
+                      }`}
+                  >
+                    {num}
+                  </button>
+                )
+              )}
+            </div>
+
+            <button
+              onClick={nextPage}
+              disabled={page === totalPages}
+              className="p-2 border border-surface-200 rounded-lg bg-white text-surface-500 hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
         </div>
       )}
     </div>

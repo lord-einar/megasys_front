@@ -24,7 +24,8 @@ export default function ServicioFormPage() {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    watch
   } = useForm({
     defaultValues: {
       nombre: '',
@@ -36,16 +37,28 @@ export default function ServicioFormPage() {
     }
   })
 
+  const activo = watch('activo')
+
   useEffect(() => {
     cargarDatosIniciales()
   }, [])
 
   useEffect(() => {
     if (!isEditing && !canCreate('proveedores')) {
-      Swal.fire('Sin permisos', 'No tienes permiso para crear servicios', 'error')
+      Swal.fire({
+        title: 'Acceso Denegado',
+        text: 'No tienes permiso para crear servicios',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
       navigate('/proveedores/servicios')
     } else if (isEditing && !canUpdate('proveedores')) {
-      Swal.fire('Sin permisos', 'No tienes permiso para editar servicios', 'error')
+      Swal.fire({
+        title: 'Acceso Denegado',
+        text: 'No tienes permiso para editar servicios',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
       navigate('/proveedores/servicios')
     }
   }, [isEditing, canCreate, canUpdate, navigate])
@@ -54,7 +67,6 @@ export default function ServicioFormPage() {
     try {
       setLoading(true)
 
-      // Cargar proveedores, tipos de servicio y sedes en paralelo
       const [provResponse, tiposResponse, sedesResponse] = await Promise.all([
         proveedoresAPI.list({ limit: 100, activo: true }),
         tiposServicioAPI.list({ limit: 100, activo: true }),
@@ -69,13 +81,17 @@ export default function ServicioFormPage() {
       setTiposServicio(tiposNormalized.data || [])
       setSedes(sedesNormalized.data || [])
 
-      // Si es edición, cargar el servicio
       if (isEditing) {
         await cargarServicio()
       }
     } catch (err) {
       console.error('Error cargando datos:', err)
-      Swal.fire('Error', 'No se pudieron cargar los datos necesarios', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudieron cargar los datos necesarios',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setLoading(false)
     }
@@ -96,7 +112,12 @@ export default function ServicioFormPage() {
       })
     } catch (err) {
       console.error('Error cargando servicio:', err)
-      Swal.fire('Error', 'No se pudo cargar el servicio', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo cargar el servicio',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
       navigate('/proveedores/servicios')
     }
   }
@@ -107,8 +128,8 @@ export default function ServicioFormPage() {
 
       const servicioData = {
         nombre: data.nombre.trim(),
-        id_servicio: data.id_servicio.trim() || null,
-        descripcion: data.descripcion.trim() || null,
+        id_servicio: data.id_servicio?.trim() || null,
+        descripcion: data.descripcion?.trim() || null,
         proveedor_id: data.proveedor_id,
         tipo_servicio_id: data.tipo_servicio_id,
         activo: data.activo
@@ -116,37 +137,31 @@ export default function ServicioFormPage() {
 
       if (isEditing) {
         await serviciosAPI.update(id, servicioData)
-        await Swal.fire('¡Actualizado!', 'El servicio ha sido actualizado correctamente', 'success')
+        await Swal.fire({
+          title: 'Actualizado',
+          text: 'El servicio ha sido actualizado correctamente',
+          icon: 'success',
+          timer: 1500,
+          customClass: { popup: 'rounded-2xl' }
+        })
         navigate('/proveedores/servicios')
       } else {
-        // Crear el servicio
         const response = await serviciosAPI.create(servicioData)
         const servicio = normalizeItemResponse(response)
         const nuevoServicioId = servicio.id
 
-        // Asignar servicio a sedes y crear equipos
         if (sedesSeleccionadas.length > 0) {
-          console.log('🔧 Asignando servicio a sedes:', {
-            servicioId: nuevoServicioId,
-            sedes: sedesSeleccionadas
-          })
-
-          // Asignar servicio a cada sede (crea relación SedeServicio)
           const promesasAsignacion = sedesSeleccionadas.map(sedeId =>
             sedesAPI.assignService(sedeId, {
               servicio_id: nuevoServicioId,
               fecha_contratacion: new Date().toISOString().split('T')[0],
               activo: true
-            }).then(result => {
-              console.log(`✅ Servicio asignado a sede ${sedeId}:`, result)
-              return result
             }).catch(err => {
-              console.error(`❌ Error asignando servicio a sede ${sedeId}:`, err)
+              console.error(`Error asignando servicio a sede ${sedeId}:`, err)
               return null
             })
           )
 
-          // Crear equipos en cada sede (crea EquipoServicio)
           const promesasEquipos = sedesSeleccionadas.map(sedeId =>
             equiposServicioAPI.create({
               servicio_id: nuevoServicioId,
@@ -166,286 +181,288 @@ export default function ServicioFormPage() {
           ? `Servicio creado y asignado a ${sedesSeleccionadas.length} sede(s)`
           : 'Servicio creado correctamente'
 
-        await Swal.fire('¡Creado!', mensaje, 'success')
+        await Swal.fire({
+          title: 'Creado',
+          text: mensaje,
+          icon: 'success',
+          timer: 1500,
+          customClass: { popup: 'rounded-2xl' }
+        })
         navigate('/proveedores/servicios')
       }
     } catch (err) {
       console.error('Error guardando servicio:', err)
-      Swal.fire(
-        'Error',
-        err.message || `No se pudo ${isEditing ? 'actualizar' : 'crear'} el servicio`,
-        'error'
-      )
+      Swal.fire({
+        title: 'Error',
+        text: err.message || `No se pudo ${isEditing ? 'actualizar' : 'crear'} el servicio`,
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setSubmitting(false)
     }
   }
 
+  const toggleSedeSelection = (sedeId) => {
+    if (sedesSeleccionadas.includes(sedeId)) {
+      setSedesSeleccionadas(sedesSeleccionadas.filter(id => id !== sedeId))
+    } else {
+      setSedesSeleccionadas([...sedesSeleccionadas, sedeId])
+    }
+  }
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-surface-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+          <p className="text-surface-500 font-medium">Cargando formulario...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/proveedores/servicios')}
-          className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2"
-        >
-          ← Volver a Servicios
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {isEditing ? 'Editar Servicio' : 'Nuevo Servicio'}
-        </h1>
-        <p className="text-gray-600 mt-2">
-          {isEditing ? 'Actualiza la información del servicio' : 'Registra un nuevo servicio de proveedor'}
-        </p>
-      </div>
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
+              {isEditing ? 'Editar Servicio' : 'Nuevo Servicio'}
+            </h1>
+            <p className="text-surface-500 mt-1 font-medium">
+              {isEditing ? 'Actualiza la información del servicio contratado' : 'Registra un nuevo servicio en el catálogo'}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/proveedores/servicios')}
+            className="text-surface-500 hover:text-surface-700 font-medium text-sm transition-colors flex items-center gap-2 w-fit bg-white px-4 py-2 rounded-xl border border-surface-200 shadow-sm hover:bg-surface-50"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Volver
+          </button>
+        </div>
 
-      {/* Formulario */}
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-3xl">
-        {/* Información del Servicio */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Información del Servicio</h2>
-
-          <div className="space-y-4">
-            {/* Nombre */}
-            <div>
-              <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre del Servicio <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="text"
-                id="nombre"
-                {...register('nombre', {
-                  required: 'El nombre del servicio es requerido',
-                  minLength: { value: 2, message: 'Debe tener al menos 2 caracteres' },
-                  maxLength: { value: 100, message: 'No puede exceder 100 caracteres' }
-                })}
-                placeholder="Ej: Internet Fibra Óptica"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.nombre ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.nombre && (
-                <p className="text-red-600 text-sm mt-1">{errors.nombre.message}</p>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Información Principal */}
+          <div className="card-base p-6 sm:p-8 bg-white space-y-8">
+            <div className="border-b border-surface-100 pb-4 mb-6">
+              <h2 className="text-lg font-bold text-surface-900">Datos del Servicio</h2>
             </div>
 
-            {/* ID Servicio */}
-            <div>
-              <label htmlFor="id_servicio" className="block text-sm font-medium text-gray-700 mb-1">
-                ID Externo del Servicio
-              </label>
-              <input
-                type="text"
-                id="id_servicio"
-                {...register('id_servicio', {
-                  maxLength: { value: 50, message: 'No puede exceder 50 caracteres' }
-                })}
-                placeholder="Ej: SRV-12345"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.id_servicio ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.id_servicio && (
-                <p className="text-red-600 text-sm mt-1">{errors.id_servicio.message}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">Identificador proporcionado por el proveedor (opcional)</p>
-            </div>
-
-            {/* Descripción */}
-            <div>
-              <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción
-              </label>
-              <textarea
-                id="descripcion"
-                {...register('descripcion', {
-                  maxLength: { value: 500, message: 'No puede exceder 500 caracteres' }
-                })}
-                placeholder="Describe las características del servicio..."
-                rows={4}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.descripcion ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.descripcion && (
-                <p className="text-red-600 text-sm mt-1">{errors.descripcion.message}</p>
-              )}
-            </div>
-
-            {/* Proveedor */}
-            <div>
-              <label htmlFor="proveedor_id" className="block text-sm font-medium text-gray-700 mb-1">
-                Proveedor <span className="text-red-600">*</span>
-              </label>
-              <select
-                id="proveedor_id"
-                {...register('proveedor_id', {
-                  required: 'Debe seleccionar un proveedor'
-                })}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.proveedor_id ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">-- Seleccionar proveedor --</option>
-                {proveedores.map((proveedor) => (
-                  <option key={proveedor.id} value={proveedor.id}>
-                    {proveedor.empresa}
-                  </option>
-                ))}
-              </select>
-              {errors.proveedor_id && (
-                <p className="text-red-600 text-sm mt-1">{errors.proveedor_id.message}</p>
-              )}
-            </div>
-
-            {/* Tipo de Servicio */}
-            <div>
-              <label htmlFor="tipo_servicio_id" className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Servicio <span className="text-red-600">*</span>
-              </label>
-              <select
-                id="tipo_servicio_id"
-                {...register('tipo_servicio_id', {
-                  required: 'Debe seleccionar un tipo de servicio'
-                })}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                  errors.tipo_servicio_id ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">-- Seleccionar tipo --</option>
-                {tiposServicio.map((tipo) => (
-                  <option key={tipo.id} value={tipo.id}>
-                    {tipo.nombre}
-                  </option>
-                ))}
-              </select>
-              {errors.tipo_servicio_id && (
-                <p className="text-red-600 text-sm mt-1">{errors.tipo_servicio_id.message}</p>
-              )}
-            </div>
-
-            {/* Asignar a Sedes - Solo en creación */}
-            {!isEditing && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Asignar a Sedes <span className="text-gray-500">(Opcional)</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nombre */}
+              <div className="md:col-span-2 space-y-1.5">
+                <label htmlFor="nombre" className="text-sm font-bold text-surface-700">
+                  Nombre del Servicio <span className="text-rose-500">*</span>
                 </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  Selecciona las sedes donde se utilizará este servicio. Se crearán registros de equipos que podrás completar después.
-                </p>
-
-                {/* Filtro de búsqueda */}
-                <div className="mb-3">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  </div>
                   <input
                     type="text"
-                    placeholder="Buscar sedes..."
-                    value={sedesFilter}
-                    onChange={(e) => setSedesFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    id="nombre"
+                    {...register('nombre', {
+                      required: 'El nombre del servicio es requerido',
+                      minLength: { value: 2, message: 'Debe tener al menos 2 caracteres' },
+                      maxLength: { value: 100, message: 'No puede exceder 100 caracteres' }
+                    })}
+                    placeholder="Ej: Conexión Internet Fibra 300Mb"
+                    className={`w-full pl-10 pr-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all ${errors.nombre ? 'border-rose-500' : 'border-surface-200'}`}
                   />
                 </div>
-
-                {/* Grid de sedes con checkboxes */}
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  <div className="space-y-2">
-                    {sedes
-                      .filter(
-                        (sede) =>
-                          sede.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase()) ||
-                          sede.localidad?.toLowerCase().includes(sedesFilter.toLowerCase())
-                      )
-                      .map((sede) => (
-                        <label
-                          key={sede.id}
-                          className="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={sedesSeleccionadas.includes(sede.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSedesSeleccionadas([...sedesSeleccionadas, sede.id])
-                              } else {
-                                setSedesSeleccionadas(sedesSeleccionadas.filter(id => id !== sede.id))
-                              }
-                            }}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{sede.nombre_sede}</p>
-                            {sede.localidad && (
-                              <p className="text-xs text-gray-500">{sede.localidad}</p>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                  </div>
-
-                  {sedes.filter(
-                    (sede) =>
-                      sede.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase()) ||
-                      sede.localidad?.toLowerCase().includes(sedesFilter.toLowerCase())
-                  ).length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      No se encontraron sedes
-                    </p>
-                  )}
-                </div>
-
-                {sedesSeleccionadas.length > 0 && (
-                  <p className="text-xs text-green-600 mt-2">
-                    ✓ {sedesSeleccionadas.length} sede(s) seleccionada(s)
-                  </p>
-                )}
+                {errors.nombre && <p className="text-xs text-rose-500 font-medium mt-1">{errors.nombre.message}</p>}
               </div>
-            )}
 
-            {/* Estado Activo */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="activo"
-                {...register('activo')}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="activo" className="ml-2 text-sm text-gray-700">
-                Servicio activo
-              </label>
+              {/* Proveedor */}
+              <div className="space-y-1.5">
+                <label htmlFor="proveedor_id" className="text-sm font-bold text-surface-700">
+                  Proveedor <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  id="proveedor_id"
+                  {...register('proveedor_id', {
+                    required: 'Debe seleccionar un proveedor'
+                  })}
+                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none ${errors.proveedor_id ? 'border-rose-500' : 'border-surface-200'}`}
+                >
+                  <option value="">Seleccionar proveedor</option>
+                  {proveedores.map((proveedor) => (
+                    <option key={proveedor.id} value={proveedor.id}>
+                      {proveedor.empresa}
+                    </option>
+                  ))}
+                </select>
+                {errors.proveedor_id && <p className="text-xs text-rose-500 font-medium mt-1">{errors.proveedor_id.message}</p>}
+              </div>
+
+              {/* Tipo de Servicio */}
+              <div className="space-y-1.5">
+                <label htmlFor="tipo_servicio_id" className="text-sm font-bold text-surface-700">
+                  Tipo de Servicio <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  id="tipo_servicio_id"
+                  {...register('tipo_servicio_id', {
+                    required: 'Debe seleccionar un tipo de servicio'
+                  })}
+                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none ${errors.tipo_servicio_id ? 'border-rose-500' : 'border-surface-200'}`}
+                >
+                  <option value="">Seleccionar tipo</option>
+                  {tiposServicio.map((tipo) => (
+                    <option key={tipo.id} value={tipo.id}>
+                      {tipo.nombre}
+                    </option>
+                  ))}
+                </select>
+                {errors.tipo_servicio_id && <p className="text-xs text-rose-500 font-medium mt-1">{errors.tipo_servicio_id.message}</p>}
+              </div>
+
+              {/* ID Servicio */}
+              <div className="space-y-1.5">
+                <label htmlFor="id_servicio" className="text-sm font-bold text-surface-700">ID Externo</label>
+                <input
+                  type="text"
+                  id="id_servicio"
+                  {...register('id_servicio', {
+                    maxLength: { value: 50, message: 'No puede exceder 50 caracteres' }
+                  })}
+                  placeholder="Ej: SRV-12345"
+                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all ${errors.id_servicio ? 'border-rose-500' : 'border-surface-200'}`}
+                />
+                {errors.id_servicio && <p className="text-xs text-rose-500 font-medium mt-1">{errors.id_servicio.message}</p>}
+              </div>
+
+              {/* Descripción - Full Width */}
+              <div className="md:col-span-2 space-y-1.5">
+                <label htmlFor="descripcion" className="text-sm font-bold text-surface-700">Descripción Detallada</label>
+                <textarea
+                  id="descripcion"
+                  {...register('descripcion', {
+                    maxLength: { value: 500, message: 'No puede exceder 500 caracteres' }
+                  })}
+                  placeholder="Describe las características técnicas o comerciales del servicio..."
+                  rows={3}
+                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all resize-none ${errors.descripcion ? 'border-rose-500' : 'border-surface-200'}`}
+                />
+                {errors.descripcion && <p className="text-xs text-rose-500 font-medium mt-1">{errors.descripcion.message}</p>}
+              </div>
+
+              {/* Estado Activo - Custom Switch */}
+              <div className="md:col-span-2 pt-4 border-t border-surface-100 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-surface-900">Estado del Servicio</p>
+                  <p className="text-xs text-surface-500">Un servicio inactivo no aparecerá en nuevas selecciones.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    {...register('activo')}
+                  />
+                  <div className="w-14 h-7 bg-surface-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
+                  <span className={`ml-3 text-sm font-bold ${activo ? 'text-emerald-700' : 'text-surface-500'}`}>
+                    {activo ? 'Activo' : 'Inactivo'}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Botones de Acción */}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              submitting
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {submitting ? 'Guardando...' : isEditing ? 'Actualizar Servicio' : 'Crear Servicio'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/proveedores/servicios')}
-            disabled={submitting}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
+          {/* Selección de Sedes (Solo Crear) */}
+          {!isEditing && (
+            <div className="card-base p-6 sm:p-8 bg-white space-y-6">
+              <div className="border-b border-surface-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-surface-900">Asignar a Sedes</h2>
+                  <p className="text-sm text-surface-500">Selecciona las sedes donde se implementará este servicio.</p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar sede..."
+                    value={sedesFilter}
+                    onChange={(e) => setSedesFilter(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                {sedes.filter(s =>
+                  s.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase()) ||
+                  s.localidad?.toLowerCase().includes(sedesFilter.toLowerCase())
+                ).map(sede => {
+                  const isSelected = sedesSeleccionadas.includes(sede.id)
+                  return (
+                    <div
+                      key={sede.id}
+                      onClick={() => toggleSedeSelection(sede.id)}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${isSelected
+                          ? 'bg-primary-50 border-primary-200 ring-1 ring-primary-500/50'
+                          : 'bg-white border-surface-200 hover:border-surface-300 hover:bg-surface-50'
+                        }`}
+                    >
+                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors mt-0.5 ${isSelected ? 'bg-primary-600 border-primary-600' : 'bg-white border-surface-300'
+                        }`}>
+                        {isSelected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-bold ${isSelected ? 'text-primary-900' : 'text-surface-700'}`}>{sede.nombre_sede}</p>
+                        {sede.localidad && <p className="text-xs text-surface-500">{sede.localidad}</p>}
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {sedes.filter(s => s.nombre_sede.toLowerCase().includes(sedesFilter.toLowerCase())).length === 0 && (
+                  <div className="col-span-full py-8 text-center text-surface-500 bg-surface-50 rounded-xl border border-dashed border-surface-200">
+                    No se encontraron sedes con ese criterio
+                  </div>
+                )}
+              </div>
+
+              {sedesSeleccionadas.length > 0 && (
+                <div className="flex items-center gap-2 p-3 bg-primary-50 text-primary-700 text-sm font-bold rounded-xl border border-primary-100">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  {sedesSeleccionadas.length} sede(s) seleccionada(s)
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="flex flex-col-reverse sm:flex-row gap-4 pt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/proveedores/servicios')}
+              className="btn-secondary w-full sm:w-auto"
+              disabled={submitting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn-primary w-full sm:w-auto shadow-lg shadow-primary-900/10"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Guardando...
+                </span>
+              ) : (
+                isEditing ? 'Guardar Cambios' : 'Crear Servicio'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

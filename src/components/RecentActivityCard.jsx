@@ -45,50 +45,65 @@ function RecentActivityCard() {
 
   const getEstadoBadgeColor = (estado) => {
     const colors = {
-      'pendiente': 'bg-yellow-100 text-yellow-800',
-      'en transito': 'bg-blue-100 text-blue-800',
-      'en tránsito': 'bg-blue-100 text-blue-800',
-      'confirmado': 'bg-green-100 text-green-800',
-      'completado': 'bg-green-100 text-green-800',
-      'cancelado': 'bg-red-100 text-red-800',
+      'pendiente': 'bg-amber-50 text-amber-700 border-amber-200',
+      'en transito': 'bg-info-50 text-info-700 border-info-200',
+      'en tránsito': 'bg-info-50 text-info-700 border-info-200',
+      'confirmado': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'completado': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'cancelado': 'bg-rose-50 text-rose-700 border-rose-200',
     }
-    return colors[estado?.toLowerCase()] || 'bg-gray-100 text-gray-800'
+    return colors[estado?.toLowerCase()] || 'bg-surface-100 text-surface-700 border-surface-200'
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        Actividad Reciente
-      </h2>
+    <div className="card-base p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-surface-900 tracking-tight flex items-center gap-2">
+          <span className="p-1.5 bg-surface-50 rounded-lg text-surface-500">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
+          Actividad Reciente
+        </h2>
+        <button className="text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline">Ver todo</button>
+      </div>
+
       {loading ? (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <p className="text-gray-500 text-sm mt-2">Cargando actividades...</p>
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <div className="h-8 w-8 border-2 border-surface-200 border-t-primary-600 rounded-full animate-spin"></div>
+          <p className="text-xs font-medium text-surface-400">Actualizando feed...</p>
         </div>
       ) : activities.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No hay actividades recientes</p>
+        <div className="text-center py-12 bg-surface-50/50 rounded-xl border border-dashed border-surface-200">
+          <p className="text-surface-500 font-medium text-sm">No hay actividades recientes</p>
+          <p className="text-xs text-surface-400 mt-1">Los movimientos aparecerán aquí</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {activities.map((activity) => (
+        <div className="space-y-0 relative before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-surface-100">
+          {activities.map((activity, index) => (
             <div
               key={activity.id}
-              className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
+              className="flex gap-4 pb-6 last:pb-0 group relative z-10"
             >
-              <div className="flex-shrink-0 text-2xl">
+              <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-white border border-surface-100 flex items-center justify-center text-xl shadow-sm z-10 group-hover:scale-110 group-hover:border-primary-200 group-hover:text-primary-600 transition-all duration-300">
                 {getActivityIcon(activity.type)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
-                  {activity.description}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-gray-500">
-                    {activity.timestamp} • Por {activity.user}
-                  </p>
+
+              <div className="flex-1 min-w-0 pt-1 group-hover:translate-x-1 transition-transform duration-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-surface-900 leading-tight">
+                      {activity.description}
+                    </p>
+                    <p className="text-xs text-surface-500 mt-1 flex items-center gap-1.5">
+                      <span className="font-medium text-surface-600">{activity.user}</span>
+                      <span className="w-1 h-1 rounded-full bg-surface-300"></span>
+                      <span>{activity.timestamp}</span>
+                    </p>
+                  </div>
                   {activity.estado && (
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getEstadoBadgeColor(activity.estado)}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide flex-shrink-0 ${getEstadoBadgeColor(activity.estado)}`}>
                       {activity.estado}
                     </span>
                   )}

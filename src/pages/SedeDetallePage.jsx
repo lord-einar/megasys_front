@@ -33,11 +33,6 @@ export default function SedeDetallePage() {
       const response = await sedesAPI.getById(id)
       const sedeData = response?.data || response
 
-      // DEBUG: Ver qué trae el backend
-      console.log('🔍 Sede cargada:', sedeData)
-      console.log('📦 Servicios:', sedeData?.servicios)
-      console.log('📊 Cantidad de servicios:', sedeData?.servicios?.length || 0)
-
       setSede(sedeData)
 
       // Load assigned technician
@@ -57,7 +52,6 @@ export default function SedeDetallePage() {
       setTecnico(response?.data || response)
     } catch (err) {
       // It's ok if there's no assigned technician
-      console.log('No hay técnico asignado a esta sede:', err.message)
       setTecnico(null)
     } finally {
       setTecnicoLoading(false)
@@ -66,558 +60,461 @@ export default function SedeDetallePage() {
 
   if (loading) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-surface-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando detalles de la sede...</p>
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-surface-200 border-t-primary-600 mb-4"></div>
+          <p className="text-surface-500 font-medium">Cargando detalles...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !sede) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto">
+      <div className="p-8 bg-surface-50 min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-sm border border-surface-200 text-center">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-surface-900 mb-2">Error al cargar la sede</h2>
+          <p className="text-surface-500 mb-6 text-sm">{error || 'No se encontró la sede solicitada.'}</p>
           <button
             onClick={() => navigate('/sedes')}
-            className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
+            className="btn-primary w-full justify-center"
           >
-            ← Volver a Sedes
+            Volver a Sedes
           </button>
-          <div className="p-6 bg-red-50 border-l-4 border-red-600 rounded-lg">
-            <p className="text-red-800 font-medium">Error al cargar la sede</p>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!sede) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => navigate('/sedes')}
-            className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Volver a Sedes
-          </button>
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No se encontró la sede</p>
-          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <button
-          onClick={() => navigate('/sedes')}
-          className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
-        >
-          ← Volver a Sedes
-        </button>
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <button
+            onClick={() => navigate('/sedes')}
+            className="text-surface-500 hover:text-primary-600 font-medium text-sm flex items-center gap-2 transition-colors w-fit"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a Sedes
+          </button>
 
-        {/* Información Principal */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-          {/* Header Gradiente */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">
-            <h1 className="text-4xl font-bold">{sede.nombre_sede}</h1>
-            <p className="text-blue-100 text-lg mt-2">{sede.empresa?.nombre_empresa || 'Sin empresa'}</p>
-            <div className="mt-4 flex items-center gap-4">
-              <span className={`px-4 py-2 rounded-full font-semibold ${
-                sede.activo
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {sede.activo ? '✓ Activa' : '✗ Inactiva'}
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            {canUpdate('sedes') && (
+              <button
+                onClick={() => navigate(`/sedes/${id}/editar`)}
+                className="btn-secondary text-sm py-2"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar
+              </button>
+            )}
           </div>
+        </div>
 
-          {/* Tabs */}
-          <div className="border-b border-gray-200 bg-gray-50">
-            <div className="flex gap-8 px-8">
-              <button
-                onClick={() => setActiveTab('general')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'general'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Información General
-              </button>
-              <button
-                onClick={() => setActiveTab('personal')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'personal'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Personal ({sede.personalSede?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('servicios')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'servicios'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Servicios ({sede.servicios?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('inventario')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'inventario'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Inventario
-              </button>
-            </div>
-          </div>
+        {/* Header Card */}
+        <div className="card-base bg-white overflow-hidden relative group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-50 rounded-full translate-x-1/3 -translate-y-1/2 blur-3xl opacity-50 pointer-events-none"></div>
 
-          {/* Contenido de Tabs */}
-          <div className="p-8">
-            {/* Tab: Información General */}
-            {activeTab === 'general' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Ubicación */}
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      📍 Ubicación
-                    </h3>
-                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Dirección</p>
-                        <p className="text-gray-900 font-medium">{sede.direccion}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Localidad</p>
-                        <p className="text-gray-900">{sede.localidad}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Provincia</p>
-                        <p className="text-gray-900">{sede.provincia}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">País</p>
-                        <p className="text-gray-900">{sede.pais}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contacto e Infraestructura */}
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      ☎️ Contacto e Infraestructura
-                    </h3>
-                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                      {sede.telefono && (
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Teléfono</p>
-                          <p className="text-gray-900">{sede.telefono}</p>
-                        </div>
-                      )}
-                      {sede.ip_sede && (
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-semibold">IP de la Sede</p>
-                          <p className="text-gray-900 font-mono">{sede.ip_sede}</p>
-                        </div>
-                      )}
-                      {!sede.telefono && !sede.ip_sede && (
-                        <p className="text-gray-500 italic">Sin información de contacto registrada</p>
-                      )}
-                    </div>
-                  </div>
+          <div className="p-8 relative z-10 flex flex-col md:flex-row gap-6 md:items-center justify-between">
+            <div className="flex items-start gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600 shrink-0 shadow-sm">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl font-extrabold text-surface-900 tracking-tight">{sede.nombre_sede}</h1>
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <span className="text-surface-500 font-medium flex items-center gap-1.5 text-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-surface-400"></span>
+                    {sede.empresa?.nombre_empresa || 'Sin empresa'}
+                  </span>
+                  <span className="text-surface-300">|</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border ${sede.activo
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                      : 'bg-rose-50 text-rose-700 border-rose-100'
+                    }`}>
+                    {sede.activo ? 'Activa' : 'Inactiva'}
+                  </span>
                 </div>
+              </div>
+            </div>
 
+            <div className="flex gap-4 border-l border-surface-100 pl-6 md:ml-6">
+              <div className="text-center">
+                <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-1">Personal</p>
+                <p className="text-2xl font-bold text-surface-900">{sede.personalSede?.length || 0}</p>
+              </div>
+              <div className="text-center pl-4 border-l border-surface-100">
+                <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-1">Inventario</p>
+                <p className="text-2xl font-bold text-surface-900">{sede.inventario?.total || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs Navigation */}
+          <div className="flex overflow-x-auto border-t border-surface-200 px-6">
+            <TabButton
+              active={activeTab === 'general'}
+              onClick={() => setActiveTab('general')}
+              label="Información General"
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+            />
+            <TabButton
+              active={activeTab === 'personal'}
+              onClick={() => setActiveTab('personal')}
+              label={`Personal (${sede.personalSede?.length || 0})`}
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>}
+            />
+            <TabButton
+              active={activeTab === 'servicios'}
+              onClick={() => setActiveTab('servicios')}
+              label={`Servicios (${sede.servicios?.length || 0})`}
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+            />
+            <TabButton
+              active={activeTab === 'inventario'}
+              onClick={() => setActiveTab('inventario')}
+              label="Inventario"
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+            />
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="animate-fade-in-up">
+          {activeTab === 'general' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {/* Ubicación Information */}
+                <InfoCard title="Ubicación" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                    <InfoItem label="Dirección" value={sede.direccion} />
+                    <InfoItem label="Localidad" value={sede.localidad} />
+                    <InfoItem label="Provincia" value={sede.provincia} />
+                    <InfoItem label="País" value={sede.pais} />
+                  </div>
+                </InfoCard>
+
+                {/* Contacto e Infraestructura */}
+                <InfoCard title="Contacto e Infraestructura" icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                    <InfoItem label="Teléfono" value={sede.telefono || 'No registrado'} isMono={!!sede.telefono} />
+                    <InfoItem label="IP de la Sede" value={sede.ip_sede || 'No registrada'} isMono={!!sede.ip_sede} />
+                  </div>
+                </InfoCard>
+
+                {/* Audit Info */}
+                <div className="text-xs text-surface-400 flex items-center justify-between px-2">
+                  <span>Creado: {new Date(sede.created_at).toLocaleDateString('es-AR')}</span>
+                  <span>Actualizado: {new Date(sede.updated_at).toLocaleDateString('es-AR')}</span>
+                </div>
+              </div>
+
+              <div className="space-y-6">
                 {/* Técnico de Soporte Asignado */}
                 {(currentUser?.roles?.some(r => r.nombre === 'super_admin') || currentUser?.roles?.some(r => r.nombre === 'support')) && (
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      👨‍💼 Técnico de Soporte
+                  <div className="card-base p-6 border-l-4 border-l-primary-500">
+                    <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      Técnico Asignado
                     </h3>
+
                     {tecnicoLoading ? (
-                      <div className="bg-gray-50 p-4 rounded-lg text-center">
-                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <p className="text-gray-500 text-sm mt-2">Cargando...</p>
+                      <div className="py-8 text-center bg-surface-50 rounded-lg">
+                        <div className="inline-block animate-spin rounded-full h-5 w-5 border-2 border-surface-300 border-t-primary-600"></div>
                       </div>
                     ) : tecnico?.personal ? (
-                      <div className="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div>
-                          <p className="text-xs text-blue-600 uppercase font-semibold">Nombre</p>
-                          <p className="text-gray-900 font-medium">
-                            {tecnico.personal.nombre} {tecnico.personal.apellido}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-blue-600 uppercase font-semibold">Email</p>
-                          <p className="text-gray-900 break-all">{tecnico.personal.email}</p>
-                        </div>
-                        {tecnico.personal.telefono && (
-                          <div>
-                            <p className="text-xs text-blue-600 uppercase font-semibold">Teléfono</p>
-                            <p className="text-gray-900">{tecnico.personal.telefono}</p>
+                      <div className="bg-primary-50/50 rounded-xl p-4 border border-primary-100">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                            {tecnico.personal.nombre.charAt(0)}{tecnico.personal.apellido.charAt(0)}
                           </div>
-                        )}
-                        <div>
-                          <p className="text-xs text-blue-600 uppercase font-semibold">Asignado desde</p>
-                          <p className="text-gray-900">
-                            {new Date(tecnico.fecha_asignacion).toLocaleDateString('es-AR')}
-                          </p>
+                          <div>
+                            <p className="font-bold text-surface-900">{tecnico.personal.nombre} {tecnico.personal.apellido}</p>
+                            <p className="text-xs text-primary-600 font-medium">Soporte IT</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm text-surface-600 pl-1">
+                          <div className="flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                            <span className="truncate">{tecnico.personal.email}</span>
+                          </div>
+                          {tecnico.personal.telefono && (
+                            <div className="flex items-center gap-2">
+                              <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                              <span>{tecnico.personal.telefono}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-primary-200/50">
+                          <p className="text-[10px] text-surface-400 font-medium uppercase text-center">Asignado el {new Date(tecnico.fecha_asignacion).toLocaleDateString('es-AR')}</p>
                         </div>
                         {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
                           <button
                             onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
-                            className="w-full mt-4 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors font-medium text-sm"
+                            className="mt-3 w-full py-1.5 text-xs font-bold text-primary-700 hover:text-primary-800 hover:underline transition-all"
                           >
                             Cambiar Técnico
                           </button>
                         )}
                       </div>
                     ) : (
-                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                        <p className="text-yellow-800 text-sm">
-                          No hay un técnico de soporte asignado a esta sede
-                        </p>
+                      <div className="text-center py-6 bg-surface-50 rounded-xl border border-dashed border-surface-200">
+                        <p className="text-surface-500 text-sm mb-3">Sin técnico asignado</p>
                         {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
                           <button
                             onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
-                            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
+                            className="btn-secondary text-xs py-1.5"
                           >
-                            + Asignar Técnico
+                            Asignar Ahora
                           </button>
                         )}
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* Estadísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-blue-600 uppercase font-semibold mb-2">Personal Activo</p>
-                    <p className="text-4xl font-bold text-blue-600">{sede.personalSede?.length || 0}</p>
-                  </div>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-green-600 uppercase font-semibold mb-2">Items Inventario</p>
-                    <p className="text-4xl font-bold text-green-600">{sede.inventario?.total || 0}</p>
-                  </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">Disponibles</p>
-                    <p className="text-4xl font-bold text-purple-600">{sede.inventario?.disponible || 0}</p>
-                  </div>
-                </div>
-
-                {/* Información de Auditoría */}
-                <div className="border-t pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">Información de Auditoría</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Creado el</p>
-                      <p>{new Date(sede.created_at).toLocaleString('es-AR')}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Actualizado el</p>
-                      <p>{new Date(sede.updated_at).toLocaleString('es-AR')}</p>
-                    </div>
-                  </div>
-                </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Tab: Personal */}
-            {activeTab === 'personal' && (
-              <div>
-                {sede.personalSede && sede.personalSede.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nombre</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Rol</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Acciones</th>
+          {activeTab === 'personal' && (
+            <div className="card-base overflow-hidden">
+              {sede.personalSede && sede.personalSede.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-surface-50 border-b border-surface-200">
+                      <tr>
+                        <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Nombre</th>
+                        <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Contacto</th>
+                        <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Rol</th>
+                        <th className="px-6 py-4 text-right text-xs font-bold text-surface-400 uppercase tracking-wider">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-surface-100">
+                      {sede.personalSede.map((person) => (
+                        <tr key={person.id} className="hover:bg-surface-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-surface-100 flex items-center justify-center text-xs font-bold text-surface-600">
+                                {person.nombre[0]}{person.apellido[0]}
+                              </div>
+                              <p className="font-semibold text-surface-900">{person.nombre} {person.apellido}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-surface-600">{person.email}</td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100">
+                              {person.rol?.nombre || 'Sin rol'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button className="text-primary-600 hover:text-primary-800 font-medium text-sm hover:underline">
+                              Ver Perfil
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {sede.personalSede.map((person) => (
-                          <tr key={person.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4">
-                              <p className="font-medium text-gray-900">{person.nombre} {person.apellido}</p>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">{person.email}</td>
-                            <td className="px-6 py-4">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                {person.rol?.nombre || 'Sin rol'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                                Ver Perfil
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-4 text-surface-400">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No hay personal asignado a esta sede</p>
-                  </div>
-                )}
-              </div>
-            )}
+                  <p className="text-surface-900 font-medium">Sin personal asignado</p>
+                  <p className="text-surface-500 text-sm mt-1">No hay empleados registrados en esta sede.</p>
+                </div>
+              )}
+            </div>
+          )}
 
-            {/* Tab: Servicios */}
-            {activeTab === 'servicios' && (
-              <div>
-                {sede.servicios && sede.servicios.length > 0 ? (
-                  <div className="space-y-6">
-                    {sede.servicios.map((servicio) => (
-                      <div key={servicio.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        {/* Header del Servicio */}
-                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b border-gray-200">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-xl font-bold text-gray-900">{servicio.nombre}</h3>
-                              <p className="text-sm text-gray-600 mt-1">
-                                <span className="font-semibold">Proveedor:</span> {servicio.proveedor?.empresa || 'N/A'}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                <span className="font-semibold">Tipo:</span> {servicio.tipoServicio?.nombre || 'N/A'}
-                              </p>
-                              {servicio.id_servicio && (
-                                <p className="text-xs text-gray-500 mt-1 font-mono">ID: {servicio.id_servicio}</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              {servicio.SedeServicio?.activo !== false ? (
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                                  ✓ Activo
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
-                                  Inactivo
-                                </span>
-                              )}
-                              {servicio.SedeServicio?.fecha_contratacion && (
-                                <p className="text-xs text-gray-500 mt-2">
-                                  Contratado: {new Date(servicio.SedeServicio.fecha_contratacion).toLocaleDateString('es-AR')}
-                                </p>
-                              )}
-                              {servicio.SedeServicio?.fecha_vencimiento && (
-                                <p className="text-xs text-gray-500">
-                                  Vence: {new Date(servicio.SedeServicio.fecha_vencimiento).toLocaleDateString('es-AR')}
-                                </p>
-                              )}
-                            </div>
+          {activeTab === 'servicios' && (
+            <div className="space-y-6">
+              {sede.servicios && sede.servicios.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {sede.servicios.map((servicio) => (
+                    <div key={servicio.id} className="card-base overflow-hidden border border-surface-200 hover:shadow-lg transition-all duration-300">
+                      {/* Header del Servicio */}
+                      <div className="bg-surface-50/50 p-6 border-b border-surface-100 flex flex-col md:flex-row gap-6 md:items-start justify-between">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-surface-900">{servicio.nombre}</h3>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${servicio.SedeServicio?.activo !== false
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : 'bg-surface-100 text-surface-600 border-surface-200'
+                              }`}>
+                              {servicio.SedeServicio?.activo !== false ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-surface-600">
+                            <p><span className="font-semibold text-surface-800">Proveedor:</span> {servicio.proveedor?.empresa || 'N/A'}</p>
+                            <p><span className="font-semibold text-surface-800">Tipo:</span> {servicio.tipoServicio?.nombre || 'Generico'}</p>
+                            {(servicio.SedeServicio?.fecha_vencimiento) && (
+                              <p className="text-amber-600 font-medium bg-amber-50 px-2 rounded">Vence: {new Date(servicio.SedeServicio.fecha_vencimiento).toLocaleDateString('es-AR')}</p>
+                            )}
                           </div>
                           {servicio.descripcion && (
-                            <p className="text-sm text-gray-700 mt-3 bg-white/50 p-3 rounded">{servicio.descripcion}</p>
+                            <p className="text-sm text-surface-500 mt-2 italic">{servicio.descripcion}</p>
                           )}
                         </div>
 
-                        {/* Niveles de Soporte */}
-                        <div className="p-6">
-                          <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            📞 Niveles de Soporte Técnico
-                          </h4>
-                          {servicio.nivelessoporte && servicio.nivelessoporte.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {servicio.nivelessoporte.map((nivel) => (
-                                <div
-                                  key={nivel.id}
-                                  className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                                >
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-bold text-blue-600 uppercase">Nivel {nivel.nivel}</span>
-                                    <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
-                                      N{nivel.nivel}
-                                    </span>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div>
-                                      <p className="text-xs text-gray-600 font-semibold">Email:</p>
-                                      <a
-                                        href={`mailto:${nivel.email}`}
-                                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all"
-                                      >
-                                        {nivel.email}
-                                      </a>
-                                    </div>
-                                    {nivel.telefono && (
-                                      <div>
-                                        <p className="text-xs text-gray-600 font-semibold">Teléfono:</p>
-                                        <a
-                                          href={`tel:${nivel.telefono}`}
-                                          className="text-sm text-gray-900 hover:text-blue-600"
-                                        >
-                                          {nivel.telefono}
-                                        </a>
-                                      </div>
-                                    )}
-                                    {nivel.web && (
-                                      <div>
-                                        <p className="text-xs text-gray-600 font-semibold">Web:</p>
-                                        <a
-                                          href={nivel.web}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all"
-                                        >
-                                          {nivel.web}
-                                        </a>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                              <p className="text-yellow-800 text-sm">
-                                No hay niveles de soporte configurados para este servicio
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500 text-lg">No hay servicios contratados para esta sede</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tab: Inventario */}
-            {activeTab === 'inventario' && (
-              <div className="space-y-6">
-                {/* Estadísticas de inventario */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-blue-600 uppercase font-semibold mb-2">Total de Items</p>
-                    <p className="text-3xl font-bold text-blue-600">{sede.inventario?.total || 0}</p>
-                  </div>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-green-600 uppercase font-semibold mb-2">Disponibles</p>
-                    <p className="text-3xl font-bold text-green-600">{sede.inventario?.disponible || 0}</p>
-                  </div>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-yellow-600 uppercase font-semibold mb-2">En Uso</p>
-                    <p className="text-3xl font-bold text-yellow-600">
-                      {(sede.inventario?.total || 0) - (sede.inventario?.disponible || 0)}
-                    </p>
-                  </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">En Préstamo</p>
-                    <p className="text-3xl font-bold text-purple-600">
-                      {sede.inventario?.prestamosEnEstaSede || sede.prestamosEnSede?.length || 0}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-gray-600 uppercase font-semibold mb-2">Otros</p>
-                    <p className="text-3xl font-bold text-gray-600">
-                      {(sede.inventario?.total || 0) - (sede.inventario?.disponible || 0) - (sede.inventario?.enUso || 0)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tabla de artículos del inventario propio */}
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Inventario de la Sede</h3>
-                  <TablaInventarioSede
-                    articulos={sede.inventarioSede || []}
-                    loading={loading}
-                  />
-                </div>
-
-                {/* Artículos en préstamo EN esta sede */}
-                {sede.prestamosEnSede && sede.prestamosEnSede.length > 0 && (
-                  <div className="mt-8">
-                    <div className="flex items-center gap-2 mb-4">
-                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                      <h3 className="text-lg font-bold text-purple-900">Artículos en Préstamo en esta Sede</h3>
-                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                        {sede.prestamosEnSede.length}
-                      </span>
-                    </div>
-                    <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6">
-                      <div className="grid grid-cols-1 gap-4">
-                        {sede.prestamosEnSede.map((prestamo, idx) => (
-                          <div key={idx} className="bg-white rounded-lg p-4 shadow">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <p className="font-bold text-gray-900">
-                                  {prestamo.inventario?.tipoArticulo?.nombre} - {prestamo.inventario?.marca} {prestamo.inventario?.modelo}
-                                </p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  SN: {prestamo.inventario?.numero_serie || 'N/A'}
-                                </p>
-                                <div className="mt-2 flex gap-4 text-xs text-gray-600">
-                                  <span>Remito: <span className="font-mono font-semibold text-purple-700">{prestamo.remito?.numero_remito}</span></span>
-                                  <span>Desde: <span className="font-semibold">{prestamo.remito?.sedeOrigen?.nombre_sede}</span></span>
-                                </div>
-                                {prestamo.fechaDevolucionEsperada && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Devolución esperada: {new Date(prestamo.fechaDevolucionEsperada).toLocaleDateString('es-AR')}
-                                  </p>
-                                )}
-                              </div>
-                              <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                                {prestamo.remito?.estado}
-                              </span>
-                            </div>
+                        {servicio.id_servicio && (
+                          <div className="text-right">
+                            <span className="text-xs font-mono bg-surface-100 text-surface-600 px-2 py-1 rounded border border-surface-200">ID: {servicio.id_servicio}</span>
                           </div>
-                        ))}
+                        )}
+                      </div>
+
+                      {/* Niveles de Soporte */}
+                      <div className="p-6">
+                        <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                          Canales de Soporte
+                        </h4>
+                        {servicio.nivelessoporte && servicio.nivelessoporte.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {servicio.nivelessoporte.map((nivel) => (
+                              <div
+                                key={nivel.id}
+                                className="rounded-xl border border-surface-200 p-4 hover:border-primary-300 hover:shadow-md transition-all group bg-white"
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-xs font-bold text-surface-500 uppercase">Soporte Nivel</span>
+                                  <span className="w-6 h-6 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold border border-primary-200">
+                                    {nivel.nivel}
+                                  </span>
+                                </div>
+                                <div className="space-y-2">
+                                  <a
+                                    href={`mailto:${nivel.email}`}
+                                    className="flex items-center gap-2 text-sm text-surface-600 hover:text-primary-600 transition-colors truncate group/link"
+                                  >
+                                    <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                    <span className="truncate">{nivel.email}</span>
+                                  </a>
+                                  {nivel.telefono && (
+                                    <a
+                                      href={`tel:${nivel.telefono}`}
+                                      className="flex items-center gap-2 text-sm text-surface-600 hover:text-primary-600 transition-colors truncate group/link"
+                                    >
+                                      <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                      <span className="truncate">{nivel.telefono}</span>
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
+                            <p className="text-amber-700 text-sm font-medium">
+                              Sin escalamiento de soporte configurado
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 card-base">
+                  <div className="w-16 h-16 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-4 text-surface-400">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+                  <p className="text-surface-900 font-medium">Sin servicios activos</p>
+                  <p className="text-surface-500 text-sm mt-1">Esta sede no cuenta con servicios o contratos registrados.</p>
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Acciones */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate(`/sedes/${id}/editar`)}
-            disabled={!canUpdate('sedes')}
-            className={`flex-1 px-6 py-3 rounded-lg transition-colors font-semibold ${
-              canUpdate('sedes')
-                ? 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer'
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            }`}
-            title={!canUpdate('sedes') ? 'No tienes permiso para editar sedes' : ''}
-          >
-            Editar Sede
-          </button>
-          <button
-            onClick={() => navigate('/sedes')}
-            className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
-          >
-            Volver a Lista
-          </button>
+          {activeTab === 'inventario' && (
+            <div className="space-y-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCardSmall label="Total Items" value={sede.inventario?.total || 0} color="blue" />
+                <StatCardSmall label="Disponibles" value={sede.inventario?.disponible || 0} color="emerald" />
+                <StatCardSmall label="En Uso" value={(sede.inventario?.total || 0) - (sede.inventario?.disponible || 0)} color="amber" />
+                <StatCardSmall label="En Préstamo" value={sede.inventario?.prestamosEnEstaSede || sede.prestamosEnSede?.length || 0} color="purple" />
+              </div>
+
+              {/* Main Inventory Table */}
+              <div className="card-base p-6">
+                <h3 className="text-lg font-bold text-surface-900 mb-6">Inventario Asignado</h3>
+                <TablaInventarioSede
+                  articulos={sede.inventarioSede || []}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function InfoCard({ title, icon, children }) {
+  return (
+    <div className="card-base p-6 h-full bg-white">
+      <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wider mb-6 flex items-center gap-2">
+        <span className="p-1.5 bg-surface-100 rounded-lg text-surface-500">{icon}</span>
+        {title}
+      </h3>
+      {children}
+    </div>
+  )
+}
+
+function InfoItem({ label, value, isMono = false }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase font-bold text-surface-400 tracking-wider mb-1">{label}</p>
+      <p className={`text-surface-900 font-medium ${isMono ? 'font-mono text-sm' : ''}`}>{value || '-'}</p>
+    </div>
+  )
+}
+
+function TabButton({ active, onClick, label, icon }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 py-4 px-6 border-b-2 font-medium text-sm transition-all duration-200 whitespace-nowrap ${active
+          ? 'border-primary-500 text-primary-700 bg-primary-50/10'
+          : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'
+        }`}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+function StatCardSmall({ label, value, color }) {
+  const colors = {
+    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    amber: 'bg-amber-50 text-amber-700 border-amber-100',
+    purple: 'bg-purple-50 text-purple-700 border-purple-100',
+  }
+
+  return (
+    <div className={`p-4 rounded-xl border ${colors[color] || colors.blue} flex flex-col items-center justify-center shadow-sm`}>
+      <span className="text-2xl font-bold tracking-tight">{value}</span>
+      <span className="text-[10px] uppercase font-bold tracking-wider opacity-80 mt-1">{label}</span>
     </div>
   )
 }

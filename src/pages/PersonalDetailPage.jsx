@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { personalAPI, authAPI } from '../services/api'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function PersonalDetailPage() {
   const { id } = useParams()
@@ -10,6 +11,7 @@ export default function PersonalDetailPage() {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
   const [currentUser, setCurrentUser] = useState(null)
+  const { canUpdate } = usePermissions()
 
   useEffect(() => {
     cargarDatos()
@@ -36,296 +38,273 @@ export default function PersonalDetailPage() {
     }
   }
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
   if (loading) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-surface-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando detalles del personal...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+          <p className="text-surface-500 font-medium">Cargando perfil...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !personal) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto">
+      <div className="p-6 sm:p-8 bg-surface-50 min-h-screen">
+        <div className="p-8 text-center bg-white rounded-2xl border border-surface-200 shadow-sm max-w-lg mx-auto mt-20">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-rose-800 mb-2">No se pudo cargar el personal</h3>
+          <p className="text-rose-600 mb-6">{error || 'El personal solicitado no existe o fue eliminado.'}</p>
           <button
             onClick={() => navigate('/personal')}
-            className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
+            className="btn-primary w-full"
           >
-            ← Volver a Personal
+            Volver a la Lista
           </button>
-          <div className="p-6 bg-red-50 border-l-4 border-red-600 rounded-lg">
-            <p className="text-red-800 font-medium">Error al cargar el personal</p>
-            <p className="text-red-600 text-sm mt-1">{error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!personal) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => navigate('/personal')}
-            className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
-          >
-            ← Volver a Personal
-          </button>
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No se encontró el personal</p>
-          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <button
-          onClick={() => navigate('/personal')}
-          className="mb-6 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
-        >
-          ← Volver a Personal
-        </button>
-
-        {/* Información Principal */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-          {/* Header Gradiente */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">
-            <h1 className="text-4xl font-bold">{personal.nombre} {personal.apellido}</h1>
-            <p className="text-blue-100 text-lg mt-2">{personal.rol?.nombre || 'Sin rol asignado'}</p>
-            <div className="mt-4 flex items-center gap-4">
-              <span className={`px-4 py-2 rounded-full font-semibold ${
-                personal.activo
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {personal.activo ? '✓ Activo' : '✗ Inactivo'}
-              </span>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="border-b border-gray-200 bg-gray-50">
-            <div className="flex gap-8 px-8">
-              <button
-                onClick={() => setActiveTab('general')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'general'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Información General
-              </button>
-              <button
-                onClick={() => setActiveTab('sedes')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'sedes'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Sedes Asignadas ({personal.sedesAsignadas?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('remitos')}
-                className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-                  activeTab === 'remitos'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Remitos
-              </button>
-            </div>
-          </div>
-
-          {/* Contenido de Tabs */}
-          <div className="p-8">
-            {/* Tab: Información General */}
-            {activeTab === 'general' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Información Personal */}
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      👤 Información Personal
-                    </h3>
-                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Nombre Completo</p>
-                        <p className="text-gray-900 font-medium">{personal.nombre} {personal.apellido}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Email</p>
-                        <p className="text-gray-900">{personal.email}</p>
-                      </div>
-                      {personal.telefono && (
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Teléfono</p>
-                          <p className="text-gray-900">{personal.telefono}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Asignación */}
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      🏢 Asignación
-                    </h3>
-                    <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Rol</p>
-                        <p className="text-gray-900 font-medium">{personal.rol?.nombre || 'Sin rol'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Sede Principal</p>
-                        <p className="text-gray-900">{personal.sede?.nombre_sede || 'Sin sede'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase font-semibold">Sedes Asignadas</p>
-                        <p className="text-gray-900">{personal.sedesAsignadas?.length || 0} sede(s)</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Estadísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-blue-600 uppercase font-semibold mb-2">Remitos Solicitados</p>
-                    <p className="text-4xl font-bold text-blue-600">{personal.estadisticas?.remitosSolicitados || 0}</p>
-                  </div>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-green-600 uppercase font-semibold mb-2">Remitos Asignados</p>
-                    <p className="text-4xl font-bold text-green-600">{personal.estadisticas?.remitosAsignados || 0}</p>
-                  </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
-                    <p className="text-xs text-purple-600 uppercase font-semibold mb-2">Total Remitos</p>
-                    <p className="text-4xl font-bold text-purple-600">
-                      {(personal.estadisticas?.remitosSolicitados || 0) + (personal.estadisticas?.remitosAsignados || 0)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Información de Auditoría */}
-                <div className="border-t pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-3">Información de Auditoría</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Creado el</p>
-                      <p>{personal.created_at ? new Date(personal.created_at).toLocaleString('es-AR') : 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Actualizado el</p>
-                      <p>{personal.updated_at ? new Date(personal.updated_at).toLocaleString('es-AR') : 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab: Sedes */}
-            {activeTab === 'sedes' && (
-              <div>
-                {personal.sedesAsignadas && personal.sedesAsignadas.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nombre de Sede</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Localidad</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Provincia</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {personal.sedesAsignadas.map((asignacion) => (
-                          <tr key={asignacion.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4">
-                              <p className="font-medium text-gray-900">{asignacion.sede?.nombre_sede || 'N/A'}</p>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">{asignacion.sede?.localidad || 'N/A'}</td>
-                            <td className="px-6 py-4 text-gray-600">{asignacion.sede?.provincia || 'N/A'}</td>
-                            <td className="px-6 py-4">
-                              <button
-                                onClick={() => navigate(`/sedes/${asignacion.sede_id}`)}
-                                className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                              >
-                                Ver Detalles
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No hay sedes asignadas a este personal</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tab: Remitos */}
-            {activeTab === 'remitos' && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg mb-4">Remitos del personal</p>
-                <div className="grid grid-cols-3 gap-4 mt-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Solicitados</p>
-                    <p className="text-3xl font-bold text-blue-600">{personal.estadisticas?.remitosSolicitados || 0}</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Asignados</p>
-                    <p className="text-3xl font-bold text-green-600">{personal.estadisticas?.remitosAsignados || 0}</p>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Total</p>
-                    <p className="text-3xl font-bold text-purple-600">
-                      {(personal.estadisticas?.remitosSolicitados || 0) + (personal.estadisticas?.remitosAsignados || 0)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Acciones */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate(`/personal/${id}/editar`)}
-            className="flex-1 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
-          >
-            Editar Personal
-          </button>
-          {currentUser && currentUser.role === 'super_admin' && (
-            <button
-              onClick={() => navigate(`/personal/${id}/asignar-sedes`)}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-            >
-              Asignar Sedes
-            </button>
-          )}
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <button
             onClick={() => navigate('/personal')}
-            className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+            className="text-surface-500 hover:text-primary-600 font-medium text-sm flex items-center gap-2 transition-colors w-fit"
           >
-            Volver a Lista
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a Personal
           </button>
+
+          <div className="flex gap-3">
+            {canUpdate('personal') && (
+              <button
+                onClick={() => navigate(`/personal/${id}/editar`)}
+                className="btn-primary flex items-center gap-2 text-sm shadow-lg shadow-primary-900/20"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar
+              </button>
+            )}
+
+            {currentUser && currentUser.role === 'super_admin' && (
+              <button
+                onClick={() => navigate(`/personal/${id}/asignar-sedes`)}
+                className="px-4 py-2 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 hover:border-surface-300 transition-all text-sm shadow-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Asignar Sedes
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Profile Header Card */}
+        <div className="card-base bg-white overflow-hidden">
+          <div className="h-32 bg-gradient-to-r from-primary-600 to-indigo-700 relative">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          </div>
+          <div className="px-8 pb-8">
+            <div className="relative flex flex-col sm:flex-row items-end -mt-12 mb-6 gap-6">
+              <div className="w-24 h-24 rounded-2xl bg-white p-1.5 shadow-xl">
+                <div className="w-full h-full rounded-xl bg-gradient-to-br from-surface-100 to-surface-200 flex items-center justify-center text-3xl font-bold text-surface-400">
+                  {personal.nombre?.[0]}{personal.apellido?.[0]}
+                </div>
+              </div>
+
+              <div className="flex-1 mb-2">
+                <h1 className="text-3xl font-bold text-surface-900 tracking-tight">{personal.nombre} {personal.apellido}</h1>
+                <div className="flex items-center gap-4 mt-1">
+                  <p className="text-surface-500 font-medium flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    {personal.rol?.nombre || 'Sin rol asignado'}
+                  </p>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${personal.activo ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                    {personal.activo ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-surface-100 mb-8">
+              <TabButton
+                active={activeTab === 'general'}
+                onClick={() => setActiveTab('general')}
+                label="Información General"
+              />
+              <TabButton
+                active={activeTab === 'sedes'}
+                onClick={() => setActiveTab('sedes')}
+                label={`Sedes Asignadas (${personal.sedesAsignadas?.length || 0})`}
+              />
+              <TabButton
+                active={activeTab === 'remitos'}
+                onClick={() => setActiveTab('remitos')}
+                label="Estadísticas"
+              />
+            </div>
+
+            {/* Tab Panels */}
+            <div className="animate-fade-in">
+              {activeTab === 'general' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide flex items-center gap-2">
+                      <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      Datos Personales
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <InfoItem label="Email" value={personal.email} />
+                      <InfoItem label="Teléfono" value={personal.telefono} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide flex items-center gap-2">
+                      <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                      Ubicación y Empresa
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <InfoItem label="Empresa" value={personal.empresa?.nombre_empresa} />
+                      <InfoItem label="Sede Principal" value={personal.sede?.nombre_sede} />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 pt-6 border-t border-surface-100 mt-2">
+                    <div className="flex items-center gap-6 text-xs text-surface-400">
+                      <span>Registrado: <span className="font-medium text-surface-600">{formatDate(personal.created_at)}</span></span>
+                      <span>Actualizado: <span className="font-medium text-surface-600">{formatDate(personal.updated_at)}</span></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'sedes' && (
+                <div className="space-y-6">
+                  {personal.sedesAsignadas && personal.sedesAsignadas.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {personal.sedesAsignadas.map((asignacion) => (
+                        <div key={asignacion.id} className="p-4 rounded-xl border border-surface-200 bg-surface-50 hover:bg-white hover:border-primary-200 hover:shadow-sm transition-all group">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="w-8 h-8 rounded-lg bg-surface-200 text-surface-500 flex items-center justify-center group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                            <button
+                              onClick={() => navigate(`/sedes/${asignacion.sede_id}`)}
+                              className="text-primary-600 hover:text-primary-800 text-xs font-bold bg-primary-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              Ver Sede
+                            </button>
+                          </div>
+                          <h4 className="font-bold text-surface-900">{asignacion.sede?.nombre_sede || 'Sede Desconocida'}</h4>
+                          <p className="text-surface-500 text-sm mt-0.5">{asignacion.sede?.localidad}, {asignacion.sede?.provincia}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-surface-50 rounded-xl border border-dashed border-surface-200">
+                      <p className="text-surface-500 font-medium">No hay sedes asignadas a este personal</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'remitos' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <StatBox
+                    label="Remitos Solicitados"
+                    value={personal.estadisticas?.remitosSolicitados || 0}
+                    color="blue"
+                  />
+                  <StatBox
+                    label="Remitos Asignados"
+                    value={personal.estadisticas?.remitosAsignados || 0}
+                    color="emerald"
+                  />
+                  <StatBox
+                    label="Total Movimientos"
+                    value={(personal.estadisticas?.remitosSolicitados || 0) + (personal.estadisticas?.remitosAsignados || 0)}
+                    color="violet"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function TabButton({ active, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-6 py-4 text-sm font-bold border-b-2 transition-colors relative ${active
+          ? 'border-primary-600 text-primary-600'
+          : 'border-transparent text-surface-500 hover:text-surface-900 hover:border-surface-300'
+        }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function InfoItem({ label, value }) {
+  return (
+    <div>
+      <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1 opacity-80">{label}</p>
+      {value ? (
+        <p className="text-surface-900 font-medium text-base">
+          {value}
+        </p>
+      ) : (
+        <p className="text-surface-400 text-sm italic">No especificado</p>
+      )}
+    </div>
+  )
+}
+
+function StatBox({ label, value, color }) {
+  const colorStyles = {
+    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    violet: 'bg-violet-50 text-violet-700 border-violet-100'
+  }
+
+  return (
+    <div className={`p-6 rounded-xl border flex flex-col items-center justify-center text-center ${colorStyles[color]}`}>
+      <span className="text-4xl font-extrabold tracking-tight mb-2">{value}</span>
+      <span className="text-xs font-bold uppercase tracking-wide opacity-80">{label}</span>
     </div>
   )
 }

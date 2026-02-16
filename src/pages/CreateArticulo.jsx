@@ -1,9 +1,33 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
+import LoadingOverlay from '../components/LoadingOverlay'
+
+// Schema de validación
+const articuloSchema = yup.object().shape({
+  tipo_articulo_id: yup
+    .string()
+    .required('El tipo de artículo es requerido'),
+  marca: yup
+    .string()
+    .required('La marca es requerida')
+    .min(2, 'La marca debe tener al menos 2 caracteres'),
+  modelo: yup
+    .string()
+    .required('El modelo es requerido')
+    .min(2, 'El modelo debe tener al menos 2 caracteres'),
+  numero_serie: yup.string().nullable().notRequired(),
+  service_tag: yup.string().nullable().notRequired(),
+  fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
+  observaciones: yup.string().nullable().notRequired(),
+  sede_id: yup.string().required('La sede es requerida (Error interno)')
+})
 
 export default function CreateArticulo() {
   const navigate = useNavigate()
@@ -14,19 +38,26 @@ export default function CreateArticulo() {
 
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
-  const [sedes, setSedes] = useState([])
-  const [formData, setFormData] = useState({
-    tipo_articulo_id: '',
-    marca: '',
-    modelo: '',
-    numero_serie: '',
-    service_tag: '',
-    sede_id: '', // Will be auto-set to Depósito
-    estado: 'disponible', // Always new items
-    fecha_adquisicion: '',
-    observaciones: ''
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+    reset
+  } = useForm({
+    resolver: yupResolver(articuloSchema),
+    defaultValues: {
+      tipo_articulo_id: '',
+      marca: '',
+      modelo: '',
+      numero_serie: '',
+      service_tag: '',
+      sede_id: '',
+      fecha_adquisicion: null,
+      observaciones: ''
+    }
   })
-  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     if (!canCreate('inventario')) {
@@ -46,20 +77,19 @@ export default function CreateArticulo() {
     try {
       setLoading(true)
 
-      // Cargar tipos de artículos - puede ser un array directamente o un objeto con rows/data
+      // Cargar tipos de artículos
       let tiposResponse
       try {
         tiposResponse = await tipoArticuloAPI.list()
       } catch (tiposErr) {
         console.error('Error cargando tipos:', tiposErr)
-        // Si falla, intenta con el endpoint /api/tipo-articulo/todos
-        tiposResponse = await tipoArticuloAPI.getById ? null : []
+        tiposResponse = []
       }
 
       const tipos = tiposResponse?.rows || tiposResponse?.data || tiposResponse || []
       setTiposArticulo(Array.isArray(tipos) ? tipos : [])
 
-      // Cargar sedes (para validación, pero solo Depósito será usado)
+      // Cargar sedes y buscar Depósito
       let sedesResponse
       try {
         sedesResponse = await sedesAPI.list({ limit: 100 })
@@ -69,280 +99,300 @@ export default function CreateArticulo() {
       }
 
       const sedesData = sedesResponse?.rows || sedesResponse?.data || sedesResponse || []
-      setSedes(Array.isArray(sedesData) ? sedesData : [])
 
-      // Auto-seleccionar el Depósito (todos los nuevos artículos van al Depósito)
+      // Auto-seleccionar el Depósito
       const deposito = Array.isArray(sedesData) && sedesData.find(s => s.nombre_sede === 'Depósito')
       if (deposito) {
-        setFormData(prev => ({ ...prev, sede_id: deposito.id }))
+        setValue('sede_id', deposito.id)
       } else {
         console.warn('Sede Depósito no encontrada')
+        Swal.fire('Advertencia', 'No se encontró la sede "Depósito". Contacte al administrador.', 'warning')
       }
 
-      // Si no se cargaron tipos, mostrar error
       if (!Array.isArray(tipos) || tipos.length === 0) {
-        Swal.fire('Error', 'No se pudieron cargar los tipos de artículos. Por favor, intenta de nuevo.', 'error')
+        Swal.fire('Error', 'No se pudieron cargar los tipos de artículos.', 'error')
       }
     } catch (err) {
       console.error('Error cargando datos:', err)
-      Swal.fire('Error', 'No se pudieron cargar los datos: ' + (err.message || 'Error desconocido'), 'error')
+      Swal.fire('Error', 'No se pudieron cargar los datos iniciales.', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-    // Limpiar error del campo
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }))
-    }
-  }
-
-  const validateForm = () => {
-    const newErrors = {}
-
-    if (!formData.tipo_articulo_id) {
-      newErrors.tipo_articulo_id = 'Tipo de artículo es requerido'
-    }
-    if (!formData.marca.trim()) {
-      newErrors.marca = 'Marca es requerida'
-    }
-    if (!formData.modelo.trim()) {
-      newErrors.modelo = 'Modelo es requerido'
-    }
-    if (!formData.sede_id) {
-      newErrors.sede_id = 'Error: Sede Depósito no encontrada'
-    }
-    if (formData.fecha_adquisicion && new Date(formData.fecha_adquisicion) > new Date()) {
-      newErrors.fecha_adquisicion = 'Fecha no puede ser futura'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      Swal.fire('Error', 'Por favor completa todos los campos requeridos', 'error')
-      return
-    }
-
+  const onSubmit = async (data) => {
     try {
       setLoading(true)
 
-      // Remove empty optional fields - don't send empty strings
-      const dataToSend = { ...formData }
+      // Preparar datos
+      const dataToSend = { ...data }
 
-      // Convert empty strings to undefined for optional fields
-      if (!dataToSend.numero_serie?.trim()) dataToSend.numero_serie = undefined
-      if (!dataToSend.service_tag?.trim()) dataToSend.service_tag = undefined
-      if (!dataToSend.fecha_adquisicion) dataToSend.fecha_adquisicion = undefined
-      if (!dataToSend.observaciones?.trim()) dataToSend.observaciones = undefined
+      // Limpiar campos vacíos
+      if (!dataToSend.numero_serie?.trim()) delete dataToSend.numero_serie
+      if (!dataToSend.service_tag?.trim()) delete dataToSend.service_tag
+      if (!dataToSend.fecha_adquisicion) delete dataToSend.fecha_adquisicion
+      if (!dataToSend.observaciones?.trim()) delete dataToSend.observaciones
 
-      // Don't send valor_adquisicion if empty
-      if (!dataToSend.valor_adquisicion) dataToSend.valor_adquisicion = undefined
+      // Estado inicial siempre disponible
+      dataToSend.estado = 'disponible'
 
       await inventarioAPI.create(dataToSend)
 
-      Swal.fire('Éxito', 'Artículo creado correctamente', 'success')
+      await Swal.fire({
+        title: 'Artículo Creado',
+        text: 'El artículo se ha registrado exitosamente en el inventario.',
+        icon: 'success',
+        timer: 1500,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'rounded-2xl',
+          confirmButton: 'px-4 py-2 bg-emerald-600 text-white rounded-lg'
+        }
+      })
       navigate('/inventario')
     } catch (err) {
       console.error('Error creando artículo:', err)
-      Swal.fire('Error', err.message || 'Error al crear el artículo', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al crear el artículo',
+        icon: 'error',
+        customClass: {
+          popup: 'rounded-2xl'
+        }
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const inputClass = (fieldName) => `
-    w-full px-4 py-2 border rounded-lg
-    focus:ring-2 focus:ring-blue-500 focus:border-transparent
-    ${errors[fieldName] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
-  `
-
   if (!canCreate('inventario')) {
-    return <div>Cargando...</div>
-  }
-
-  if (loading && tiposArticulo.length === 0) {
-    return (
-      <div className="p-6 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="mt-2 text-gray-600">Cargando formulario...</p>
-      </div>
-    )
+    return <div className="p-8 text-center text-surface-500">Cargando permisos...</div>
   }
 
   return (
-    <div className="p-6">
-      {/* Encabezado */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Nuevo Artículo de Inventario</h1>
-        <p className="text-gray-600 mt-2">Registra un nuevo artículo en el sistema</p>
-      </div>
-
-      {/* Formulario */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 max-w-2xl">
-
-        {/* Tipo de Artículo */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tipo de Artículo *
-          </label>
-          <select
-            name="tipo_articulo_id"
-            value={formData.tipo_articulo_id}
-            onChange={handleChange}
-            className={inputClass('tipo_articulo_id')}
-            disabled={loading}
-          >
-            <option value="">Selecciona un tipo</option>
-            {tiposArticulo.map(tipo => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-          {errors.tipo_articulo_id && (
-            <p className="text-red-500 text-sm mt-1">{errors.tipo_articulo_id}</p>
-          )}
-        </div>
-
-        {/* Marca y Modelo en una fila */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Marca *
-            </label>
-            <input
-              type="text"
-              name="marca"
-              value={formData.marca}
-              onChange={handleChange}
-              placeholder="ej: Dell, HP, etc."
-              className={inputClass('marca')}
-              disabled={loading}
-            />
-            {errors.marca && (
-              <p className="text-red-500 text-sm mt-1">{errors.marca}</p>
-            )}
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Nuevo Artículo</h1>
+            <p className="text-surface-500 mt-1 font-medium">Registra un nuevo activo en el inventario</p>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Modelo *
-            </label>
-            <input
-              type="text"
-              name="modelo"
-              value={formData.modelo}
-              onChange={handleChange}
-              placeholder="ej: OptiPlex 7090"
-              className={inputClass('modelo')}
-              disabled={loading}
-            />
-            {errors.modelo && (
-              <p className="text-red-500 text-sm mt-1">{errors.modelo}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Número de Serie y Service Tag */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Número de Serie
-            </label>
-            <input
-              type="text"
-              name="numero_serie"
-              value={formData.numero_serie}
-              onChange={handleChange}
-              placeholder="Número de serie del equipo"
-              className={inputClass('numero_serie')}
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Service Tag
-            </label>
-            <input
-              type="text"
-              name="service_tag"
-              value={formData.service_tag}
-              onChange={handleChange}
-              placeholder="Service tag del fabricante"
-              className={inputClass('service_tag')}
-              disabled={loading}
-            />
-          </div>
-        </div>
-
-        {/* Fecha de Adquisición */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Fecha de Adquisición (Opcional)
-          </label>
-          <input
-            type="date"
-            name="fecha_adquisicion"
-            value={formData.fecha_adquisicion}
-            onChange={handleChange}
-            className={inputClass('fecha_adquisicion')}
-            disabled={loading}
-          />
-          {errors.fecha_adquisicion && (
-            <p className="text-red-500 text-sm mt-1">{errors.fecha_adquisicion}</p>
-          )}
-        </div>
-
-        {/* Observaciones */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Observaciones
-          </label>
-          <textarea
-            name="observaciones"
-            value={formData.observaciones}
-            onChange={handleChange}
-            placeholder="Notas adicionales sobre el equipo"
-            rows="4"
-            className={inputClass('observaciones')}
-            disabled={loading}
-          />
-        </div>
-
-        {/* Botones */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {loading ? 'Guardando...' : 'Crear Artículo'}
-          </button>
           <button
             type="button"
             onClick={() => navigate('/inventario')}
-            disabled={loading}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="text-surface-500 hover:text-surface-700 font-medium text-sm transition-colors flex items-center gap-2"
           >
-            Cancelar
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Cancelar y Volver
           </button>
         </div>
-      </form>
+
+        {loading && !tiposArticulo.length ? (
+          <div className="p-12 text-center bg-white rounded-2xl border border-surface-200 shadow-sm">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+            <p className="text-surface-500 font-medium">Cargando formulario...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Sección 1: Detalles del Equipo */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">1</span>
+                Detalles del Equipo
+              </h2>
+
+              <div className="grid grid-cols-1 gap-6">
+                {/* Tipo de Artículo */}
+                <div className="space-y-1.5">
+                  <label htmlFor="tipo_articulo_id" className="block text-sm font-semibold text-surface-700">
+                    Tipo de Artículo <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="tipo_articulo_id"
+                      {...register('tipo_articulo_id')}
+                      disabled={loading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.tipo_articulo_id
+                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    >
+                      <option value="">Selecciona un tipo</option>
+                      {tiposArticulo.map(tipo => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  {errors.tipo_articulo_id && (
+                    <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {errors.tipo_articulo_id.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Marca */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="marca" className="block text-sm font-semibold text-surface-700">
+                      Marca <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="marca"
+                      {...register('marca')}
+                      placeholder="Ej: Dell, HP, Apple"
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.marca
+                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    />
+                    {errors.marca && (
+                      <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {errors.marca.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Modelo */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="modelo" className="block text-sm font-semibold text-surface-700">
+                      Modelo <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="modelo"
+                      {...register('modelo')}
+                      placeholder="Ej: Latitude 5420"
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.modelo
+                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    />
+                    {errors.modelo && (
+                      <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {errors.modelo.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sección 2: Identificación */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">2</span>
+                Identificación y Seguimiento
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Número de Serie */}
+                <div className="space-y-1.5">
+                  <label htmlFor="numero_serie" className="block text-sm font-semibold text-surface-700">
+                    Número de Serie
+                  </label>
+                  <input
+                    type="text"
+                    id="numero_serie"
+                    {...register('numero_serie')}
+                    placeholder="S/N del fabricante"
+                    className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all hover:border-surface-300"
+                  />
+                </div>
+
+                {/* Service Tag */}
+                <div className="space-y-1.5">
+                  <label htmlFor="service_tag" className="block text-sm font-semibold text-surface-700">
+                    Service Tag / Etiqueta
+                  </label>
+                  <input
+                    type="text"
+                    id="service_tag"
+                    {...register('service_tag')}
+                    placeholder="Etiqueta de servicio"
+                    className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all hover:border-surface-300"
+                  />
+                </div>
+
+                {/* Fecha de Adquisición */}
+                <div className="space-y-1.5">
+                  <label htmlFor="fecha_adquisicion" className="block text-sm font-semibold text-surface-700">
+                    Fecha de Adquisición
+                  </label>
+                  <input
+                    type="date"
+                    id="fecha_adquisicion"
+                    {...register('fecha_adquisicion')}
+                    className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.fecha_adquisicion
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      }`}
+                  />
+                  {errors.fecha_adquisicion && (
+                    <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {errors.fecha_adquisicion.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Observaciones */}
+              <div className="space-y-1.5 pt-2">
+                <label htmlFor="observaciones" className="block text-sm font-semibold text-surface-700">
+                  Observaciones
+                </label>
+                <textarea
+                  id="observaciones"
+                  {...register('observaciones')}
+                  rows="3"
+                  placeholder="Notas adicionales..."
+                  className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all hover:border-surface-300 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4 border-t border-surface-200">
+              <button
+                type="button"
+                onClick={() => navigate('/inventario')}
+                disabled={loading}
+                className="btn-secondary w-full sm:w-auto"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || loading}
+                className="btn-primary w-full sm:w-auto shadow-lg shadow-primary-900/10"
+              >
+                {loading || isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Guardando...
+                  </span>
+                ) : 'Crear Artículo'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <LoadingOverlay isVisible={loading || isSubmitting} message="Procesando..." />
+      </div>
     </div>
   )
 }

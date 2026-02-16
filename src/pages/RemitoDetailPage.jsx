@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../services/api'
 import { remitosAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
@@ -39,29 +38,35 @@ function RemitoDetailPage() {
     } catch (err) {
       console.error('Error cargando remito:', err)
       setError(err.message || 'Error al cargar remito')
-      Swal.fire('Error', err.message || 'No se pudo cargar el remito', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'No se pudo cargar el remito',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setLoading(false)
     }
   }
 
   const getEstadoBadgeClass = (estado) => {
-    const baseClass = 'px-3 py-1 rounded-full text-sm font-medium'
+    // Return classes for consistent badges
+    const baseClass = 'px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 w-fit'
     switch (estado) {
       case 'preparado':
-        return `${baseClass} bg-yellow-100 text-yellow-800`
+        return `${baseClass} bg-amber-50 text-amber-700 border-amber-100`
       case 'en_transito':
-        return `${baseClass} bg-blue-100 text-blue-800`
+        return `${baseClass} bg-blue-50 text-blue-700 border-blue-100`
       case 'entregado':
-        return `${baseClass} bg-green-100 text-green-800`
-      case 'completado':
-        return `${baseClass} bg-purple-100 text-purple-800`
+        return `${baseClass} bg-emerald-50 text-emerald-700 border-emerald-100`
+      case 'completado': // Legacy or alternative name
+        return `${baseClass} bg-purple-50 text-purple-700 border-purple-100`
       case 'devuelto':
-        return `${baseClass} bg-indigo-100 text-indigo-800`
+        return `${baseClass} bg-violet-50 text-violet-700 border-violet-100`
       case 'cancelado':
-        return `${baseClass} bg-red-100 text-red-800`
+        return `${baseClass} bg-rose-50 text-rose-700 border-rose-100`
       default:
-        return baseClass
+        return `${baseClass} bg-surface-100 text-surface-600 border-surface-200`
     }
   }
 
@@ -92,18 +97,35 @@ function RemitoDetailPage() {
 
   const handleCambiarEstado = async () => {
     if (!newState) {
-      Swal.fire('Error', 'Selecciona un nuevo estado', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: 'Selecciona un nuevo estado',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
       return
     }
 
     try {
       setChangingState(true)
       await remitosAPI.cambiarEstado(id, newState)
-      Swal.fire('Éxito', 'Estado del remito actualizado correctamente', 'success')
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Estado del remito actualizado correctamente',
+        icon: 'success',
+        timer: 1500,
+        timerProgressBar: true,
+        customClass: { popup: 'rounded-2xl' }
+      })
       setNewState('')
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al cambiar el estado', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al cambiar el estado',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setChangingState(false)
     }
@@ -119,7 +141,12 @@ function RemitoDetailPage() {
 
   const handleGenerarDevolucion = async () => {
     if (selectedDetalles.length === 0) {
-      Swal.fire('Error', 'Selecciona al menos un artículo para devolver', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: 'Selecciona al menos un artículo para devolver',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
       return
     }
 
@@ -131,14 +158,20 @@ function RemitoDetailPage() {
       Swal.fire({
         title: 'Éxito',
         html: `Remito de devolución <strong>${remitoDevolucion.numero_remito}</strong> creado correctamente`,
-        icon: 'success'
+        icon: 'success',
+        customClass: { popup: 'rounded-2xl' }
       })
 
       setShowDevolucionModal(false)
       setSelectedDetalles([])
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al generar remito de devolución', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al generar remito de devolución',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setDevolviendoArticulos(false)
     }
@@ -169,12 +202,23 @@ function RemitoDetailPage() {
     try {
       setMarkingReturned(true)
       await remitosAPI.actualizarFechaDevolucion(id, editingLoanId, editingDate)
-      Swal.fire('Éxito', 'Fecha de devolución actualizada', 'success')
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Fecha de devolución actualizada',
+        icon: 'success',
+        timer: 1500,
+        customClass: { popup: 'rounded-2xl' }
+      })
       setEditingLoanId(null)
       setEditingDate('')
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al actualizar la fecha', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al actualizar la fecha',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setMarkingReturned(false)
     }
@@ -187,7 +231,13 @@ function RemitoDetailPage() {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, devolver',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'bg-emerald-600 text-white px-4 py-2 rounded-lg',
+        cancelButton: 'bg-surface-200 text-surface-700 px-4 py-2 rounded-lg ml-2'
+      },
+      buttonsStyling: false
     })
 
     if (!confirm.isConfirmed) return
@@ -196,10 +246,21 @@ function RemitoDetailPage() {
       setMarkingReturned(true)
       // Usar el endpoint de devolver con solo este detalle
       await remitosAPI.devolver(id, [detalleId])
-      Swal.fire('Éxito', 'Artículo marcado como devuelto', 'success')
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Artículo marcado como devuelto',
+        icon: 'success',
+        timer: 1500,
+        customClass: { popup: 'rounded-2xl' }
+      })
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al marcar como devuelto', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al marcar como devuelto',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setMarkingReturned(false)
     }
@@ -212,7 +273,13 @@ function RemitoDetailPage() {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, reenviar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'bg-primary-600 text-white px-4 py-2 rounded-lg',
+        cancelButton: 'bg-surface-200 text-surface-700 px-4 py-2 rounded-lg ml-2'
+      },
+      buttonsStyling: false
     })
 
     if (!confirm.isConfirmed) return
@@ -220,9 +287,20 @@ function RemitoDetailPage() {
     try {
       setReenviandoEmails(true)
       await remitosAPI.reenviarEmails(id)
-      Swal.fire('Éxito', 'Emails reenviados exitosamente', 'success')
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Emails reenviados exitosamente',
+        icon: 'success',
+        timer: 1500,
+        customClass: { popup: 'rounded-2xl' }
+      })
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al reenviar emails', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al reenviar emails',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setReenviandoEmails(false)
     }
@@ -247,14 +325,20 @@ function RemitoDetailPage() {
       Swal.fire({
         title: 'Éxito',
         html: `Receptor asignado exitosamente.<br><br>Se han enviado emails a:<br>- ${receptorEmail} (receptor)<br>- ${remito.solicitante?.email} (solicitante)`,
-        icon: 'success'
+        icon: 'success',
+        customClass: { popup: 'rounded-2xl' }
       })
       setShowReceptorModal(false)
       setReceptorNombre('')
       setReceptorEmail('')
       await cargarDetalle()
     } catch (err) {
-      Swal.fire('Error', err.message || 'Error al asignar receptor', 'error')
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al asignar receptor',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
     } finally {
       setAsignandoReceptor(false)
     }
@@ -262,10 +346,10 @@ function RemitoDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center min-h-screen bg-surface-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando remito...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-surface-200 border-t-primary-600 mb-4"></div>
+          <p className="text-surface-500 font-medium">Cargando remito...</p>
         </div>
       </div>
     )
@@ -273,490 +357,469 @@ function RemitoDetailPage() {
 
   if (error || !remito) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error || 'El remito no existe'}
+      <div className="p-6 sm:p-8 bg-surface-50 min-h-screen">
+        <div className="p-8 text-center bg-white rounded-2xl border border-surface-200 shadow-sm max-w-lg mx-auto mt-20">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-rose-800 mb-2">No se pudo cargar el remito</h3>
+          <p className="text-rose-600 mb-6">{error || 'El remito solicitado no existe o fue eliminado.'}</p>
+          <button
+            onClick={() => navigate('/remitos')}
+            className="btn-primary w-full"
+          >
+            Volver a la Lista
+          </button>
         </div>
-        <button
-          onClick={() => navigate('/remitos')}
-          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-        >
-          Volver a Lista
-        </button>
       </div>
     )
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Remito {remito.numero_remito}
-          </h1>
-          <span className={`inline-block mt-2 ${getEstadoBadgeClass(remito.estado)}`}>
-            {getEstadoLabel(remito.estado)}
-          </span>
-        </div>
-        <button
-          onClick={() => navigate('/remitos')}
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded"
-        >
-          Volver
-        </button>
-      </div>
+    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <button
+            onClick={() => navigate('/remitos')}
+            className="text-surface-500 hover:text-primary-600 font-medium text-sm flex items-center gap-2 transition-colors w-fit"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver a Remitos
+          </button>
 
-      {/* Información General */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Información General</h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm font-medium text-gray-700">Número Remito</p>
-            <p className="text-lg font-semibold text-gray-900">{remito.numero_remito}</p>
+          <div className="flex gap-3">
+            {/* Acciones Globales */}
+            {remito && remito.estado !== 'preparado' && remito.estado !== 'completado' && canUpdate('remitos') && (
+              <button
+                onClick={handleReenviarEmails}
+                disabled={reenviandoEmails}
+                className="bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center gap-2"
+              >
+                {reenviandoEmails ? 'Enviando...' : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Reenviar Email
+                  </>
+                )}
+              </button>
+            )}
           </div>
+        </div>
 
+        {/* Header del Remito */}
+        <div className="card-base p-6 md:p-8 bg-white flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
-            <p className="text-sm font-medium text-gray-700">Fecha</p>
-            <p className="text-lg font-semibold text-gray-900">
-              {new Date(remito.fecha).toLocaleDateString('es-AR')}
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
+                Remito {remito.numero_remito}
+              </h1>
+              <span className={getEstadoBadgeClass(remito.estado)}>
+                {getEstadoLabel(remito.estado)}
+              </span>
+            </div>
+            <p className="text-surface-500 font-medium flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              {new Date(remito.fecha).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-gray-700">Tipo</p>
-            <p className="text-lg font-semibold">
-              {remito.es_prestamo ? (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
-                  Préstamo
-                </span>
-              ) : (
-                <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">
-                  Transferencia
-                </span>
-              )}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-gray-700">Cantidad Artículos</p>
-            <p className="text-lg font-semibold text-gray-900">{remito.detalles?.length || 0}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Personal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Solicitante</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Nombre:</span> {remito.solicitante?.nombre} {remito.solicitante?.apellido}</p>
-            <p><span className="font-medium">Email:</span> {remito.solicitante?.email}</p>
+          <div className="flex flex-col items-end gap-2">
+            <span className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${remito.es_prestamo ? 'bg-violet-50 text-violet-700 border-violet-200' : 'bg-surface-100 text-surface-600 border-surface-200'}`}>
+              {remito.es_prestamo ? 'Préstamo' : 'Transferencia'}
+            </span>
+            <span className="text-sm font-bold text-surface-500 bg-surface-50 px-3 py-1.5 rounded-lg border border-surface-200">
+              {remito.detalles?.length || 0} Artículos
+            </span>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Técnico Asignado</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Nombre:</span> {remito.tecnicoAsignado?.nombre} {remito.tecnicoAsignado?.apellido}</p>
-            <p><span className="font-medium">Email:</span> {remito.tecnicoAsignado?.email}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Detalles de Involucrados */}
+          <div className="card-base p-6 bg-white space-y-6">
+            <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide">
+              Involucrados
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-surface-500 uppercase">Solicitante</p>
+                <p className="text-surface-900 font-medium">{remito.solicitante?.nombre} {remito.solicitante?.apellido}</p>
+                <p className="text-surface-500 text-sm">{remito.solicitante?.email}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-surface-500 uppercase">Técnico Asignado</p>
+                <p className="text-surface-900 font-medium">{remito.tecnicoAsignado?.nombre} {remito.tecnicoAsignado?.apellido}</p>
+                <p className="text-surface-500 text-sm">{remito.tecnicoAsignado?.email}</p>
+              </div>
+            </div>
+
+            {/* Receptor Alternativo */}
+            {remito.receptor_nombre && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-900 text-sm">Receptor Asignado</p>
+                    <p className="text-emerald-800 font-medium">{remito.receptor_nombre}</p>
+                    <p className="text-emerald-700 text-xs">{remito.receptor_email}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Ruta / Sedes */}
+          <div className="card-base p-6 bg-white space-y-6">
+            <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide">
+              Ruta de Envío
+            </h3>
+            <div className="flex items-center gap-6 relative">
+              {/* Connecting Line */}
+              <div className="absolute left-[19px] top-10 bottom-4 w-0.5 bg-gradient-to-b from-primary-200 to-primary-100 -z-10"></div>
+
+              <div className="space-y-8 w-full">
+                {/* Origen */}
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-surface-100 border-4 border-white shadow-sm flex items-center justify-center text-surface-500 shrink-0 z-10">
+                    <span className="font-bold text-xs">DESDE</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-surface-500 uppercase mb-0.5">Sede Origen</p>
+                    <p className="text-surface-900 font-bold text-lg">{remito.sedeOrigen?.nombre_sede}</p>
+                    <p className="text-surface-500 text-sm flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      {remito.sedeOrigen?.localidad}, {remito.sedeOrigen?.provincia}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Destino */}
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary-100 border-4 border-white shadow-sm flex items-center justify-center text-primary-600 shrink-0 z-10">
+                    <span className="font-bold text-xs">HACIA</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-surface-500 uppercase mb-0.5">Sede Destino</p>
+                    <p className="text-surface-900 font-bold text-lg">{remito.sedeDestino?.nombre_sede}</p>
+                    <p className="text-surface-500 text-sm flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      {remito.sedeDestino?.localidad}, {remito.sedeDestino?.provincia}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Sedes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Sede de Origen</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Nombre:</span> {remito.sedeOrigen?.nombre_sede}</p>
-            <p><span className="font-medium">Localidad:</span> {remito.sedeOrigen?.localidad}</p>
+        {/* Lista de Artículos */}
+        <div className="card-base bg-white overflow-hidden shadow-sm border border-surface-200">
+          <div className="p-6 border-b border-surface-100 bg-surface-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 className="text-lg font-bold text-surface-900 flex items-center gap-2">
+              <span className="bg-primary-600 text-white w-6 h-6 rounded flex items-center justify-center text-xs shadow-sm shadow-primary-900/10">{remito.detalles?.length || 0}</span>
+              Artículos Incluidos
+            </h3>
+
+            {/* Botón Generar Devolución (Solo si corresponde) */}
+            {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (
+              <button
+                onClick={() => setShowDevolucionModal(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors shadow-lg shadow-emerald-900/10 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                Generar Devolución
+              </button>
+            )}
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Sede de Destino</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Nombre:</span> {remito.sedeDestino?.nombre_sede}</p>
-            <p><span className="font-medium">Localidad:</span> {remito.sedeDestino?.localidad}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Artículos */}
-      <div className="bg-white rounded-lg shadow mb-6">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Artículos ({remito.detalles?.length || 0})</h2>
-        </div>
-
-        {remito.detalles && remito.detalles.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+            <table className="min-w-full text-left">
+              <thead className="bg-surface-50 border-b border-surface-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Marca/Modelo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Serie</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Préstamo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Fecha Devolución</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Devuelto</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase">Acciones</th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Artículo</th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Serie / ID</th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-surface-400 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {remito.detalles.map(detalle => (
-                  <tr key={detalle.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {detalle.inventarioDetalle?.numero_serie || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {detalle.inventarioDetalle?.tipoArticulo?.nombre || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {detalle.es_prestamo ? (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Sí</span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {detalle.es_prestamo && detalle.fecha_devolucion_esperada ? (
-                        new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR')
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {detalle.es_prestamo ? (
-                        detalle.devuelto ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Devuelto</span>
+              <tbody className="divide-y divide-surface-100">
+                {remito.detalles && remito.detalles.length > 0 ? (
+                  remito.detalles.map(detalle => (
+                    <tr key={detalle.id} className="hover:bg-surface-50/60 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-surface-900 text-sm">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
+                        <p className="text-surface-500 text-xs">{detalle.inventarioDetalle?.tipoArticulo?.nombre}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs bg-surface-100 text-surface-600 px-2 py-1 rounded border border-surface-200">
+                          {detalle.inventarioDetalle?.numero_serie || 'S/N'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {detalle.es_prestamo ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded w-fit border border-violet-100">Préstamo</span>
+                            {detalle.fecha_devolucion_esperada && (
+                              <span className="text-[10px] text-surface-500 flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                Vence: {new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-gray-400">Pendiente</span>
-                        )
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {detalle.es_prestamo && !detalle.devuelto ? (
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => handleEditarFecha(detalle)}
-                            disabled={!canUpdate('remitos')}
-                            className={`text-sm font-medium ${
-                              canUpdate('remitos')
-                                ? 'text-blue-600 hover:text-blue-800 cursor-pointer'
-                                : 'text-slate-400 cursor-not-allowed'
-                            }`}
-                            title={!canUpdate('remitos') ? 'No tienes permiso' : 'Editar fecha'}
-                          >
-                            📅
-                          </button>
-                          <button
-                            onClick={() => handleMarcarDevuelto(detalle.id)}
-                            disabled={markingReturned || !canUpdate('remitos')}
-                            className={`text-sm font-medium ${
-                              !canUpdate('remitos')
-                                ? 'text-slate-400 cursor-not-allowed'
-                                : markingReturned
-                                ? 'text-green-400 cursor-wait opacity-50'
-                                : 'text-green-600 hover:text-green-800 cursor-pointer'
-                            }`}
-                            title={!canUpdate('remitos') ? 'No tienes permiso' : 'Marcar como devuelto'}
-                          >
-                            ✓
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
+                          <span className="text-xs font-bold text-surface-600 bg-surface-100 px-2 py-0.5 rounded w-fit border border-surface-200">Definitivo</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {detalle.es_prestamo ? (
+                          detalle.devuelto ? (
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full w-fit border border-emerald-100">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                              Devuelto
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-full w-fit border border-amber-100">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              Pendiente
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-xs text-surface-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {detalle.es_prestamo && !detalle.devuelto && canUpdate('remitos') && (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditarFecha(detalle)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                              title="Editar fecha de devolución"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleMarcarDevuelto(detalle.id)}
+                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100"
+                              title="Marcar como devuelto"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center text-surface-500">
+                      No hay artículos en este remito
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
-        ) : (
-          <div className="p-6 text-center text-gray-500">No hay artículos en este remito</div>
+        </div>
+
+        {/* Acciones de Cambio de Estado y Receptor */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Cambio de Estado */}
+          {getTransicionesValidas().length > 0 && canUpdate('remitos') && (
+            <div className="card-base p-6 bg-white border border-surface-200">
+              <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide mb-4">
+                Actualizar Estado
+              </h3>
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <select
+                    value={newState}
+                    onChange={(e) => setNewState(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none"
+                  >
+                    <option value="">Seleccionar nuevo estado...</option>
+                    {getTransicionesValidas().map(estado => (
+                      <option key={estado} value={estado}>
+                        {getEstadoLabel(estado)}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCambiarEstado}
+                  disabled={!newState || changingState}
+                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-primary-900/10"
+                >
+                  {changingState ? '...' : 'Actualizar'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Asignar Receptor Alternativo (si aplica) */}
+          {remito.estado === 'en_transito' && !remito.receptor_nombre && canUpdate('remitos') && (
+            <div className="card-base p-6 bg-white border border-surface-200 flex flex-col justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide mb-2">
+                  Receptor Alternativo
+                </h3>
+                <p className="text-sm text-surface-500 mb-4">
+                  Si el solicitante no puede recibir el remito, asigna a otra persona.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReceptorModal(true)}
+                className="bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                Asignar Receptor
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Modals */}
+        {editingLoanId && (
+          <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100">
+              <h3 className="text-lg font-bold text-surface-900 mb-4">Editar fecha límite</h3>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-surface-700">Nueva Fecha</label>
+                  <input
+                    type="date"
+                    value={editingDate}
+                    onChange={(e) => setEditingDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setEditingLoanId(null); setEditingDate(''); }}
+                    className="flex-1 px-4 py-2 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleGuardarFecha}
+                    disabled={!editingDate || markingReturned}
+                    className="flex-1 px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {markingReturned ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(showDevolucionModal || showReceptorModal) && (
+          <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            {/* El contenido específico de cada modal iría aquí, reutilizando estilos de cards */}
+            {/* Implementación simplificada para brevedad, usando la misma lógica de estado */}
+
+            {showDevolucionModal && (
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+                <h3 className="text-lg font-bold text-surface-900 mb-4">Devolver Artículos</h3>
+                <div className="space-y-3 mb-6">
+                  {getPrestamosNoDevueltos().map(detalle => (
+                    <label key={detalle.id} className={`flex items-start p-3 border rounded-xl cursor-pointer transition-all ${selectedDetalles.includes(detalle.id) ? 'border-primary-500 bg-primary-50' : 'border-surface-200 hover:bg-surface-50'}`}>
+                      <input
+                        type="checkbox"
+                        checked={selectedDetalles.includes(detalle.id)}
+                        onChange={() => handleSeleccionarDetalle(detalle.id)}
+                        className="mt-1 mr-3 w-4 h-4 text-primary-600 rounded border-surface-300 focus:ring-primary-500"
+                      />
+                      <div>
+                        <p className="font-bold text-surface-900 text-sm">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
+                        <p className="text-xs text-surface-500">S/N: {detalle.inventarioDetalle?.numero_serie}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4 border-t border-surface-100">
+                  <button
+                    onClick={() => { setShowDevolucionModal(false); setSelectedDetalles([]); }}
+                    className="px-4 py-2.5 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleGenerarDevolucion}
+                    disabled={selectedDetalles.length === 0 || devolviendoArticulos}
+                    className="px-4 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 text-sm shadow-lg shadow-emerald-900/10"
+                  >
+                    {devolviendoArticulos ? 'Generando...' : 'Generar Devolución'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showReceptorModal && (
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                <h3 className="text-lg font-bold text-surface-900 mb-2">Asignar Receptor</h3>
+                <p className="text-sm text-surface-500 mb-6">Designa a quien recibirá los equipos realmente.</p>
+
+                <div className="space-y-4 mb-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-surface-700 uppercase">Nombre Completo</label>
+                    <input
+                      type="text"
+                      value={receptorNombre}
+                      onChange={(e) => setReceptorNombre(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
+                      placeholder="Ej: Juan Pérez"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-surface-700 uppercase">Email</label>
+                    <input
+                      type="email"
+                      value={receptorEmail}
+                      onChange={(e) => setReceptorEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
+                      placeholder="juan.perez@megatlon.com.ar"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => { setShowReceptorModal(false); setReceptorNombre(''); setReceptorEmail(''); }}
+                    disabled={asignandoReceptor}
+                    className="px-4 py-2.5 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleAsignarReceptor}
+                    disabled={asignandoReceptor || !receptorNombre.trim() || !receptorEmail.trim()}
+                    className="px-4 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 text-sm shadow-lg shadow-primary-900/10"
+                  >
+                    {asignandoReceptor ? 'Asignando...' : 'Asignar'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Cambiar Estado */}
-      {getTransicionesValidas().length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Cambiar Estado</h2>
-          <div className="flex gap-4">
-            <select
-              value={newState}
-              onChange={(e) => setNewState(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccionar nuevo estado...</option>
-              {getTransicionesValidas().map(estado => (
-                <option key={estado} value={estado}>
-                  {getEstadoLabel(estado)}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleCambiarEstado}
-              disabled={!newState || changingState || !canUpdate('remitos')}
-              className={`font-medium py-2 px-6 rounded transition-colors ${
-                !canUpdate('remitos')
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                  : !newState || changingState
-                  ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-              }`}
-              title={!canUpdate('remitos') ? 'No tienes permiso para cambiar estados' : ''}
-            >
-              {changingState ? 'Actualizando...' : 'Actualizar'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Reenviar Emails - Solo visible si el remito no está en estado "preparado" ni "completado" */}
-      {remito && remito.estado !== 'preparado' && remito.estado !== 'completado' && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Reenviar Emails</h2>
-          <p className="text-gray-600 mb-4">
-            Reenvía el remito por correo a infraestructura y al solicitante
-          </p>
-          <button
-            onClick={handleReenviarEmails}
-            disabled={reenviandoEmails || !canUpdate('remitos')}
-            className={`font-medium py-2 px-6 rounded transition-colors ${
-              !canUpdate('remitos')
-                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                : reenviandoEmails
-                ? 'bg-gray-400 text-white cursor-wait'
-                : 'bg-orange-600 hover:bg-orange-700 text-white cursor-pointer'
-            }`}
-            title={!canUpdate('remitos') ? 'No tienes permiso' : ''}
-          >
-            {reenviandoEmails ? 'Reenviando...' : '📧 Reenviar Email'}
-          </button>
-        </div>
-      )}
-
-      {/* Receptor Asignado - Mostrar si ya tiene receptor */}
-      {remito && remito.receptor_nombre && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-green-700">✓ Receptor Asignado</h2>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-gray-700 mb-2">
-              <span className="font-medium">Nombre:</span> {remito.receptor_nombre}
-            </p>
-            <p className="text-gray-700">
-              <span className="font-medium">Email:</span> {remito.receptor_email}
-            </p>
-          </div>
-          <p className="text-sm text-gray-500 mt-3">
-            Esta persona recibirá el remito y confirmará la recepción.
-          </p>
-        </div>
-      )}
-
-      {/* Asignar Receptor - Solo si está en tránsito y no tiene receptor */}
-      {remito && remito.estado === 'en_transito' && !remito.receptor_nombre && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Asignar Receptor Alternativo</h2>
-          <p className="text-gray-600 mb-4">
-            Si el solicitante no puede recibir el remito, puedes asignar otra persona como receptor.
-          </p>
-          <button
-            onClick={() => setShowReceptorModal(true)}
-            disabled={!canUpdate('remitos')}
-            className={`font-medium py-2 px-6 rounded transition-colors ${
-              canUpdate('remitos')
-                ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
-                : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            }`}
-            title={!canUpdate('remitos') ? 'No tienes permiso' : ''}
-          >
-            👤 Asignar Receptor
-          </button>
-        </div>
-      )}
-
-      {/* Generar Devolución */}
-      {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Devolver Artículos Préstamo</h2>
-          <p className="text-gray-600 mb-4">
-            Tienes {getPrestamosNoDevueltos().length} artículos no devueltos para este remito de préstamo
-          </p>
-          <button
-            onClick={() => setShowDevolucionModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded transition-colors"
-          >
-            Generar Remito de Devolución
-          </button>
-        </div>
-      )}
-
-      {/* Modal de Editar Fecha */}
-      {editingLoanId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Editar Fecha de Devolución</h3>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nueva fecha de devolución
-              </label>
-              <input
-                type="date"
-                value={editingDate}
-                onChange={(e) => setEditingDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setEditingLoanId(null)
-                  setEditingDate('')
-                }}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleGuardarFecha}
-                disabled={!editingDate || markingReturned}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded"
-              >
-                {markingReturned ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Devolución */}
-      {showDevolucionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Seleccionar Artículos para Devolver</h3>
-
-            <div className="space-y-3 mb-6">
-              {getPrestamosNoDevueltos().map(detalle => (
-                <label key={detalle.id} className="flex items-center p-3 border border-gray-300 rounded hover:bg-gray-50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedDetalles.includes(detalle.id)}
-                    onChange={() => handleSeleccionarDetalle(detalle.id)}
-                    className="mr-3"
-                  />
-                  <span className="flex-1">
-                    <p className="font-medium">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
-                    <p className="text-sm text-gray-600">
-                      Devolución esperada: {new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR')}
-                    </p>
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowDevolucionModal(false)
-                  setSelectedDetalles([])
-                }}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleGenerarDevolucion}
-                disabled={selectedDetalles.length === 0 || devolviendoArticulos}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors"
-              >
-                {devolviendoArticulos ? 'Generando...' : 'Generar Devolución'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Asignar Receptor */}
-      {showReceptorModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Asignar Receptor Alternativo</h3>
-
-            <p className="text-sm text-gray-600 mb-4">
-              Esta persona recibirá el remito en lugar del solicitante original.
-            </p>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  value={receptorNombre}
-                  onChange={(e) => setReceptorNombre(e.target.value)}
-                  placeholder="Ej: Juan Pérez"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  disabled={asignandoReceptor}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={receptorEmail}
-                  onChange={(e) => setReceptorEmail(e.target.value)}
-                  placeholder="Ej: juan.perez@megatlon.com.ar"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  disabled={asignandoReceptor}
-                />
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> Se enviará un email al receptor con un link para confirmar la recepción del remito.
-                El solicitante original ({remito?.solicitante?.email}) recibirá una copia informativa.
-              </p>
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowReceptorModal(false)
-                  setReceptorNombre('')
-                  setReceptorEmail('')
-                }}
-                disabled={asignandoReceptor}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 rounded"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleAsignarReceptor}
-                disabled={asignandoReceptor || !receptorNombre.trim() || !receptorEmail.trim()}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded"
-              >
-                {asignandoReceptor ? 'Asignando...' : 'Asignar y Enviar Email'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
