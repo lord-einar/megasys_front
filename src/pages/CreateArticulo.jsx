@@ -26,7 +26,7 @@ const articuloSchema = yup.object().shape({
   service_tag: yup.string().nullable().notRequired(),
   fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
   observaciones: yup.string().nullable().notRequired(),
-  sede_id: yup.string().required('La sede es requerida (Error interno)')
+  sede_id: yup.string().required('Debe seleccionar una sede')
 })
 
 export default function CreateArticulo() {
@@ -38,6 +38,7 @@ export default function CreateArticulo() {
 
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
+  const [sedes, setSedes] = useState([])
 
   const {
     register,
@@ -99,14 +100,13 @@ export default function CreateArticulo() {
       }
 
       const sedesData = sedesResponse?.rows || sedesResponse?.data || sedesResponse || []
+      const sedesArray = Array.isArray(sedesData) ? sedesData : []
+      setSedes(sedesArray)
 
-      // Auto-seleccionar el Depósito
-      const deposito = Array.isArray(sedesData) && sedesData.find(s => s.nombre_sede === 'Depósito')
+      // Pre-seleccionar Depósito por defecto
+      const deposito = sedesArray.find(s => s.nombre_sede === 'Depósito')
       if (deposito) {
         setValue('sede_id', deposito.id)
-      } else {
-        console.warn('Sede Depósito no encontrada')
-        Swal.fire('Advertencia', 'No se encontró la sede "Depósito". Contacte al administrador.', 'warning')
       }
 
       if (!Array.isArray(tipos) || tipos.length === 0) {
@@ -237,6 +237,42 @@ export default function CreateArticulo() {
                     <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       {errors.tipo_articulo_id.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Sede */}
+                <div className="space-y-1.5">
+                  <label htmlFor="sede_id" className="block text-sm font-semibold text-surface-700">
+                    Sede <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="sede_id"
+                      {...register('sede_id')}
+                      disabled={loading}
+                      className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.sede_id
+                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        }`}
+                    >
+                      <option value="">Selecciona una sede</option>
+                      {sedes.map(sede => (
+                        <option key={sede.id} value={sede.id}>
+                          {sede.nombre_sede}{sede.localidad ? ` (${sede.localidad})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-surface-400">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  {errors.sede_id && (
+                    <p className="text-rose-500 text-xs mt-1 font-medium flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {errors.sede_id.message}
                     </p>
                   )}
                 </div>
