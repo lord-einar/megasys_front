@@ -113,3 +113,69 @@
     70% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+/* ==================== */
+/* Responsive - Mobile  */
+/* ==================== */
+@media (max-width: 767px) {
+    .rbc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .rbc-toolbar-label {
+        font-size: 1rem;
+        text-align: center;
+        order: -1;
+    }
+
+    .rbc-toolbar button {
+        padding: 0.4rem 0.75rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .rbc-btn-group {
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Agenda view - más legible en móvil */
+    .rbc-agenda-view table {
+        font-size: 0.85rem;
+    }
+
+    .rbc-agenda-date-cell,
+    .rbc-agenda-time-cell {
+        padding: 8px 6px !important;
+        white-space: nowrap;
+    }
+
+    .rbc-agenda-event-cell {
+        padding: 8px 6px !important;
+    }
+
+    /* Month view en móvil (por si el usuario lo fuerza) */
+    .rbc-header {
+        padding: 6px 0;
+        font-size: 0.65rem;
+    }
+
+    .rbc-event {
+        font-size: 0.65rem !important;
+        padding: 1px 3px !important;
+    }
+
+    .rbc-date-cell {
+        font-size: 0.75rem;
+        padding: 2px 4px;
+    }
+
+    .rbc-row-segment {
+        padding: 0 1px;
+    }
+
+    .rbc-show-more {
+        font-size: 0.65rem;
+    }
+}

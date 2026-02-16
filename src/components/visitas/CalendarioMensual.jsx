@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
@@ -36,6 +36,24 @@ const messages = {
 };
 
 const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavigate, view, onView, onShowMore }) => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            // Auto-cambiar a agenda en móvil si está en month
+            if (mobile && view === 'month') {
+                onView('agenda');
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        // Aplicar al montar si ya es móvil
+        if (isMobile && view === 'month') {
+            onView('agenda');
+        }
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const eventPropGetter = (event) => {
         let className = 'rbc-event';
@@ -56,7 +74,7 @@ const CalendarioMensual = ({ eventos, onSelectEvent, onSelectSlot, date, onNavig
     };
 
     return (
-        <div className="h-[700px] bg-white p-6 rounded-lg shadow">
+        <div className="h-[500px] md:h-[700px] bg-white p-2 md:p-6 rounded-lg shadow">
             <Calendar
                 localizer={localizer}
                 events={eventos}

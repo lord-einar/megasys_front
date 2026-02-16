@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/logo.png'
 
-function Sidebar({ isOpen, onNavigate }) {
+function Sidebar({ isOpen, onNavigate, onClose }) {
   const [expandedMenu, setExpandedMenu] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const location = useLocation()
@@ -129,27 +129,47 @@ function Sidebar({ isOpen, onNavigate }) {
   ]
 
   return (
-    <aside
-      className={`
-        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:translate-x-0 md:w-20 lg:w-64'} 
-        fixed md:static inset-y-0 left-0 bg-surface-950 text-white transition-all duration-300 ease-out z-30 flex flex-col border-r border-surface-800 shadow-2xl overflow-hidden
-      `}
-    >
-      {/* Logo Section */}
-      <div className="h-16 flex items-center justify-center border-b border-surface-800 bg-surface-950 relative overflow-hidden shrink-0">
-        <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 scale-100 px-6' : 'opacity-0 scale-90 px-0'}`}>
-          {/* Replace with your logo or text */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
-            <span className="font-bold text-lg tracking-tight">Megasys</span>
+    <>
+      {/* Backdrop overlay para móvil */}
+      {isOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`
+          ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 md:translate-x-0 md:w-20 lg:w-64'}
+          fixed md:static inset-y-0 left-0 bg-surface-950 text-white transition-all duration-300 ease-out z-30 flex flex-col border-r border-surface-800 shadow-2xl overflow-hidden
+        `}
+      >
+        {/* Logo Section */}
+        <div className="h-16 flex items-center justify-between border-b border-surface-800 bg-surface-950 relative overflow-hidden shrink-0">
+          <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 scale-100 px-6' : 'opacity-0 scale-90 px-0'}`}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
+              <span className="font-bold text-lg tracking-tight">Megasys</span>
+            </div>
           </div>
+          {/* Botón cerrar en móvil */}
+          {isOpen && isMobile && (
+            <button
+              onClick={onClose}
+              className="mr-4 p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
+              aria-label="Cerrar menú"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+          {!isOpen && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
+            </div>
+          )}
         </div>
-        {!isOpen && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
-          </div>
-        )}
-      </div>
 
       {/* Navigation Menu */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-1 custom-scrollbar scrollbar-thin scrollbar-thumb-surface-700 scrollbar-track-transparent">
@@ -251,7 +271,8 @@ function Sidebar({ isOpen, onNavigate }) {
         )}
 
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 

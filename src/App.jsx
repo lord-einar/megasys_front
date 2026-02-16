@@ -91,7 +91,7 @@ function App() {
         element={
           <div className="flex h-screen bg-slate-50">
             {/* Sidebar */}
-            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
+            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">

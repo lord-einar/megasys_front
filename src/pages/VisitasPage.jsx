@@ -143,7 +143,7 @@ const VisitasPage = () => {
     };
 
     return (
-        <div className="p-8 bg-slate-50 min-h-screen font-sans text-slate-800">
+        <div className="p-4 md:p-8 bg-slate-50 min-h-screen font-sans text-slate-800">
             {loading && <LoadingOverlay message="Actualizando calendario..." />}
 
             {/* Header Section */}
@@ -175,7 +175,7 @@ const VisitasPage = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
                 <StatCard
                     title="Total Visitas (Mes)"
                     value={stats?.total || eventos.length}
@@ -205,12 +205,12 @@ const VisitasPage = () => {
             {/* Main Content Card */}
             <div className="card-base overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="p-3 md:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 md:gap-4 bg-white">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtrar por Técnico:</span>
                         <div className="relative group">
                             <select
-                                className="appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none cursor-pointer hover:bg-slate-100 transition-colors w-64"
+                                className="appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none cursor-pointer hover:bg-slate-100 transition-colors w-full sm:w-64"
                                 value={filtroTecnico}
                                 onChange={(e) => setFiltroTecnico(e.target.value)}
                             >
@@ -244,7 +244,7 @@ const VisitasPage = () => {
                 </div>
 
                 {/* Calendar Wrapper */}
-                <div className="p-6 bg-white min-h-[750px]">
+                <div className="p-2 md:p-6 bg-white min-h-[500px] md:min-h-[750px]">
                     <CalendarioMensual
                         eventos={eventos}
                         onSelectEvent={handleSelectEvent}
