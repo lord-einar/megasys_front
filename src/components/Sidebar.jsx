@@ -149,7 +149,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
           <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 scale-100 px-6' : 'opacity-0 scale-90 px-0'}`}>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-lg">M</div>
-              <span className="font-bold text-lg tracking-tight">Megasys</span>
+              <span className="font-bold text-lg tracking-tight">Portal IT</span>
             </div>
           </div>
           {/* Botón cerrar en móvil */}
@@ -260,7 +260,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
               v2
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Megasys Platform</p>
+              <p className="text-sm font-medium text-white truncate">Portal IT Megatlon</p>
               <p className="text-xs text-surface-500 truncate">Infraestructura</p>
             </div>
           </div>

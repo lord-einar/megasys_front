@@ -147,10 +147,10 @@ export default function Login() {
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
             <div className="h-20 w-20 rounded-2xl bg-surface-50 flex items-center justify-center p-4 shadow-sm border border-surface-100">
-              <img src={logo} alt="Megasys" className="h-full w-full object-contain" />
+              <img src={logo} alt="Portal IT Megatlon" className="h-full w-full object-contain" />
             </div>
           </div>
-          <h1 className="text-2xl font-extrabold text-surface-900 tracking-tight">Megasys Platform</h1>
+          <h1 className="text-2xl font-extrabold text-surface-900 tracking-tight">Portal IT Megatlon</h1>
           <p className="text-surface-500 mt-2 text-sm font-medium">Sistema Integral de Gestión</p>
         </div>
 
