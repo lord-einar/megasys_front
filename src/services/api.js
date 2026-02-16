@@ -300,6 +300,11 @@ export const remitosAPI = {
   enviarAvisoDevolucion: (detalleId) => apiCall(`/remitos/detalles/${detalleId}/enviar-aviso-devolucion`, {
     method: 'POST'
   }),
+  // Procesar devolución granular de préstamos
+  procesarDevolucion: (id, items) => apiCall(`/remitos/${id}/procesar-devolucion`, {
+    method: 'POST',
+    body: JSON.stringify({ items })
+  }),
   // Email resending
   reenviarEmails: (id) => apiCall(`/remitos/${id}/reenviar-emails`, {
     method: 'POST'

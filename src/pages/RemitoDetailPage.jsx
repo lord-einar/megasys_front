@@ -19,6 +19,10 @@ function RemitoDetailPage() {
   const [editingDate, setEditingDate] = useState('')
   const [markingReturned, setMarkingReturned] = useState(false)
   const [reenviandoEmails, setReenviandoEmails] = useState(false)
+  // Estado para modal de procesamiento de devolución
+  const [showProcesarDevolucionModal, setShowProcesarDevolucionModal] = useState(false)
+  const [itemsDevolucion, setItemsDevolucion] = useState({})
+  const [procesandoDevolucion, setProcesandoDevolucion] = useState(false)
   const [showReceptorModal, setShowReceptorModal] = useState(false)
   const [receptorNombre, setReceptorNombre] = useState('')
   const [receptorEmail, setReceptorEmail] = useState('')
@@ -50,7 +54,6 @@ function RemitoDetailPage() {
   }
 
   const getEstadoBadgeClass = (estado) => {
-    // Return classes for consistent badges
     const baseClass = 'px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 w-fit'
     switch (estado) {
       case 'preparado':
@@ -59,8 +62,10 @@ function RemitoDetailPage() {
         return `${baseClass} bg-blue-50 text-blue-700 border-blue-100`
       case 'entregado':
         return `${baseClass} bg-emerald-50 text-emerald-700 border-emerald-100`
-      case 'completado': // Legacy or alternative name
+      case 'completado':
         return `${baseClass} bg-purple-50 text-purple-700 border-purple-100`
+      case 'devuelto_parcial':
+        return `${baseClass} bg-orange-50 text-orange-700 border-orange-100`
       case 'devuelto':
         return `${baseClass} bg-violet-50 text-violet-700 border-violet-100`
       case 'cancelado':
@@ -76,6 +81,7 @@ function RemitoDetailPage() {
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
       completado: 'Completado',
+      devuelto_parcial: 'Devuelto Parcial',
       devuelto: 'Devuelto',
       cancelado: 'Cancelado'
     }
@@ -84,15 +90,100 @@ function RemitoDetailPage() {
 
   const getTransicionesValidas = () => {
     if (!remito) return []
+    // Si el remito tiene préstamos, no se permite cambiar directamente a 'devuelto'
+    // desde el selector de estados. Se usa el modal de procesamiento de devolución.
+    const tienePrestamos = remito.es_prestamo || remito.detalles?.some(d => d.es_prestamo)
     const transiciones = {
       'preparado': ['en_transito', 'cancelado'],
       'en_transito': ['entregado', 'cancelado'],
-      'entregado': ['completado', 'devuelto', 'cancelado'],
-      'completado': ['devuelto'],
+      'entregado': tienePrestamos
+        ? ['completado', 'cancelado']
+        : ['completado', 'devuelto', 'cancelado'],
+      'completado': tienePrestamos ? [] : ['devuelto'],
+      'devuelto_parcial': [],
       'devuelto': [],
       'cancelado': []
     }
     return transiciones[remito.estado] || []
+  }
+
+  // Verificar si se puede mostrar el botón de procesar devolución
+  const canProcesarDevolucion = () => {
+    if (!remito) return false
+    const estadosPermitidos = ['entregado', 'completado', 'devuelto_parcial']
+    if (!estadosPermitidos.includes(remito.estado)) return false
+    return getPrestamosNoDevueltos().length > 0
+  }
+
+  // Inicializar items del modal de devolución
+  const abrirModalProcesarDevolucion = () => {
+    const prestamosNoDevueltos = getPrestamosNoDevueltos()
+    const initial = {}
+    prestamosNoDevueltos.forEach(d => {
+      initial[d.id] = {
+        accion: 'devolver',
+        nueva_fecha: ''
+      }
+    })
+    setItemsDevolucion(initial)
+    setShowProcesarDevolucionModal(true)
+  }
+
+  const handleProcesarDevolucion = async () => {
+    const items = Object.entries(itemsDevolucion).map(([detalle_id, data]) => ({
+      detalle_id,
+      accion: data.accion,
+      ...(data.accion === 'extender' ? { nueva_fecha: data.nueva_fecha } : {})
+    }))
+
+    // Validar que los que extienden tengan fecha
+    const sinFecha = items.filter(i => i.accion === 'extender' && !i.nueva_fecha)
+    if (sinFecha.length > 0) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Debes especificar una nueva fecha para los artículos que deseas extender',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
+      return
+    }
+
+    try {
+      setProcesandoDevolucion(true)
+      const response = await remitosAPI.procesarDevolucion(id, items)
+      const resultado = response.data
+
+      let mensaje = ''
+      if (resultado.articulos_devueltos > 0) {
+        mensaje += `${resultado.articulos_devueltos} artículo(s) devuelto(s). `
+      }
+      if (resultado.articulos_extendidos > 0) {
+        mensaje += `${resultado.articulos_extendidos} préstamo(s) extendido(s). `
+      }
+      if (resultado.prestamos_pendientes > 0) {
+        mensaje += `${resultado.prestamos_pendientes} préstamo(s) pendiente(s).`
+      }
+
+      Swal.fire({
+        title: 'Devolución Procesada',
+        html: `<p>${mensaje}</p><p class="mt-2 text-sm text-gray-500">Estado del remito: <strong>${getEstadoLabel(resultado.estado_nuevo)}</strong></p>`,
+        icon: 'success',
+        customClass: { popup: 'rounded-2xl' }
+      })
+
+      setShowProcesarDevolucionModal(false)
+      setItemsDevolucion({})
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al procesar devolución',
+        icon: 'error',
+        customClass: { popup: 'rounded-2xl' }
+      })
+    } finally {
+      setProcesandoDevolucion(false)
+    }
   }
 
   const handleCambiarEstado = async () => {
@@ -536,6 +627,17 @@ function RemitoDetailPage() {
                 Generar Devolución
               </button>
             )}
+
+            {/* Botón Procesar Devolución (modal granular por artículo) */}
+            {canProcesarDevolucion() && canUpdate('remitos') && (
+              <button
+                onClick={abrirModalProcesarDevolucion}
+                className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors shadow-lg shadow-violet-900/10 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                Procesar Devolución
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -817,6 +919,142 @@ function RemitoDetailPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Modal Procesar Devolución (granular por artículo) */}
+        {showProcesarDevolucionModal && (
+          <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-violet-100 rounded-xl text-violet-600">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-surface-900">Procesar Devolución</h3>
+                  <p className="text-sm text-surface-500">Selecciona la acción para cada artículo préstamo</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 my-6">
+                {getPrestamosNoDevueltos().map(detalle => {
+                  const itemState = itemsDevolucion[detalle.id] || { accion: 'devolver', nueva_fecha: '' }
+                  return (
+                    <div key={detalle.id} className={`border rounded-xl p-4 transition-all ${itemState.accion === 'devolver'
+                        ? 'border-emerald-200 bg-emerald-50/50'
+                        : 'border-amber-200 bg-amber-50/50'
+                      }`}>
+                      {/* Artículo info */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-bold text-surface-900 text-sm">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
+                          <p className="text-xs text-surface-500">{detalle.inventarioDetalle?.tipoArticulo?.nombre}</p>
+                          <p className="text-xs text-surface-400 font-mono mt-0.5">S/N: {detalle.inventarioDetalle?.numero_serie || 'S/N'}</p>
+                        </div>
+                        {detalle.fecha_devolucion_esperada && (
+                          <span className="text-xs text-surface-500 bg-white px-2 py-1 rounded-lg border border-surface-200 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            Vence: {new Date(detalle.fecha_devolucion_esperada).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Selector de acción */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          onClick={() => setItemsDevolucion(prev => ({
+                            ...prev,
+                            [detalle.id]: { accion: 'devolver', nueva_fecha: '' }
+                          }))}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all border ${itemState.accion === 'devolver'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                              : 'bg-white text-surface-600 border-surface-200 hover:border-emerald-300 hover:text-emerald-600'
+                            }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          Devolver
+                        </button>
+                        <button
+                          onClick={() => setItemsDevolucion(prev => ({
+                            ...prev,
+                            [detalle.id]: { accion: 'extender', nueva_fecha: prev[detalle.id]?.nueva_fecha || '' }
+                          }))}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all border ${itemState.accion === 'extender'
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                              : 'bg-white text-surface-600 border-surface-200 hover:border-amber-300 hover:text-amber-600'
+                            }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          Extender Préstamo
+                        </button>
+                      </div>
+
+                      {/* Campo fecha si es extender */}
+                      {itemState.accion === 'extender' && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <label className="text-xs font-bold text-surface-600 whitespace-nowrap">Nueva fecha:</label>
+                          <input
+                            type="date"
+                            value={itemState.nueva_fecha}
+                            onChange={(e) => setItemsDevolucion(prev => ({
+                              ...prev,
+                              [detalle.id]: { ...prev[detalle.id], nueva_fecha: e.target.value }
+                            }))}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="flex-1 px-3 py-1.5 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Resumen */}
+              <div className="bg-surface-50 rounded-xl p-3 mb-4 border border-surface-100">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-surface-600">
+                    <span className="font-bold text-emerald-600">
+                      {Object.values(itemsDevolucion).filter(i => i.accion === 'devolver').length}
+                    </span> a devolver
+                    {' · '}
+                    <span className="font-bold text-amber-600">
+                      {Object.values(itemsDevolucion).filter(i => i.accion === 'extender').length}
+                    </span> a extender
+                  </span>
+                  <span className="text-xs text-surface-400">
+                    {getPrestamosNoDevueltos().length} artículo(s) en préstamo
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2 border-t border-surface-100">
+                <button
+                  onClick={() => { setShowProcesarDevolucionModal(false); setItemsDevolucion({}); }}
+                  disabled={procesandoDevolucion}
+                  className="px-4 py-2.5 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleProcesarDevolucion}
+                  disabled={procesandoDevolucion}
+                  className="px-4 py-2.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 disabled:opacity-50 text-sm shadow-lg shadow-violet-900/10 flex items-center gap-2"
+                >
+                  {procesandoDevolucion ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      Confirmar Devolución
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

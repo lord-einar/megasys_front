@@ -55,6 +55,8 @@ function RemitoListPage() {
         return `${baseClass} bg-blue-50 text-blue-700 border-blue-100`
       case 'entregado':
         return `${baseClass} bg-emerald-50 text-emerald-700 border-emerald-100`
+      case 'devuelto_parcial':
+        return `${baseClass} bg-orange-50 text-orange-700 border-orange-100`
       case 'devuelto':
         return `${baseClass} bg-violet-50 text-violet-700 border-violet-100`
       case 'cancelado':
@@ -69,6 +71,7 @@ function RemitoListPage() {
       borrador: 'Borrador',
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
+      devuelto_parcial: 'Devuelto Parcial',
       devuelto: 'Devuelto',
       cancelado: 'Cancelado'
     }
@@ -87,8 +90,8 @@ function RemitoListPage() {
           onClick={() => navigate('/remitos/crear')}
           disabled={!canCreate('remitos')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary-900/10 transition-all ${canCreate('remitos')
-              ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
-              : 'bg-surface-200 text-surface-400 cursor-not-allowed'
+            ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
+            : 'bg-surface-200 text-surface-400 cursor-not-allowed'
             }`}
           title={!canCreate('remitos') ? 'No tienes permiso para crear remitos' : ''}
         >
@@ -126,6 +129,7 @@ function RemitoListPage() {
                 <option value="borrador">Borrador</option>
                 <option value="en_transito">En Tránsito</option>
                 <option value="entregado">Entregado</option>
+                <option value="devuelto_parcial">Devuelto Parcial</option>
                 <option value="devuelto">Devuelto</option>
                 <option value="cancelado">Cancelado</option>
               </select>
@@ -318,8 +322,8 @@ function RemitoListPage() {
                     key={num}
                     onClick={() => goToPage(num)}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${num === page
-                        ? 'bg-primary-600 text-white shadow-md'
-                        : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
                       }`}
                   >
                     {num}
