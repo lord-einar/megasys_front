@@ -4,6 +4,7 @@ import { remitosAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
+import { getPaginationNumbers, getRecordRange } from '../utils/paginationHelper'
 
 function RemitoListPage() {
   const navigate = useNavigate()
@@ -32,40 +33,6 @@ function RemitoListPage() {
     initialLimit: 10,
     initialFilters: { estado: '', es_prestamo: '' }
   })
-
-  // Obtener rango de registros mostrados
-  const getRecordRange = () => {
-    const start = (page - 1) * 10 + 1
-    const end = Math.min(page * 10, totalRecords)
-    return { start, end }
-  }
-
-  // Generar números de paginación
-  const getPaginationNumbers = () => {
-    const pages = []
-    const maxVisiblePages = 5
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i)
-    } else {
-      if (page <= 3) {
-        for (let i = 1; i <= 3; i++) pages.push(i)
-        pages.push('...')
-        pages.push(totalPages)
-      } else if (page >= totalPages - 2) {
-        pages.push(1)
-        pages.push('...')
-        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i)
-      } else {
-        pages.push(1)
-        pages.push('...')
-        pages.push(page)
-        pages.push('...')
-        pages.push(totalPages)
-      }
-    }
-    return pages
-  }
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
@@ -330,7 +297,7 @@ function RemitoListPage() {
       {!loading && remitos.length > 0 && (
         <div className="px-6 py-4 border-t border-surface-200 bg-surface-50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-xs text-surface-500">
-            Mostrando <span className="font-bold text-surface-900">{getRecordRange().start}</span> a <span className="font-bold text-surface-900">{getRecordRange().end}</span> de <span className="font-bold text-surface-900">{totalRecords}</span> registros
+            Mostrando <span className="font-bold text-surface-900">{getRecordRange(page, 10, totalRecords).start}</span> a <span className="font-bold text-surface-900">{getRecordRange(page, 10, totalRecords).end}</span> de <span className="font-bold text-surface-900">{totalRecords}</span> registros
           </div>
 
           <div className="flex items-center gap-2">
@@ -343,7 +310,7 @@ function RemitoListPage() {
             </button>
 
             <div className="flex gap-1">
-              {getPaginationNumbers().map((num, i) =>
+              {getPaginationNumbers(page, totalPages).map((num, i) =>
                 num === '...' ? (
                   <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-surface-500">...</span>
                 ) : (

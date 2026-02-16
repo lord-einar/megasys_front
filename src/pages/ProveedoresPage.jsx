@@ -5,6 +5,7 @@ import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
+import { getPaginationNumbers } from '../utils/paginationHelper'
 import Swal from 'sweetalert2'
 
 export default function ProveedoresPage() {
@@ -50,33 +51,6 @@ export default function ProveedoresPage() {
   const handleBuscar = (e) => {
     e.preventDefault()
     updateFilters({ search: filtro })
-  }
-
-  // Generar números de paginación
-  const getPaginationNumbers = () => {
-    const pages = []
-    const maxVisiblePages = 5
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i)
-    } else {
-      if (page <= 3) {
-        for (let i = 1; i <= 3; i++) pages.push(i)
-        pages.push('...')
-        pages.push(totalPages)
-      } else if (page >= totalPages - 2) {
-        pages.push(1)
-        pages.push('...')
-        for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i)
-      } else {
-        pages.push(1)
-        pages.push('...')
-        pages.push(page)
-        pages.push('...')
-        pages.push(totalPages)
-      }
-    }
-    return pages
   }
 
   const eliminarProveedor = async (proveedor) => {
@@ -387,7 +361,7 @@ export default function ProveedoresPage() {
               </button>
 
               <div className="flex gap-1.5">
-                {getPaginationNumbers().map((num, i) =>
+                {getPaginationNumbers(page, totalPages).map((num, i) =>
                   num === '...' ? (
                     <span key={`dots-${i}`} className="px-2 py-1 text-surface-400">...</span>
                   ) : (
