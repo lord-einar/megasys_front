@@ -100,7 +100,7 @@ function RemitoDetailPage() {
         ? ['completado', 'cancelado']
         : ['completado', 'devuelto', 'cancelado'],
       'completado': tienePrestamos ? [] : ['devuelto'],
-      'devuelto_parcial': [],
+      'devuelto_parcial': ['cancelado'],
       'devuelto': [],
       'cancelado': []
     }
@@ -110,7 +110,9 @@ function RemitoDetailPage() {
   // Verificar si se puede mostrar el botón de procesar devolución
   const canProcesarDevolucion = () => {
     if (!remito) return false
-    const estadosPermitidos = ['entregado', 'completado', 'devuelto_parcial']
+    // Permitir en estos estados normales Y también en 'devuelto' si hay inconsistencias
+    // (items no marcados como devueltos a pesar de que el remito dice devuelto)
+    const estadosPermitidos = ['entregado', 'completado', 'devuelto_parcial', 'devuelto']
     if (!estadosPermitidos.includes(remito.estado)) return false
     return getPrestamosNoDevueltos().length > 0
   }
@@ -941,8 +943,8 @@ function RemitoDetailPage() {
                   const itemState = itemsDevolucion[detalle.id] || { accion: 'devolver', nueva_fecha: '' }
                   return (
                     <div key={detalle.id} className={`border rounded-xl p-4 transition-all ${itemState.accion === 'devolver'
-                        ? 'border-emerald-200 bg-emerald-50/50'
-                        : 'border-amber-200 bg-amber-50/50'
+                      ? 'border-emerald-200 bg-emerald-50/50'
+                      : 'border-amber-200 bg-amber-50/50'
                       }`}>
                       {/* Artículo info */}
                       <div className="flex items-start justify-between mb-3">
@@ -967,8 +969,8 @@ function RemitoDetailPage() {
                             [detalle.id]: { accion: 'devolver', nueva_fecha: '' }
                           }))}
                           className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all border ${itemState.accion === 'devolver'
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                              : 'bg-white text-surface-600 border-surface-200 hover:border-emerald-300 hover:text-emerald-600'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-white text-surface-600 border-surface-200 hover:border-emerald-300 hover:text-emerald-600'
                             }`}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -980,8 +982,8 @@ function RemitoDetailPage() {
                             [detalle.id]: { accion: 'extender', nueva_fecha: prev[detalle.id]?.nueva_fecha || '' }
                           }))}
                           className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all border ${itemState.accion === 'extender'
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                              : 'bg-white text-surface-600 border-surface-200 hover:border-amber-300 hover:text-amber-600'
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                            : 'bg-white text-surface-600 border-surface-200 hover:border-amber-300 hover:text-amber-600'
                             }`}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
