@@ -448,71 +448,78 @@ export default function EditPersonal() {
               </div>
             </div>
 
-            {/* Sección 3: Color del Calendario */}
-            <div className="card-base p-6 md:p-8 bg-white space-y-6">
-              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
-                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">3</span>
-                Color en el Calendario
-              </h2>
+            {/* Sección 3: Color del Calendario - Solo para roles de soporte técnico */}
+            {(() => {
+              const selectedRolId = watch('rol_id')
+              const selectedRol = roles.find(r => r.id === selectedRolId)
+              const rolesSoporte = ['Soporte Técnico', 'Sistemas', 'Tecnico sede']
+              return selectedRol && rolesSoporte.includes(selectedRol.nombre)
+            })() && (
+                <div className="card-base p-6 md:p-8 bg-white space-y-6">
+                  <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">3</span>
+                    Color en el Calendario
+                  </h2>
 
-              <div className="space-y-4">
-                <p className="text-sm text-surface-500">Elige un color que identifique a este miembro del equipo en el calendario de visitas.</p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-surface-500">Elige un color que identifique a este miembro del equipo en el calendario de visitas.</p>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  {[
-                    { color: '#3788d8', label: 'Azul' },
-                    { color: '#10b981', label: 'Verde' },
-                    { color: '#8b5cf6', label: 'Violeta' },
-                    { color: '#f59e0b', label: 'Amarillo' },
-                    { color: '#ef4444', label: 'Rojo' },
-                    { color: '#ec4899', label: 'Rosa' },
-                    { color: '#06b6d4', label: 'Cian' },
-                    { color: '#f97316', label: 'Naranja' },
-                    { color: '#14b8a6', label: 'Teal' },
-                    { color: '#6366f1', label: 'Índigo' },
-                  ].map(({ color, label }) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setValue('color', color)}
-                      title={label}
-                      className={`w-10 h-10 rounded-xl border-2 transition-all duration-200 hover:scale-110 shadow-sm ${watch('color') === color
-                          ? 'border-surface-900 ring-2 ring-offset-2 ring-surface-400 scale-110'
-                          : 'border-transparent hover:border-surface-300'
-                        }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {[
+                        { color: '#3788d8', label: 'Azul' },
+                        { color: '#10b981', label: 'Verde' },
+                        { color: '#8b5cf6', label: 'Violeta' },
+                        { color: '#f59e0b', label: 'Amarillo' },
+                        { color: '#ef4444', label: 'Rojo' },
+                        { color: '#ec4899', label: 'Rosa' },
+                        { color: '#06b6d4', label: 'Cian' },
+                        { color: '#f97316', label: 'Naranja' },
+                        { color: '#14b8a6', label: 'Teal' },
+                        { color: '#6366f1', label: 'Índigo' },
+                      ].map(({ color, label }) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => setValue('color', color)}
+                          title={label}
+                          className={`w-10 h-10 rounded-xl border-2 transition-all duration-200 hover:scale-110 shadow-sm ${watch('color') === color
+                            ? 'border-surface-900 ring-2 ring-offset-2 ring-surface-400 scale-110'
+                            : 'border-transparent hover:border-surface-300'
+                            }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
 
-                  {/* Custom color input */}
-                  <div className="flex items-center gap-2 ml-2 pl-3 border-l border-surface-200">
-                    <input
-                      type="color"
-                      value={watch('color') || '#007bff'}
-                      onChange={(e) => setValue('color', e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5"
-                      title="Color personalizado"
-                    />
-                    <span className="text-xs font-mono text-surface-400 bg-surface-50 px-2 py-1 rounded">{watch('color')}</span>
+                      {/* Custom color input */}
+                      <div className="flex items-center gap-2 ml-2 pl-3 border-l border-surface-200">
+                        <input
+                          type="color"
+                          value={watch('color') || '#007bff'}
+                          onChange={(e) => setValue('color', e.target.value)}
+                          className="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5"
+                          title="Color personalizado"
+                        />
+                        <span className="text-xs font-mono text-surface-400 bg-surface-50 px-2 py-1 rounded">{watch('color')}</span>
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="flex items-center gap-3 mt-4 p-3 bg-surface-50 rounded-xl border border-surface-100">
+                      <div
+                        className="w-4 h-4 rounded-full shadow-sm"
+                        style={{ backgroundColor: watch('color') || '#007bff' }}
+                      />
+                      <span className="text-sm text-surface-600">Así se verá en el calendario de visitas</span>
+                      <div
+                        className="ml-auto px-3 py-1 rounded text-xs font-medium text-white shadow-sm"
+                        style={{ backgroundColor: watch('color') || '#007bff' }}
+                      >
+                        Visita ejemplo
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* Preview */}
-                <div className="flex items-center gap-3 mt-4 p-3 bg-surface-50 rounded-xl border border-surface-100">
-                  <div
-                    className="w-4 h-4 rounded-full shadow-sm"
-                    style={{ backgroundColor: watch('color') || '#007bff' }}
-                  />
-                  <span className="text-sm text-surface-600">Así se verá en el calendario de visitas</span>
-                  <div
-                    className="ml-auto px-3 py-1 rounded text-xs font-medium text-white shadow-sm"
-                    style={{ backgroundColor: watch('color') || '#007bff' }}
-                  >
-                    Visita ejemplo
-                  </div>
-                </div>
-              </div>
-            </div>
+              )}
 
             {/* Botones de Acción */}
             <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4 border-t border-surface-200">
