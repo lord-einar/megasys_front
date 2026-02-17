@@ -57,8 +57,16 @@ function CreateRemitoPage() {
         tipoArticuloAPI.list({ limit: 100 })
       ])
 
-      setPersonal(personalRes.data || [])
-      setSedes(sedesRes.data || [])
+      const personalData = personalRes.data || []
+      // Ordenar por apellido alfabéticamente
+      personalData.sort((a, b) => (a.apellido || '').localeCompare(b.apellido || '', 'es'))
+      setPersonal(personalData)
+
+      const sedesData = sedesRes.data || []
+      // Ordenar sedes alfabéticamente por nombre
+      sedesData.sort((a, b) => (a.nombre_sede || '').localeCompare(b.nombre_sede || '', 'es'))
+      setSedes(sedesData)
+
       setTiposArticulo(tiposRes.data || [])
       setError(null)
     } catch (err) {
@@ -345,7 +353,7 @@ function CreateRemitoPage() {
                       <option value="">Seleccionar persona...</option>
                       {personal.map(p => (
                         <option key={p.id} value={p.id}>
-                          {p.nombre} {p.apellido}
+                          {p.apellido}, {p.nombre}
                         </option>
                       ))}
                     </select>
@@ -366,7 +374,7 @@ function CreateRemitoPage() {
                         p.rol?.nombre === 'Sistemas' || p.rol?.nombre === 'Tecnico sede'
                       ).map(p => (
                         <option key={p.id} value={p.id}>
-                          {p.nombre} {p.apellido}
+                          {p.apellido}, {p.nombre}
                         </option>
                       ))}
                     </select>
