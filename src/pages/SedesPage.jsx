@@ -79,6 +79,38 @@ export default function SedesPage() {
     setEmpresaSeleccionada(empresaId === empresaSeleccionada ? null : empresaId)
   }
 
+  // Colores de marca para diferenciación visual
+  const getBrandStyle = (nombreEmpresa) => {
+    const name = (nombreEmpresa || '').toLowerCase()
+    if (name.includes('fiter')) {
+      return {
+        borderColor: 'border-l-orange-500',
+        badgeBg: 'bg-orange-50',
+        badgeText: 'text-orange-700',
+        badgeBorder: 'border-orange-200',
+        dotColor: 'bg-orange-500',
+        hoverBorder: 'hover:border-orange-200',
+        hoverShadow: 'hover:shadow-orange-900/5',
+        headerHover: 'group-hover:bg-orange-50/20',
+        nameHover: 'group-hover:text-orange-700',
+        filterActive: 'bg-orange-50 border-orange-200 text-orange-700',
+      }
+    }
+    // Megatlon (default)
+    return {
+      borderColor: 'border-l-sky-600',
+      badgeBg: 'bg-sky-50',
+      badgeText: 'text-sky-700',
+      badgeBorder: 'border-sky-200',
+      dotColor: 'bg-sky-600',
+      hoverBorder: 'hover:border-sky-200',
+      hoverShadow: 'hover:shadow-sky-900/5',
+      headerHover: 'group-hover:bg-sky-50/20',
+      nameHover: 'group-hover:text-sky-700',
+      filterActive: 'bg-sky-50 border-sky-200 text-sky-700',
+    }
+  }
+
   const eliminarSede = async (sede) => {
     const result = await Swal.fire({
       title: 'Confirmar eliminación',
@@ -212,19 +244,22 @@ export default function SedesPage() {
           <div className="pt-4 border-t border-surface-100">
             <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">Filtrar por empresa</p>
             <div className="flex gap-2 flex-wrap">
-              {empresas.map((empresa) => (
-                <button
-                  key={empresa.id}
-                  type="button"
-                  onClick={() => cambiarEmpresa(empresa.id)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${empresaSeleccionada === empresa.id
-                      ? 'bg-primary-50 border-primary-200 text-primary-700 shadow-sm'
+              {empresas.map((empresa) => {
+                const brand = getBrandStyle(empresa.nombre_empresa)
+                return (
+                  <button
+                    key={empresa.id}
+                    type="button"
+                    onClick={() => cambiarEmpresa(empresa.id)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${empresaSeleccionada === empresa.id
+                      ? `${brand.filterActive} shadow-sm`
                       : 'bg-white border-surface-200 text-surface-600 hover:border-surface-300 hover:bg-surface-50'
-                    }`}
-                >
-                  {empresa.nombre_empresa}
-                </button>
-              ))}
+                      }`}
+                  >
+                    {empresa.nombre_empresa}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </form>
@@ -259,159 +294,166 @@ export default function SedesPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {sedes.map((sede) => (
-              <div
-                key={sede.id}
-                className="group bg-white rounded-2xl border border-surface-200 hover:border-primary-200 hover:shadow-lg hover:shadow-primary-900/5 transition-all duration-300 overflow-hidden flex flex-col"
-              >
-                {/* Header de la tarjeta */}
-                <div className="p-5 border-b border-surface-100 bg-surface-50/30 group-hover:bg-primary-50/10 transition-colors">
-                  <div className="flex justify-between items-start gap-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-surface-900 group-hover:text-primary-700 transition-colors leading-tight">
-                        {sede.nombre_sede}
-                      </h3>
-                      <p className="text-sm text-surface-500 mt-1 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-surface-400"></span>
-                        {sede.empresa?.nombre_empresa || 'Empresa no asignada'}
-                      </p>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border ${sede.activo
+            {sedes.map((sede) => {
+              const brand = getBrandStyle(sede.empresa?.nombre_empresa)
+              return (
+                <div
+                  key={sede.id}
+                  className={`group bg-white rounded-2xl border border-surface-200 ${brand.hoverBorder} hover:shadow-lg ${brand.hoverShadow} transition-all duration-300 overflow-hidden flex flex-col border-l-4 ${brand.borderColor}`}
+                >
+                  {/* Header de la tarjeta */}
+                  <div className={`p-5 border-b border-surface-100 bg-surface-50/30 ${brand.headerHover} transition-colors`}>
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <h3 className={`text-lg font-bold text-surface-900 ${brand.nameHover} transition-colors leading-tight`}>
+                          {sede.nombre_sede}
+                        </h3>
+                        <p className="text-sm mt-1 flex items-center gap-1.5">
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${brand.badgeBg} ${brand.badgeText} ${brand.badgeBorder}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${brand.dotColor}`}></span>
+                            {sede.empresa?.nombre_empresa || 'Sin empresa'}
+                          </span>
+                        </p>
+                      </div>
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border ${sede.activo
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                         : 'bg-rose-50 text-rose-700 border-rose-100'
-                      }`}>
-                      {sede.activo ? 'Activa' : 'Inactiva'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Contenido de la tarjeta */}
-                <div className="p-5 space-y-4 flex-1">
-                  {/* Ubicación */}
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 text-surface-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-surface-900">{sede.direccion}</p>
-                      <p className="text-xs text-surface-500 mt-0.5">{sede.localidad}, {sede.provincia}</p>
+                        }`}>
+                        {sede.activo ? 'Activa' : 'Inactiva'}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-3 py-3 border-y border-surface-50">
-                    <div className="bg-surface-50/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-0.5">Personal</p>
-                      <p className="text-lg font-bold text-surface-900">{sede.estadisticas?.totalPersonal || 0}</p>
+                  {/* Contenido de la tarjeta */}
+                  <div className="p-5 space-y-4 flex-1">
+                    {/* Ubicación */}
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-surface-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-surface-900">{sede.direccion}</p>
+                        <p className="text-xs text-surface-500 mt-0.5">{sede.localidad}, {sede.provincia}</p>
+                      </div>
                     </div>
-                    <div className="bg-surface-50/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-0.5">Inventario</p>
-                      <p className="text-lg font-bold text-surface-900">{sede.estadisticas?.totalInventario || 0}</p>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3 py-3 border-y border-surface-50">
+                      <div className="bg-surface-50/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-0.5">Personal</p>
+                        <p className="text-lg font-bold text-surface-900">{sede.estadisticas?.totalPersonal || 0}</p>
+                      </div>
+                      <div className="bg-surface-50/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-0.5">Inventario</p>
+                        <p className="text-lg font-bold text-surface-900">{sede.estadisticas?.totalInventario || 0}</p>
+                      </div>
                     </div>
+
+                    {/* Contacto */}
+                    {(sede.telefono || sede.ip_sede) && (
+                      <div className="space-y-2 pt-1">
+                        {sede.telefono && (
+                          <div className="flex items-center gap-2 text-xs text-surface-600">
+                            <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span className="font-mono">{sede.telefono}</span>
+                          </div>
+                        )}
+                        {sede.ip_sede && (
+                          <div className="flex items-center gap-2 text-xs text-surface-600">
+                            <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                            <span className="bg-surface-100 px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wide text-surface-700">{sede.ip_sede}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Contacto */}
-                  {(sede.telefono || sede.ip_sede) && (
-                    <div className="space-y-2 pt-1">
-                      {sede.telefono && (
-                        <div className="flex items-center gap-2 text-xs text-surface-600">
-                          <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                          <span className="font-mono">{sede.telefono}</span>
-                        </div>
-                      )}
-                      {sede.ip_sede && (
-                        <div className="flex items-center gap-2 text-xs text-surface-600">
-                          <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                          </svg>
-                          <span className="bg-surface-100 px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wide text-surface-700">{sede.ip_sede}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Acciones */}
-                <div className="p-4 bg-surface-50 border-t border-surface-100 flex gap-2">
-                  <button
-                    onClick={() => navigate(`/sedes/${sede.id}`)}
-                    className="flex-1 px-3 py-2 bg-white border border-surface-200 text-surface-700 hover:border-primary-300 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all text-xs font-bold shadow-sm"
-                  >
-                    Ver Detalles
-                  </button>
-                  {canUpdate('sedes') && (
+                  {/* Acciones */}
+                  <div className="p-4 bg-surface-50 border-t border-surface-100 flex gap-2">
                     <button
-                      onClick={() => navigate(`/sedes/${sede.id}/editar`)}
-                      className="px-3 py-2 bg-white border border-surface-200 text-surface-500 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50 rounded-lg transition-all shadow-sm"
-                      title="Editar"
+                      onClick={() => navigate(`/sedes/${sede.id}`)}
+                      className="flex-1 px-3 py-2 bg-white border border-surface-200 text-surface-700 hover:border-primary-300 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all text-xs font-bold shadow-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
+                      Ver Detalles
                     </button>
-                  )}
-                  {canDelete('sedes') && (
-                    <button
-                      onClick={() => eliminarSede(sede)}
-                      className="px-3 py-2 bg-white border border-surface-200 text-surface-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 rounded-lg transition-all shadow-sm"
-                      title="Eliminar"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
+                    {canUpdate('sedes') && (
+                      <button
+                        onClick={() => navigate(`/sedes/${sede.id}/editar`)}
+                        className="px-3 py-2 bg-white border border-surface-200 text-surface-500 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50 rounded-lg transition-all shadow-sm"
+                        title="Editar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    )}
+                    {canDelete('sedes') && (
+                      <button
+                        onClick={() => eliminarSede(sede)}
+                        className="px-3 py-2 bg-white border border-surface-200 text-surface-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 rounded-lg transition-all shadow-sm"
+                        title="Eliminar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Paginador */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8 mb-8">
-              <button
-                onClick={previousPage}
-                disabled={page === 1}
-                className="px-4 py-2 bg-white border border-surface-200 rounded-lg hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs text-surface-600 shadow-sm"
-              >
-                ← Anterior
-              </button>
+          {
+            totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8 mb-8">
+                <button
+                  onClick={previousPage}
+                  disabled={page === 1}
+                  className="px-4 py-2 bg-white border border-surface-200 rounded-lg hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs text-surface-600 shadow-sm"
+                >
+                  ← Anterior
+                </button>
 
-              <div className="flex gap-1">
-                {getPaginationNumbers(page, totalPages).map((num, i) =>
-                  num === '...' ? (
-                    <span key={`dots-${i}`} className="px-2 py-2 text-surface-400">
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={num}
-                      onClick={() => goToPage(num)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-all ${page === num
+                <div className="flex gap-1">
+                  {getPaginationNumbers(page, totalPages).map((num, i) =>
+                    num === '...' ? (
+                      <span key={`dots-${i}`} className="px-2 py-2 text-surface-400">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={num}
+                        onClick={() => goToPage(num)}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-all ${page === num
                           ? 'bg-primary-600 text-white shadow-md ring-2 ring-primary-100'
                           : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
-                        }`}
-                    >
-                      {num}
-                    </button>
-                  )
-                )}
-              </div>
+                          }`}
+                      >
+                        {num}
+                      </button>
+                    )
+                  )}
+                </div>
 
-              <button
-                onClick={nextPage}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-white border border-surface-200 rounded-lg hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs text-surface-600 shadow-sm"
-              >
-                Siguiente →
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={nextPage}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 bg-white border border-surface-200 rounded-lg hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs text-surface-600 shadow-sm"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )
+          }
         </>
       )}
     </div>

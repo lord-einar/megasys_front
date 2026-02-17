@@ -86,7 +86,8 @@ export default function EditPersonal() {
       email: '',
       telefono: '',
       sedes: [],
-      rol_id: ''
+      rol_id: '',
+      color: '#007bff'
     }
   })
 
@@ -134,7 +135,8 @@ export default function EditPersonal() {
           email: personal.email || '',
           telefono: personal.telefono || '',
           sedes: personal.sedesAsignadas?.map(s => s.sede_id) || [],
-          rol_id: personal.rol?.id || ''
+          rol_id: personal.rol?.id || '',
+          color: personal.color || '#007bff'
         })
 
       } catch (err) {
@@ -172,7 +174,8 @@ export default function EditPersonal() {
         email: data.email,
         telefono: data.telefono || null,
         sedes: data.sedes,
-        rol_id: data.rol_id
+        rol_id: data.rol_id,
+        color: data.color || '#007bff'
       }
 
       await personalAPI.update(id, datosPersonal)
@@ -269,8 +272,8 @@ export default function EditPersonal() {
                     {...register('nombre')}
                     placeholder="Ej: Juan"
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.nombre || hasFieldError('nombre', serverFieldErrors)
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   />
                   <FieldError
@@ -290,8 +293,8 @@ export default function EditPersonal() {
                     {...register('apellido')}
                     placeholder="Ej: Pérez"
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.apellido || hasFieldError('apellido', serverFieldErrors)
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   />
                   <FieldError
@@ -311,8 +314,8 @@ export default function EditPersonal() {
                     {...register('email')}
                     placeholder="juan.perez@empresa.com"
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.email || hasFieldError('email', serverFieldErrors)
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   />
                   <FieldError
@@ -332,8 +335,8 @@ export default function EditPersonal() {
                     {...register('telefono')}
                     placeholder="(011) 1234-5678"
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.telefono || hasFieldError('telefono', serverFieldErrors)
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   />
                   <FieldError
@@ -362,8 +365,8 @@ export default function EditPersonal() {
                     {...register('rol_id')}
                     disabled={isLoading}
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.rol_id || hasFieldError('rol_id', serverFieldErrors)
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   >
                     <option value="">-- Seleccionar rol --</option>
@@ -442,6 +445,72 @@ export default function EditPersonal() {
                   serverError={getFieldError('sedes', serverFieldErrors)}
                   clientError={errors.sedes}
                 />
+              </div>
+            </div>
+
+            {/* Sección 3: Color del Calendario */}
+            <div className="card-base p-6 md:p-8 bg-white space-y-6">
+              <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">3</span>
+                Color en el Calendario
+              </h2>
+
+              <div className="space-y-4">
+                <p className="text-sm text-surface-500">Elige un color que identifique a este miembro del equipo en el calendario de visitas.</p>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {[
+                    { color: '#3788d8', label: 'Azul' },
+                    { color: '#10b981', label: 'Verde' },
+                    { color: '#8b5cf6', label: 'Violeta' },
+                    { color: '#f59e0b', label: 'Amarillo' },
+                    { color: '#ef4444', label: 'Rojo' },
+                    { color: '#ec4899', label: 'Rosa' },
+                    { color: '#06b6d4', label: 'Cian' },
+                    { color: '#f97316', label: 'Naranja' },
+                    { color: '#14b8a6', label: 'Teal' },
+                    { color: '#6366f1', label: 'Índigo' },
+                  ].map(({ color, label }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setValue('color', color)}
+                      title={label}
+                      className={`w-10 h-10 rounded-xl border-2 transition-all duration-200 hover:scale-110 shadow-sm ${watch('color') === color
+                          ? 'border-surface-900 ring-2 ring-offset-2 ring-surface-400 scale-110'
+                          : 'border-transparent hover:border-surface-300'
+                        }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+
+                  {/* Custom color input */}
+                  <div className="flex items-center gap-2 ml-2 pl-3 border-l border-surface-200">
+                    <input
+                      type="color"
+                      value={watch('color') || '#007bff'}
+                      onChange={(e) => setValue('color', e.target.value)}
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5"
+                      title="Color personalizado"
+                    />
+                    <span className="text-xs font-mono text-surface-400 bg-surface-50 px-2 py-1 rounded">{watch('color')}</span>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="flex items-center gap-3 mt-4 p-3 bg-surface-50 rounded-xl border border-surface-100">
+                  <div
+                    className="w-4 h-4 rounded-full shadow-sm"
+                    style={{ backgroundColor: watch('color') || '#007bff' }}
+                  />
+                  <span className="text-sm text-surface-600">Así se verá en el calendario de visitas</span>
+                  <div
+                    className="ml-auto px-3 py-1 rounded text-xs font-medium text-white shadow-sm"
+                    style={{ backgroundColor: watch('color') || '#007bff' }}
+                  >
+                    Visita ejemplo
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -147,6 +147,15 @@ export default function PersonalDetailPage() {
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${personal.activo ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
                     {personal.activo ? 'Activo' : 'Inactivo'}
                   </span>
+                  {personal.color && (
+                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border border-surface-200 bg-surface-50 text-surface-600" title="Color en el calendario">
+                      <span
+                        className="w-3 h-3 rounded-full shadow-sm border border-black/10"
+                        style={{ backgroundColor: personal.color }}
+                      />
+                      Calendario
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -270,8 +279,8 @@ function TabButton({ active, onClick, label }) {
     <button
       onClick={onClick}
       className={`px-6 py-4 text-sm font-bold border-b-2 transition-colors relative ${active
-          ? 'border-primary-600 text-primary-600'
-          : 'border-transparent text-surface-500 hover:text-surface-900 hover:border-surface-300'
+        ? 'border-primary-600 text-primary-600'
+        : 'border-transparent text-surface-500 hover:text-surface-900 hover:border-surface-300'
         }`}
     >
       {label}

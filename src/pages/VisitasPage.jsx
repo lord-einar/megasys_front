@@ -162,11 +162,10 @@ const VisitasPage = () => {
                     <button
                         onClick={() => handleSelectSlot({ start: new Date() })}
                         disabled={!canCreate('visitas')}
-                        className={`flex items-center gap-2 shadow-lg ${
-                            canCreate('visitas')
-                                ? 'btn-primary hover:shadow-xl cursor-pointer'
-                                : 'bg-slate-300 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed'
-                        }`}
+                        className={`flex items-center gap-2 shadow-lg ${canCreate('visitas')
+                            ? 'btn-primary hover:shadow-xl cursor-pointer'
+                            : 'bg-slate-300 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed'
+                            }`}
                         title={!canCreate('visitas') ? 'No tienes permiso para crear visitas' : ''}
                     >
                         <span className="text-lg font-bold">+</span> Nueva Visita
@@ -242,6 +241,29 @@ const VisitasPage = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Leyenda de colores por técnico */}
+                {tecnicos.some(t => t.color) && (
+                    <div className="px-3 md:px-5 py-2.5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Técnicos:</span>
+                        {tecnicos.filter(t => t.color).map(t => (
+                            <button
+                                key={t.id}
+                                onClick={() => setFiltroTecnico(filtroTecnico === t.id ? '' : t.id)}
+                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer border ${filtroTecnico === t.id
+                                        ? 'bg-white border-slate-300 shadow-sm text-slate-800'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                                    }`}
+                            >
+                                <span
+                                    className="w-2.5 h-2.5 rounded-full shadow-sm border border-black/10 shrink-0"
+                                    style={{ backgroundColor: t.color }}
+                                />
+                                {t.nombre} {t.apellido?.[0]}.
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Calendar Wrapper */}
                 <div className="p-2 md:p-6 bg-white min-h-[500px] md:min-h-[750px]">
