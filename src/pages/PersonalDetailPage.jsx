@@ -229,7 +229,7 @@ export default function PersonalDetailPage() {
                             </div>
                             <button
                               onClick={() => navigate(`/sedes/${asignacion.sede_id}`)}
-                              className="text-primary-600 hover:text-primary-800 text-xs font-bold bg-primary-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-primary-600 hover:text-primary-800 text-xs font-bold bg-primary-50 px-2 py-1 rounded group-hover:bg-primary-100 transition-colors"
                             >
                               Ver Sede
                             </button>

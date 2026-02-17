@@ -392,10 +392,10 @@ export default function PersonalPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => navigate(`/personal/${persona.id}`)}
-                          className="p-1.5 text-surface-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          className="p-1.5 text-surface-400 hover:text-primary-600 hover:bg-primary-50 group-hover:text-surface-600 rounded-lg transition-colors"
                           title="Ver Detalles"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -407,7 +407,7 @@ export default function PersonalPage() {
                         {canUpdate('personal') && (
                           <button
                             onClick={() => navigate(`/personal/${persona.id}/editar`)}
-                            className="p-1.5 text-surface-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            className="p-1.5 text-surface-400 hover:text-amber-600 hover:bg-amber-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -419,7 +419,7 @@ export default function PersonalPage() {
                         {canDelete('personal') && (
                           <button
                             onClick={() => eliminarPersona(persona)}
-                            className="p-1.5 text-surface-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="p-1.5 text-surface-400 hover:text-rose-600 hover:bg-rose-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Eliminar"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

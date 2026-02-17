@@ -197,8 +197,8 @@ export default function ProveedoresPage() {
               <div className="font-bold text-surface-900">{item.label}</div>
               <div className="text-xs text-surface-500">{item.desc}</div>
             </div>
-            <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
-              <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <div className="absolute right-3 top-3 text-surface-300 group-hover:text-surface-500 transition-colors transform group-hover:translate-x-0.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </div>
           </button>
         ))}
@@ -276,8 +276,8 @@ export default function ProveedoresPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold text-surface-900 line-clamp-1" title={proveedor.empresa}>{proveedor.empresa}</h3>
                     <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${proveedor.activo
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                        : 'bg-rose-50 text-rose-700 border-rose-100'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                      : 'bg-rose-50 text-rose-700 border-rose-100'
                       }`}>
                       {proveedor.activo ? 'Activo' : 'Inactivo'}
                     </span>
@@ -369,8 +369,8 @@ export default function ProveedoresPage() {
                       key={num}
                       onClick={() => goToPage(num)}
                       className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${page === num
-                          ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                          : 'bg-white text-surface-600 border border-surface-200 hover:border-primary-300'
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                        : 'bg-white text-surface-600 border border-surface-200 hover:border-primary-300'
                         }`}
                     >
                       {num}

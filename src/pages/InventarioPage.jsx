@@ -151,8 +151,8 @@ export default function InventarioPage() {
             onClick={() => navigate('/inventario/crear')}
             disabled={!canCreate('inventario')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary-900/10 transition-all ${canCreate('inventario')
-                ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
-                : 'bg-surface-200 text-surface-400 cursor-not-allowed'
+              ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
+              : 'bg-surface-200 text-surface-400 cursor-not-allowed'
               }`}
             title={!canCreate('inventario') ? 'No tienes permiso para crear artículos' : ''}
           >
@@ -326,10 +326,10 @@ export default function InventarioPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => navigate(`/inventario/${item.id}`)}
-                          className="p-1.5 text-surface-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          className="p-1.5 text-surface-400 hover:text-primary-600 hover:bg-primary-50 group-hover:text-surface-600 rounded-lg transition-colors"
                           title="Ver Detalles"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -341,7 +341,7 @@ export default function InventarioPage() {
                         {canUpdate('inventario') && (
                           <button
                             onClick={() => navigate(`/inventario/${item.id}/editar`)}
-                            className="p-1.5 text-surface-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                            className="p-1.5 text-surface-400 hover:text-amber-600 hover:bg-amber-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +353,7 @@ export default function InventarioPage() {
                         {canDelete('inventario') && (
                           <button
                             onClick={() => eliminarItem(item)}
-                            className="p-1.5 text-surface-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="p-1.5 text-surface-400 hover:text-rose-600 hover:bg-rose-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Eliminar"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -393,8 +393,8 @@ export default function InventarioPage() {
                     onClick={() => typeof num === 'number' && goToPage(num)}
                     disabled={typeof num !== 'number'}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${num === page
-                        ? 'bg-primary-600 text-white shadow-md'
-                        : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'bg-white border border-surface-200 text-surface-600 hover:bg-surface-50'
                       } ${typeof num !== 'number' ? 'cursor-default border-none bg-transparent' : ''}`}
                   >
                     {num}
