@@ -161,6 +161,7 @@ export const personalAPI = {
     body: JSON.stringify(data)
   }),
   delete: (id) => apiCall(`/personal/${id}`, { method: 'DELETE' }),
+  syncEntra: () => apiCall('/personal/sync-entra', { method: 'POST' }),
   export: async (params = {}) => {
     const token = localStorage.getItem('authToken')
     const query = new URLSearchParams(params).toString()
@@ -255,6 +256,10 @@ export const inventarioAPI = {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/inventario/${id}/historial${query ? '?' + query : ''}`)
   },
+  getGarantias: (id) => apiCall(`/inventario/${id}/garantias`),
+  refrescarGarantia: (id) => apiCall(`/inventario/${id}/garantias/refrescar`, {
+    method: 'POST'
+  }),
 }
 
 // Remitos Endpoints

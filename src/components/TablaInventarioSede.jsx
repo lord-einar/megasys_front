@@ -123,6 +123,9 @@ export default function TablaInventarioSede({ articulos = [], loading = false })
                   Estado
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                  Garantía
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
                   Adquisición
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-bold text-surface-400 uppercase tracking-wider">
@@ -165,6 +168,9 @@ export default function TablaInventarioSede({ articulos = [], loading = false })
                       {getEstadoLabel(articulo.estado)}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <GarantiaBadge estado={articulo.garantia_estado} fechaFin={articulo.garantia_fecha_fin} />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600">
                     {articulo.fecha_adquisicion
                       ? new Date(articulo.fecha_adquisicion).toLocaleDateString('es-AR')
@@ -200,4 +206,30 @@ export default function TablaInventarioSede({ articulos = [], loading = false })
       </div>
     </div>
   )
+}
+
+function GarantiaBadge({ estado, fechaFin }) {
+  if (!estado || estado === 'sin_consultar') {
+    return <span className="text-xs text-surface-400">-</span>
+  }
+  if (estado === 'consultando') {
+    return <span className="text-xs text-surface-400 italic">Consultando...</span>
+  }
+  if (estado === 'error') {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-rose-50 text-rose-600 border-rose-100">Error</span>
+  }
+  if (estado === 'sin_garantia') {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-surface-50 text-surface-500 border-surface-200">Sin garantía</span>
+  }
+  if (estado === 'con_garantia' && fechaFin) {
+    const dias = Math.ceil((new Date(fechaFin) - new Date()) / (1000 * 60 * 60 * 24))
+    if (dias <= 0) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-rose-50 text-rose-600 border-rose-100">Expirada</span>
+    }
+    if (dias <= 90) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-100">Por vencer</span>
+    }
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-100">Vigente</span>
+  }
+  return <span className="text-xs text-surface-400">-</span>
 }

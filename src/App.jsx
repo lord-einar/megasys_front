@@ -45,6 +45,7 @@ import EjecutivosPage from './pages/EjecutivosPage'
 import EjecutivoFormPage from './pages/EjecutivoFormPage'
 import TiposServicioPage from './pages/TiposServicioPage'
 import TipoServicioFormPage from './pages/TipoServicioFormPage'
+import TiposArticuloPage from './pages/TiposArticuloPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -124,6 +125,7 @@ function App() {
                   <Route path="/configuracion/roles" element={<ConfiguracionRolesPage />} />
 
                   {/* Inventario routes - más específicas primero */}
+                  <Route path="/inventario/tipos-articulo" element={<TiposArticuloPage />} />
                   <Route path="/inventario/crear" element={<CreateArticulo />} />
                   <Route path="/inventario/:id/editar" element={<EditArticulo />} />
                   <Route path="/inventario/:id" element={<InventarioDetailPage />} />

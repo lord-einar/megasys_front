@@ -26,7 +26,12 @@ const articuloSchema = yup.object().shape({
   service_tag: yup.string().nullable().notRequired(),
   fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
   observaciones: yup.string().nullable().notRequired(),
-  sede_id: yup.string().required('Debe seleccionar una sede')
+  observaciones: yup.string().nullable().notRequired(),
+  sede_id: yup.string().required('Debe seleccionar una sede'),
+  procesador: yup.string().nullable().notRequired(),
+  memoria: yup.string().nullable().notRequired(),
+  disco: yup.string().nullable().notRequired(),
+  sistema_operativo: yup.string().nullable().notRequired()
 })
 
 export default function CreateArticulo() {
@@ -40,10 +45,21 @@ export default function CreateArticulo() {
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])
 
+  // Watch tipo_articulo_id para mostrar campos condicionales
+  const tipoSeleccionadoId = useForm().watch('tipo_articulo_id', undefined)
+  const [mostrarHardware, setMostrarHardware] = useState(false)
+
+  // Efecto para actualizar mostrarHardware cuando cambia el tipo
+  useEffect(() => {
+    // Usamos watch desde props o contexto si fuera necesario, pero aquí lo hacemos manual
+    // En realidad useForm devuelve watch, lo usaremos abajo extraido del hook
+  }, [])
+
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
     reset
   } = useForm({
@@ -56,7 +72,11 @@ export default function CreateArticulo() {
       service_tag: '',
       sede_id: '',
       fecha_adquisicion: null,
-      observaciones: ''
+      observaciones: '',
+      procesador: '',
+      memoria: '',
+      disco: '',
+      sistema_operativo: ''
     }
   })
 
@@ -132,6 +152,10 @@ export default function CreateArticulo() {
       if (!dataToSend.service_tag?.trim()) delete dataToSend.service_tag
       if (!dataToSend.fecha_adquisicion) delete dataToSend.fecha_adquisicion
       if (!dataToSend.observaciones?.trim()) delete dataToSend.observaciones
+      if (!dataToSend.procesador?.trim()) delete dataToSend.procesador
+      if (!dataToSend.memoria?.trim()) delete dataToSend.memoria
+      if (!dataToSend.disco?.trim()) delete dataToSend.disco
+      if (!dataToSend.sistema_operativo?.trim()) delete dataToSend.sistema_operativo
 
       // Estado inicial siempre disponible
       dataToSend.estado = 'disponible'
@@ -216,8 +240,8 @@ export default function CreateArticulo() {
                       {...register('tipo_articulo_id')}
                       disabled={loading}
                       className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.tipo_articulo_id
-                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                         }`}
                     >
                       <option value="">Selecciona un tipo</option>
@@ -252,8 +276,8 @@ export default function CreateArticulo() {
                       {...register('sede_id')}
                       disabled={loading}
                       className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.sede_id
-                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                         }`}
                     >
                       <option value="">Selecciona una sede</option>
@@ -289,8 +313,8 @@ export default function CreateArticulo() {
                       {...register('marca')}
                       placeholder="Ej: Dell, HP, Apple"
                       className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.marca
-                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                         }`}
                     />
                     {errors.marca && (
@@ -312,8 +336,8 @@ export default function CreateArticulo() {
                       {...register('modelo')}
                       placeholder="Ej: Latitude 5420"
                       className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.modelo
-                          ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                          : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                         }`}
                     />
                     {errors.modelo && (
@@ -326,6 +350,76 @@ export default function CreateArticulo() {
                 </div>
               </div>
             </div>
+
+            {/* Sección Hardware (Condicional) */}
+            {(() => {
+              const tipoId = watch('tipo_articulo_id')
+              const tipoSeleccionado = tiposArticulo.find(t => t.id === tipoId)
+              const nombreTipo = tipoSeleccionado?.nombre?.toLowerCase() || ''
+              const esOrdenador = nombreTipo.includes('notebook') ||
+                nombreTipo.includes('pc') ||
+                nombreTipo.includes('comp') ||
+                nombreTipo.includes('all') ||
+                nombreTipo.includes('cel') ||
+                nombreTipo.includes('servidor')
+
+              if (!esOrdenador) return null
+
+              return (
+                <div className="card-base p-6 md:p-8 bg-white space-y-6 animate-fade-in">
+                  <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-primary-50 text-primary-600 flex items-center justify-center text-xs">•</span>
+                    Especificaciones de Hardware
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Procesador */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="procesador" className="block text-sm font-semibold text-surface-700">Procesador</label>
+                      <input
+                        type="text"
+                        id="procesador"
+                        {...register('procesador')}
+                        placeholder="Ej: Intel Core i5-1135G7"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* Memoria */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="memoria" className="block text-sm font-semibold text-surface-700">Memoria RAM</label>
+                      <input
+                        type="text"
+                        id="memoria"
+                        {...register('memoria')}
+                        placeholder="Ej: 16 GB DDR4"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* Disco */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="disco" className="block text-sm font-semibold text-surface-700">Almacenamiento</label>
+                      <input
+                        type="text"
+                        id="disco"
+                        {...register('disco')}
+                        placeholder="Ej: 512 GB SSD NVMe"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* Sistema Operativo */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="sistema_operativo" className="block text-sm font-semibold text-surface-700">Sistema Operativo</label>
+                      <input
+                        type="text"
+                        id="sistema_operativo"
+                        {...register('sistema_operativo')}
+                        placeholder="Ej: Windows 10 Pro"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Sección 2: Identificación */}
             <div className="card-base p-6 md:p-8 bg-white space-y-6">
@@ -373,8 +467,8 @@ export default function CreateArticulo() {
                     id="fecha_adquisicion"
                     {...register('fecha_adquisicion')}
                     className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all ${errors.fecha_adquisicion
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
-                        : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
+                      ? 'border-rose-300 focus:border-rose-500 bg-rose-50/10'
+                      : 'border-surface-200 focus:border-primary-500 hover:border-surface-300'
                       }`}
                   />
                   {errors.fecha_adquisicion && (

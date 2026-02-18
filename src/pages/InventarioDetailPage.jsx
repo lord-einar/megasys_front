@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
+import GarantiaCard from '../components/GarantiaCard'
 
 export default function InventarioDetailPage() {
   const navigate = useNavigate()
@@ -257,8 +258,10 @@ export default function InventarioDetailPage() {
                       ID: {id.split('-')[0]}...
                     </span>
                   </div>
-                  <h1 className="text-2xl font-bold text-surface-900 tracking-tight">{item.descripcionCompleta || 'Sin descripción'}</h1>
-                  <p className="text-surface-500 font-medium mt-1">{item.marca} {item.modelo}</p>
+                  <h1 className="text-2xl font-bold text-surface-900 tracking-tight">{item.marca} {item.modelo}</h1>
+                  {item.tipoArticulo?.nombre && (
+                    <p className="text-surface-500 font-medium mt-1">{item.tipoArticulo.nombre}</p>
+                  )}
                 </div>
 
                 {item.sedePrincipal && (
@@ -281,8 +284,8 @@ export default function InventarioDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 pt-6 border-t border-surface-100">
                 <InfoItem label="Número de Serie" value={item.numero_serie} mono />
                 <InfoItem label="Service Tag" value={item.service_tag} mono />
-                <InfoItem label="Tipo de Artículo" value={item.tipoArticulo?.nombre} />
                 <InfoItem label="Fecha de Adquisición" value={formatDateSimple(item.fecha_adquisicion)} />
+                <InfoItem label="Valor de Adquisición" value={item.valor_adquisicion ? `$${Number(item.valor_adquisicion).toLocaleString('es-AR')}` : null} />
               </div>
 
               {item.observaciones && (
@@ -328,18 +331,32 @@ export default function InventarioDetailPage() {
                           </span>
                         </div>
 
-                        {mov.descripcion && (
-                          <p className="text-surface-600 text-xs mb-2">{mov.descripcion}</p>
+                        {mov.observaciones && (
+                          <p className="text-surface-600 text-xs mb-2">{mov.observaciones}</p>
                         )}
 
-                        {mov.usuario_email && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-surface-400 uppercase font-bold tracking-wide">
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            {mov.usuario_email}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {mov.remitoMovimiento && (
+                            <button
+                              onClick={() => navigate(`/remitos/${mov.remitoMovimiento.id}`)}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-primary-600 hover:text-primary-700 hover:underline transition-colors uppercase tracking-wide"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              {mov.remitoMovimiento.numero_remito}
+                            </button>
+                          )}
+
+                          {mov.usuario_email && (
+                            <div className="flex items-center gap-1.5 text-[10px] text-surface-400 uppercase font-bold tracking-wide">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              {mov.usuario_email}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -350,6 +367,9 @@ export default function InventarioDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Garantía Card */}
+            <GarantiaCard item={item} onRefresh={cargarDetalle} />
+
             {/* Préstamo Activo Card (Re-styled) */}
             {item.prestamoActivo && (
               <div className="bg-gradient-to-br from-indigo-600 to-primary-700 rounded-2xl p-6 text-white shadow-xl shadow-primary-900/20 relative overflow-hidden">

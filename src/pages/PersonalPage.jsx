@@ -164,6 +164,67 @@ export default function PersonalPage() {
 
         <div className="flex flex-wrap gap-3">
           <button
+            onClick={async () => {
+              try {
+                // Confirmación
+                const result = await Swal.fire({
+                  title: '¿Sincronizar con Entra ID?',
+                  text: 'Esto actualizará usuarios, roles y sedes desde Azure. Puede tomar unos segundos.',
+                  icon: 'info',
+                  showCancelButton: true,
+                  confirmButtonText: 'Sí, sincronizar',
+                  cancelButtonText: 'Cancelar',
+                  customClass: { popup: 'rounded-2xl' }
+                });
+
+                if (result.isConfirmed) {
+                  // Loading state visual
+                  Swal.fire({
+                    title: 'Sincronizando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading(),
+                    customClass: { popup: 'rounded-2xl' }
+                  });
+
+                  const response = await personalAPI.syncEntra();
+
+                  if (response.success) {
+                    Swal.fire({
+                      title: '¡Sincronización Exitosa!',
+                      html: `Procesados: ${response.stats?.processed || 0}<br>Actualizados: ${response.stats?.updated || 0}<br>Creados: ${response.stats?.created || 0}`,
+                      icon: 'success',
+                      customClass: { popup: 'rounded-2xl' }
+                    });
+                    reload(); // Recargar tabla
+                    cargarEstadisticas(); // Recargar stats
+                  } else {
+                    throw new Error(response.error || 'Error desconocido');
+                  }
+                }
+              } catch (err) {
+                console.error('Error Sync:', err);
+                Swal.fire({
+                  title: 'Error',
+                  text: err.message || 'No se pudo sincronizar',
+                  icon: 'error',
+                  customClass: { popup: 'rounded-2xl' }
+                });
+              }
+            }}
+            disabled={!canCreate('personal')} // Usamos permiso de crear como proxy para admin/infra
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border transition-all ${canCreate('personal')
+                ? 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50 hover:text-primary-600'
+                : 'bg-surface-100 text-surface-400 cursor-not-allowed'
+              }`}
+            title="Sincronizar manualmente con Microsoft Entra ID"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Sync Entra ID
+          </button>
+          <button
             onClick={handleExportar}
             disabled={exportando}
             className="btn-secondary flex items-center gap-2 text-sm font-bold"

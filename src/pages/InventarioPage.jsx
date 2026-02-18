@@ -282,6 +282,9 @@ export default function InventarioPage() {
                   <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
                     Estado
                   </th>
+                  <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">
+                    Garantía
+                  </th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-surface-400 uppercase tracking-wider">
                     Acciones
                   </th>
@@ -324,6 +327,9 @@ export default function InventarioPage() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${estadoBadge(item.estado)}`}>
                         {formatEstado(item.estado)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <GarantiaBadge estado={item.garantia_estado} fechaFin={item.garantia_fecha_fin} />
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <div className="flex items-center justify-end gap-2">
@@ -415,6 +421,32 @@ export default function InventarioPage() {
       </div>
     </div>
   )
+}
+
+function GarantiaBadge({ estado, fechaFin }) {
+  if (!estado || estado === 'sin_consultar') {
+    return <span className="text-xs text-surface-400">-</span>
+  }
+  if (estado === 'consultando') {
+    return <span className="text-xs text-surface-400 italic">Consultando...</span>
+  }
+  if (estado === 'error') {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-rose-50 text-rose-600 border-rose-100">Error</span>
+  }
+  if (estado === 'sin_garantia') {
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-surface-50 text-surface-500 border-surface-200">Sin garantía</span>
+  }
+  if (estado === 'con_garantia' && fechaFin) {
+    const dias = Math.ceil((new Date(fechaFin) - new Date()) / (1000 * 60 * 60 * 24))
+    if (dias <= 0) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-rose-50 text-rose-600 border-rose-100">Expirada</span>
+    }
+    if (dias <= 90) {
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-amber-50 text-amber-700 border-amber-100">Por vencer</span>
+    }
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-100">Vigente</span>
+  }
+  return <span className="text-xs text-surface-400">-</span>
 }
 
 function StatCard({ title, value, color }) {
