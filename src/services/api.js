@@ -398,22 +398,28 @@ export const serviciosAPI = {
   delete: (id) => apiCall(`/proveedores/servicios/${id}`, { method: 'DELETE' }),
 }
 
-// Niveles de Soporte Endpoints
+// Niveles de Soporte Endpoints (anidados bajo proveedor -> tipo servicio)
 export const nivelesServiciosAPI = {
-  list: (params = {}) => {
+  // Listar todos los niveles de un proveedor
+  listByProveedor: (proveedorId, params = {}) => {
     const query = new URLSearchParams(params).toString()
-    return apiCall(`/proveedores/soporte-niveles${query ? '?' + query : ''}`)
+    return apiCall(`/proveedores/${proveedorId}/soporte${query ? '?' + query : ''}`)
   },
-  getById: (id) => apiCall(`/proveedores/soporte-niveles/${id}`),
-  create: (data) => apiCall('/proveedores/soporte-niveles', {
+  // Listar niveles de un proveedor para un tipo de servicio específico
+  listByProveedorYTipo: (proveedorId, tipoServicioId, params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/proveedores/${proveedorId}/soporte/${tipoServicioId}${query ? '?' + query : ''}`)
+  },
+  getById: (proveedorId, id) => apiCall(`/proveedores/${proveedorId}/soporte/nivel/${id}`),
+  create: (proveedorId, tipoServicioId, data) => apiCall(`/proveedores/${proveedorId}/soporte/${tipoServicioId}`, {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  update: (id, data) => apiCall(`/proveedores/soporte-niveles/${id}`, {
+  update: (proveedorId, id, data) => apiCall(`/proveedores/${proveedorId}/soporte/nivel/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
-  delete: (id) => apiCall(`/proveedores/soporte-niveles/${id}`, { method: 'DELETE' }),
+  delete: (proveedorId, id) => apiCall(`/proveedores/${proveedorId}/soporte/nivel/${id}`, { method: 'DELETE' }),
 }
 
 // Equipos de Servicio Endpoints

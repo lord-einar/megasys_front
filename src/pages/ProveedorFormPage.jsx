@@ -24,10 +24,7 @@ export default function ProveedorFormPage() {
   } = useForm({
     defaultValues: {
       empresa: '',
-      email: '',
-      telefono: '',
       direccion: '',
-      web: '',
       activo: true
     }
   })
@@ -69,10 +66,7 @@ export default function ProveedorFormPage() {
 
       reset({
         empresa: proveedor.empresa || '',
-        email: proveedor.email || '',
-        telefono: proveedor.telefono || '',
         direccion: proveedor.direccion || '',
-        web: proveedor.web || '',
         activo: proveedor.activo ?? true
       })
     } catch (err) {
@@ -95,10 +89,7 @@ export default function ProveedorFormPage() {
 
       const proveedorData = {
         empresa: data.empresa.trim(),
-        email: data.email?.trim() || null,
-        telefono: data.telefono?.trim() || null,
         direccion: data.direccion?.trim() || null,
-        web: data.web?.trim() || null,
         activo: data.activo
       }
 
@@ -157,7 +148,7 @@ export default function ProveedorFormPage() {
               {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
             </h1>
             <p className="text-surface-500 mt-1 font-medium">
-              {isEditing ? 'Actualiza la información comercial y contacto' : 'Registra una nueva empresa externa'}
+              {isEditing ? 'Actualiza la información del proveedor' : 'Registra una nueva empresa externa'}
             </p>
           </div>
           <button
@@ -200,39 +191,6 @@ export default function ProveedorFormPage() {
                 {errors.empresa && <p className="text-xs text-rose-500 font-medium mt-1">{errors.empresa.message}</p>}
               </div>
 
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm font-bold text-surface-700">Email Corporativo</label>
-                <input
-                  type="email"
-                  id="email"
-                  {...register('email', {
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email inválido'
-                    }
-                  })}
-                  placeholder="contacto@empresa.com"
-                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all ${errors.email ? 'border-rose-500' : 'border-surface-200'}`}
-                />
-                {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email.message}</p>}
-              </div>
-
-              {/* Teléfono */}
-              <div className="space-y-1.5">
-                <label htmlFor="telefono" className="text-sm font-bold text-surface-700">Teléfono</label>
-                <input
-                  type="tel"
-                  id="telefono"
-                  {...register('telefono', {
-                    maxLength: { value: 20, message: 'No puede exceder 20 caracteres' }
-                  })}
-                  placeholder="(011) 1234-5678"
-                  className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all ${errors.telefono ? 'border-rose-500' : 'border-surface-200'}`}
-                />
-                {errors.telefono && <p className="text-xs text-rose-500 font-medium mt-1">{errors.telefono.message}</p>}
-              </div>
-
               {/* Dirección (Full width on Grid) */}
               <div className="md:col-span-2 space-y-1.5">
                 <label htmlFor="direccion" className="text-sm font-bold text-surface-700">Dirección Fiscal / Oficina</label>
@@ -248,24 +206,8 @@ export default function ProveedorFormPage() {
                 {errors.direccion && <p className="text-xs text-rose-500 font-medium mt-1">{errors.direccion.message}</p>}
               </div>
 
-              {/* Web */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="web" className="text-sm font-bold text-surface-700">Sitio Web</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
-                  </div>
-                  <input
-                    type="text"
-                    id="web"
-                    {...register('web', {
-                      maxLength: { value: 200, message: 'No puede exceder 200 caracteres' }
-                    })}
-                    placeholder="www.ejemplo.com"
-                    className={`w-full pl-10 pr-4 py-2.5 bg-surface-50 border rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all ${errors.web ? 'border-rose-500' : 'border-surface-200'}`}
-                  />
-                </div>
-                {errors.web && <p className="text-xs text-rose-500 font-medium mt-1">{errors.web.message}</p>}
+              <div className="md:col-span-2 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                <p className="text-sm text-blue-700 font-medium">Los datos de contacto (email, teléfono, web) se gestionan en las secciones de <strong>Ejecutivos de Cuenta</strong> y <strong>Soporte</strong> dentro del detalle del proveedor.</p>
               </div>
 
               {/* Estado Activo - Custom Switch */}

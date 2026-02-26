@@ -265,8 +265,8 @@ export default function ServiciosPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold text-surface-900 line-clamp-1" title={servicio.nombre}>{servicio.nombre}</h3>
                     <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${servicio.activo
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                        : 'bg-rose-50 text-rose-700 border-rose-100'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                      : 'bg-rose-50 text-rose-700 border-rose-100'
                       }`}>
                       {servicio.activo ? 'Activo' : 'Inactivo'}
                     </span>
@@ -297,6 +297,29 @@ export default function ServiciosPage() {
                     <div>
                       <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wide">Tipo de Servicio</p>
                       <p className="text-surface-700 text-sm font-medium">{servicio.tipoServicio?.nombre || 'General'}</p>
+                    </div>
+                  </div>
+
+                  {/* Sedes asociadas */}
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg mt-0.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                    <div>
+                      <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wide">Sede(s)</p>
+                      {servicio.sedesServicio && servicio.sedesServicio.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {servicio.sedesServicio.map(sede => (
+                            <span
+                              key={sede.id}
+                              onClick={() => navigate(`/sedes/${sede.id}`)}
+                              className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded font-medium cursor-pointer hover:bg-orange-100 transition-colors border border-orange-100"
+                            >
+                              {sede.empresa ? `${sede.empresa.nombre_empresa} - ` : ''}{sede.nombre_sede}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-surface-400 text-sm italic">Sin sede asignada</p>
+                      )}
                     </div>
                   </div>
 
@@ -357,8 +380,8 @@ export default function ServiciosPage() {
                       key={num}
                       onClick={() => goToPage(num)}
                       className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${page === num
-                          ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                          : 'bg-white text-surface-600 border border-surface-200 hover:border-primary-300'
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                        : 'bg-white text-surface-600 border border-surface-200 hover:border-primary-300'
                         }`}
                     >
                       {num}

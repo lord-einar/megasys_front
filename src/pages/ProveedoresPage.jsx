@@ -213,7 +213,7 @@ export default function ProveedoresPage() {
             </div>
             <input
               type="text"
-              placeholder="Buscar proveedores por empresa, email..."
+              placeholder="Buscar proveedores por empresa..."
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-surface-400 text-sm"
@@ -288,26 +288,6 @@ export default function ProveedoresPage() {
                 </div>
 
                 <div className="p-6 space-y-4 flex-1">
-                  {proveedor.email ? (
-                    <div className="flex items-start gap-3">
-                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg mt-0.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
-                      <div>
-                        <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wide">Email</p>
-                        <p className="text-surface-700 text-sm font-medium">{proveedor.email}</p>
-                      </div>
-                    </div>
-                  ) : <div className="h-10"></div>}
-
-                  {proveedor.telefono ? (
-                    <div className="flex items-start gap-3">
-                      <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg mt-0.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg></div>
-                      <div>
-                        <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wide">Teléfono</p>
-                        <p className="text-surface-700 text-sm font-medium">{proveedor.telefono}</p>
-                      </div>
-                    </div>
-                  ) : <div className="h-10"></div>}
-
                   {proveedor.direccion ? (
                     <div className="flex items-start gap-3">
                       <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg mt-0.5"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
@@ -316,7 +296,9 @@ export default function ProveedoresPage() {
                         <p className="text-surface-700 text-sm font-medium line-clamp-2">{proveedor.direccion}</p>
                       </div>
                     </div>
-                  ) : <div className="h-10"></div>}
+                  ) : (
+                    <p className="text-surface-400 text-sm italic">Sin dirección registrada</p>
+                  )}
                 </div>
 
                 <div className="p-4 bg-surface-50 border-t border-surface-100 flex gap-2">

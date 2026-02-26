@@ -141,8 +141,8 @@ export default function SedeDetallePage() {
                   </span>
                   <span className="text-surface-300">|</span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border ${sede.activo
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                      : 'bg-rose-50 text-rose-700 border-rose-100'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                    : 'bg-rose-50 text-rose-700 border-rose-100'
                     }`}>
                     {sede.activo ? 'Activa' : 'Inactiva'}
                   </span>
@@ -354,8 +354,8 @@ export default function SedeDetallePage() {
                           <div className="flex items-center gap-3">
                             <h3 className="text-xl font-bold text-surface-900">{servicio.nombre}</h3>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${servicio.SedeServicio?.activo !== false
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                : 'bg-surface-100 text-surface-600 border-surface-200'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              : 'bg-surface-100 text-surface-600 border-surface-200'
                               }`}>
                               {servicio.SedeServicio?.activo !== false ? 'Activo' : 'Inactivo'}
                             </span>
@@ -384,9 +384,9 @@ export default function SedeDetallePage() {
                         <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                           Canales de Soporte
                         </h4>
-                        {servicio.nivelessoporte && servicio.nivelessoporte.length > 0 ? (
+                        {servicio.proveedor?.soporteNiveles && servicio.proveedor.soporteNiveles.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {servicio.nivelessoporte.map((nivel) => (
+                            {servicio.proveedor.soporteNiveles.sort((a, b) => a.nivel - b.nivel).map((nivel) => (
                               <div
                                 key={nivel.id}
                                 className="rounded-xl border border-surface-200 p-4 hover:border-primary-300 hover:shadow-md transition-all group bg-white"
@@ -398,13 +398,15 @@ export default function SedeDetallePage() {
                                   </span>
                                 </div>
                                 <div className="space-y-2">
-                                  <a
-                                    href={`mailto:${nivel.email}`}
-                                    className="flex items-center gap-2 text-sm text-surface-600 hover:text-primary-600 transition-colors truncate group/link"
-                                  >
-                                    <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                    <span className="truncate">{nivel.email}</span>
-                                  </a>
+                                  {nivel.email && (
+                                    <a
+                                      href={`mailto:${nivel.email}`}
+                                      className="flex items-center gap-2 text-sm text-surface-600 hover:text-primary-600 transition-colors truncate group/link"
+                                    >
+                                      <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                      <span className="truncate">{nivel.email}</span>
+                                    </a>
+                                  )}
                                   {nivel.telefono && (
                                     <a
                                       href={`tel:${nivel.telefono}`}
@@ -412,6 +414,17 @@ export default function SedeDetallePage() {
                                     >
                                       <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                                       <span className="truncate">{nivel.telefono}</span>
+                                    </a>
+                                  )}
+                                  {nivel.web && (
+                                    <a
+                                      href={nivel.web.startsWith('http') ? nivel.web : `https://${nivel.web}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 text-sm text-surface-600 hover:text-primary-600 transition-colors truncate group/link"
+                                    >
+                                      <svg className="w-4 h-4 text-surface-400 group-hover/link:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                                      <span className="truncate">{nivel.web}</span>
                                     </a>
                                   )}
                                 </div>
@@ -493,8 +506,8 @@ function TabButton({ active, onClick, label, icon }) {
     <button
       onClick={onClick}
       className={`flex items-center gap-2 py-4 px-6 border-b-2 font-medium text-sm transition-all duration-200 whitespace-nowrap ${active
-          ? 'border-primary-500 text-primary-700 bg-primary-50/10'
-          : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'
+        ? 'border-primary-500 text-primary-700 bg-primary-50/10'
+        : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'
         }`}
     >
       {icon}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { proveedoresAPI, nivelesServiciosAPI } from '../services/api'
+import { proveedoresAPI, nivelesServiciosAPI, tiposServicioAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { normalizeItemResponse } from '../utils/apiResponseNormalizer'
 import Swal from 'sweetalert2'
@@ -13,15 +13,27 @@ export default function ProveedorDetailPage() {
   const [proveedor, setProveedor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [serviciosExpandidos, setServiciosExpandidos] = useState({})
+  const [soporteExpandido, setSoporteExpandido] = useState({})
   const [modalNivel, setModalNivel] = useState(false)
-  const [servicioSeleccionado, setServicioSeleccionado] = useState(null)
   const [nivelEditando, setNivelEditando] = useState(null)
-  const [formNivel, setFormNivel] = useState({ nivel: 1, email: '', telefono: '', web: '' })
+  const [formNivel, setFormNivel] = useState({ tipoServicioId: '', nivel: 1, email: '', telefono: '', web: '' })
   const [savingNivel, setSavingNivel] = useState(false)
+  const [tiposServicio, setTiposServicio] = useState([])
 
   useEffect(() => {
     cargarProveedor()
+    cargarTiposServicio()
   }, [id])
+
+  const cargarTiposServicio = async () => {
+    try {
+      const response = await tiposServicioAPI.list({ limit: 100 })
+      const data = response?.data?.rows || response?.data || []
+      setTiposServicio(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Error cargando tipos de servicio:', err)
+    }
+  }
 
   const cargarProveedor = async () => {
     try {
@@ -96,35 +108,98 @@ export default function ProveedorDetailPage() {
     }))
   }
 
-  const abrirModalNivel = (servicio, nivel = null) => {
-    setServicioSeleccionado(servicio)
+  const toggleSoporte = (tipoId) => {
+    setSoporteExpandido(prev => ({
+      ...prev,
+      [tipoId]: !prev[tipoId]
+    }))
+  }
+
+  // Agrupar soporteNiveles por tipo de servicio
+  const getSoportePorTipo = () => {
+    if (!proveedor?.soporteNiveles) return {}
+    const agrupado = {}
+    proveedor.soporteNiveles.forEach(nivel => {
+      const tipoId = nivel.tipo_servicio_id
+      const tipoNombre = nivel.tipoServicio?.nombre || 'Sin tipo'
+      if (!agrupado[tipoId]) {
+        agrupado[tipoId] = { tipoServicio: { id: tipoId, nombre: tipoNombre }, niveles: [] }
+      }
+      agrupado[tipoId].niveles.push(nivel)
+    })
+    // Ordenar niveles dentro de cada grupo
+    Object.values(agrupado).forEach(grupo => {
+      grupo.niveles.sort((a, b) => a.nivel - b.nivel)
+    })
+    return agrupado
+  }
+
+  // Obtener los tipos de servicio disponibles (de los servicios del proveedor)
+  const getTiposServicioDisponibles = () => {
+    if (!proveedor?.servicios) return []
+    const tipos = new Map()
+    proveedor.servicios.forEach(s => {
+      if (s.tipoServicio && !tipos.has(s.tipoServicio.id)) {
+        tipos.set(s.tipoServicio.id, s.tipoServicio)
+      }
+    })
+    return Array.from(tipos.values())
+  }
+
+  const abrirModalNivel = (tipoServicio = null, nivel = null) => {
     setNivelEditando(nivel)
 
     if (nivel) {
       setFormNivel({
+        tipoServicioId: nivel.tipo_servicio_id || tipoServicio?.id || '',
         nivel: nivel.nivel,
-        email: nivel.email,
+        email: nivel.email || '',
         telefono: nivel.telefono || '',
         web: nivel.web || ''
       })
     } else {
-      setFormNivel({ nivel: 1, email: '', telefono: '', web: '' })
+      setFormNivel({
+        tipoServicioId: tipoServicio?.id || '',
+        nivel: 1,
+        email: '',
+        telefono: '',
+        web: ''
+      })
     }
     setModalNivel(true)
   }
 
   const cerrarModalNivel = () => {
     setModalNivel(false)
-    setServicioSeleccionado(null)
     setNivelEditando(null)
-    setFormNivel({ nivel: 1, email: '', telefono: '', web: '' })
+    setFormNivel({ tipoServicioId: '', nivel: 1, email: '', telefono: '', web: '' })
   }
 
   const guardarNivel = async () => {
-    if (!formNivel.email || !formNivel.nivel) {
+    if (!formNivel.tipoServicioId && !nivelEditando) {
       Swal.fire({
         title: 'Datos Incompletos',
-        text: 'El nivel y el email son obligatorios',
+        text: 'Debe seleccionar un tipo de servicio',
+        icon: 'warning',
+        customClass: { popup: 'rounded-2xl' }
+      })
+      return
+    }
+
+    if (!formNivel.email && !formNivel.telefono && !formNivel.web) {
+      Swal.fire({
+        title: 'Datos Incompletos',
+        text: 'Debe proporcionar al menos un medio de contacto: email, teléfono o web',
+        icon: 'warning',
+        customClass: { popup: 'rounded-2xl' }
+      })
+      return
+    }
+
+    if (!formNivel.nivel) {
+      Swal.fire({
+        title: 'Datos Incompletos',
+        text: 'El nivel es obligatorio',
         icon: 'warning',
         customClass: { popup: 'rounded-2xl' }
       })
@@ -134,16 +209,14 @@ export default function ProveedorDetailPage() {
     try {
       setSavingNivel(true)
       const nivelData = {
-        servicio_id: servicioSeleccionado.id,
         nivel: parseInt(formNivel.nivel),
-        email: formNivel.email.trim(),
+        email: formNivel.email?.trim() || null,
         telefono: formNivel.telefono?.trim() || null,
-        web: formNivel.web?.trim() || null,
-        activo: true
+        web: formNivel.web?.trim() || null
       }
 
       if (nivelEditando) {
-        await nivelesServiciosAPI.update(nivelEditando.id, nivelData)
+        await nivelesServiciosAPI.update(proveedor.id, nivelEditando.id, nivelData)
         await Swal.fire({
           title: 'Actualizado',
           text: 'Nivel de soporte actualizado',
@@ -152,7 +225,7 @@ export default function ProveedorDetailPage() {
           customClass: { popup: 'rounded-2xl' }
         })
       } else {
-        await nivelesServiciosAPI.create(nivelData)
+        await nivelesServiciosAPI.create(proveedor.id, formNivel.tipoServicioId, nivelData)
         await Swal.fire({
           title: 'Creado',
           text: 'Nivel de soporte agregado',
@@ -180,7 +253,7 @@ export default function ProveedorDetailPage() {
   const eliminarNivel = async (nivel) => {
     const result = await Swal.fire({
       title: '¿Eliminar nivel?',
-      text: `Nivel ${nivel.nivel} (${nivel.email})`,
+      text: `Nivel ${nivel.nivel} - ${nivel.email || nivel.telefono || nivel.web}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -195,7 +268,7 @@ export default function ProveedorDetailPage() {
 
     if (result.isConfirmed) {
       try {
-        await nivelesServiciosAPI.delete(nivel.id)
+        await nivelesServiciosAPI.delete(proveedor.id, nivel.id)
         await Swal.fire({
           title: 'Eliminado',
           text: 'Nivel eliminado correctamente',
@@ -277,9 +350,12 @@ export default function ProveedorDetailPage() {
                 {proveedor.activo ? 'Activo' : 'Inactivo'}
               </span>
             </div>
-            <p className="text-surface-500 font-medium flex items-center gap-2">
-              {proveedor.email || 'Sin email registrado'}
-            </p>
+            {proveedor.direccion && (
+              <p className="text-surface-500 font-medium flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                {proveedor.direccion}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -310,31 +386,9 @@ export default function ProveedorDetailPage() {
             {/* Information */}
             <div className="card-base p-6 bg-white space-y-4">
               <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide">
-                Datos de Contacto
+                Información
               </h3>
               <div className="space-y-4">
-                {proveedor.telefono && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-surface-50 rounded-lg text-surface-500">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-surface-500 uppercase">Teléfono</p>
-                      <p className="text-surface-900 font-medium">{proveedor.telefono}</p>
-                    </div>
-                  </div>
-                )}
-                {proveedor.email && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-surface-50 rounded-lg text-surface-500">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-surface-500 uppercase">Email</p>
-                      <p className="text-surface-900 font-medium break-all">{proveedor.email}</p>
-                    </div>
-                  </div>
-                )}
                 {proveedor.direccion && (
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-surface-50 rounded-lg text-surface-500">
@@ -346,18 +400,8 @@ export default function ProveedorDetailPage() {
                     </div>
                   </div>
                 )}
-                {proveedor.web && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-surface-50 rounded-lg text-surface-500">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-surface-500 uppercase">Sitio Web</p>
-                      <a href={proveedor.web.startsWith('http') ? proveedor.web : `https://${proveedor.web}`} target="_blank" rel="noopener noreferrer" className="text-primary-600 font-medium hover:underline break-all">
-                        {proveedor.web}
-                      </a>
-                    </div>
-                  </div>
+                {!proveedor.direccion && (
+                  <p className="text-surface-400 text-sm italic">Sin dirección registrada</p>
                 )}
               </div>
             </div>
@@ -393,66 +437,183 @@ export default function ProveedorDetailPage() {
             {/* Services */}
             <div className="card-base bg-white overflow-hidden">
               <div className="p-6 border-b border-surface-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-surface-900">Servicios y Soporte</h3>
+                <h3 className="text-lg font-bold text-surface-900">Servicios</h3>
                 <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded text-xs font-bold">
                   {proveedor.servicios?.length || 0} Servicios
                 </span>
               </div>
 
-              {proveedor.servicios && proveedor.servicios.length > 0 ? (
-                <div className="divide-y divide-surface-100">
-                  {proveedor.servicios.map((servicio) => (
-                    <div key={servicio.id} className="bg-white">
-                      <div
-                        className="p-5 flex items-center justify-between cursor-pointer hover:bg-surface-50 transition-colors"
-                        onClick={() => toggleServicio(servicio.id)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-lg ${servicio.activo ? 'bg-blue-50 text-blue-600' : 'bg-surface-100 text-surface-400'}`}>
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                          </div>
-                          <div>
-                            <p className="font-bold text-surface-900 text-sm">{servicio.nombre}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-surface-500">{servicio.tipoServicio?.nombre}</span>
-                              <span className="w-1 h-1 rounded-full bg-surface-300"></span>
-                              <span className="text-xs text-surface-500">{servicio.nivelessoporte?.length || 0} niveles</span>
+              {proveedor.servicios && proveedor.servicios.length > 0 ? (() => {
+                // Agrupar servicios por nombre + tipo
+                const grupos = {}
+                proveedor.servicios.forEach(servicio => {
+                  const key = `${servicio.nombre}__${servicio.tipoServicio?.id || 'sin-tipo'}`
+                  if (!grupos[key]) {
+                    grupos[key] = {
+                      nombre: servicio.nombre,
+                      tipoServicio: servicio.tipoServicio,
+                      servicios: []
+                    }
+                  }
+                  grupos[key].servicios.push(servicio)
+                })
+
+                return (
+                  <div className="divide-y divide-surface-100">
+                    {Object.entries(grupos).map(([key, grupo]) => (
+                      <div key={key} className="bg-white">
+                        <div
+                          className="p-5 flex items-center justify-between cursor-pointer hover:bg-surface-50 transition-colors"
+                          onClick={() => toggleServicio(key)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </div>
+                            <div>
+                              <p className="font-bold text-surface-900 text-sm">{grupo.nombre}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs text-surface-500">{grupo.tipoServicio?.nombre}</span>
+                                {grupo.servicios.length > 1 && (
+                                  <>
+                                    <span className="w-1 h-1 rounded-full bg-surface-300"></span>
+                                    <span className="text-xs text-primary-600 font-semibold">{grupo.servicios.length} instancias</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-4">
+                            <svg className={`w-5 h-5 text-surface-400 transition-transform ${serviciosExpandidos[key] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${servicio.activo ? 'bg-green-50 text-green-700 border-green-200' : 'bg-surface-100 text-surface-500 border-surface-200'}`}>
-                            {servicio.activo ? 'Activo' : 'Inactivo'}
-                          </span>
-                          <svg className={`w-5 h-5 text-surface-400 transition-transform ${serviciosExpandidos[servicio.id] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
 
-                      {/* Niveles de Soporte Panel */}
-                      {serviciosExpandidos[servicio.id] && (
-                        <div className="px-6 pb-6 pt-2 bg-surface-50/50 border-t border-surface-100 shadow-inner">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-xs font-bold text-surface-500 uppercase tracking-wide">Niveles de Escalado</h4>
+                        {/* Detalle expandido */}
+                        {serviciosExpandidos[key] && (
+                          <div className="px-6 pb-6 pt-2 bg-surface-50/50 border-t border-surface-100 shadow-inner">
+                            <div className="space-y-3">
+                              {grupo.servicios.map(servicio => (
+                                <div key={servicio.id} className="bg-white border border-surface-200 rounded-xl p-4 hover:border-primary-200 transition-colors">
+                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                    {/* ID del servicio */}
+                                    {servicio.id_servicio && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-surface-500 uppercase">ID:</span>
+                                        <span className="text-sm font-mono text-surface-800 bg-surface-100 px-2 py-0.5 rounded">{servicio.id_servicio}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Sedes asociadas */}
+                                    {servicio.sedesServicio && servicio.sedesServicio.length > 0 ? (
+                                      <div className="flex items-center gap-2">
+                                        <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        <div className="flex flex-wrap gap-1">
+                                          {servicio.sedesServicio.map(sede => (
+                                            <span
+                                              key={sede.id}
+                                              onClick={() => navigate(`/sedes/${sede.id}`)}
+                                              className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium cursor-pointer hover:bg-blue-100 transition-colors"
+                                            >
+                                              {sede.empresa ? `${sede.empresa.nombre_empresa} - ` : ''}{sede.nombre_sede}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-surface-400 italic">Sin sede asignada</span>
+                                    )}
+                                  </div>
+
+                                  {/* Descripción */}
+                                  {servicio.descripcion && (
+                                    <p className="text-xs text-surface-500 mt-2">{servicio.descripcion}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-xs text-surface-400 mt-3">
+                              Los datos de soporte se gestionan por tipo de servicio en la sección inferior.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })() : (
+                <div className="p-8 text-center text-surface-500 bg-surface-50">
+                  <p>No se han registrado servicios para este proveedor.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Soporte por Tipo de Servicio */}
+            <div className="card-base bg-white overflow-hidden">
+              <div className="p-6 border-b border-surface-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-surface-900">Datos de Soporte</h3>
+                <div className="flex items-center gap-3">
+                  <span className="bg-amber-50 text-amber-700 px-2 py-1 rounded text-xs font-bold">
+                    Por Tipo de Servicio
+                  </span>
+                  <button
+                    onClick={() => abrirModalNivel()}
+                    className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+              </div>
+
+              {(() => {
+                const soportePorTipo = getSoportePorTipo()
+                const tiposDisponibles = getTiposServicioDisponibles()
+                const tiposConSoporte = Object.keys(soportePorTipo)
+                const tiposSinSoporte = tiposDisponibles.filter(t => !tiposConSoporte.includes(t.id))
+
+                return (
+                  <div className="divide-y divide-surface-100">
+                    {/* Tipos CON soporte configurado */}
+                    {Object.values(soportePorTipo).map(({ tipoServicio, niveles }) => (
+                      <div key={tipoServicio.id} className="bg-white">
+                        <div
+                          className="p-5 flex items-center justify-between cursor-pointer hover:bg-surface-50 transition-colors"
+                          onClick={() => toggleSoporte(tipoServicio.id)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            </div>
+                            <div>
+                              <p className="font-bold text-surface-900 text-sm">{tipoServicio.nombre}</p>
+                              <span className="text-xs text-surface-500">{niveles.length} nivel(es)</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
                             <button
-                              onClick={(e) => { e.stopPropagation(); abrirModalNivel(servicio); }}
+                              onClick={(e) => { e.stopPropagation(); abrirModalNivel(tipoServicio); }}
                               className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
                             >
-                              + Agregar Nivel
+                              + Nivel
                             </button>
+                            <svg className={`w-5 h-5 text-surface-400 transition-transform ${soporteExpandido[tipoServicio.id] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
                           </div>
+                        </div>
 
-                          {servicio.nivelessoporte && servicio.nivelessoporte.length > 0 ? (
+                        {soporteExpandido[tipoServicio.id] && (
+                          <div className="px-6 pb-6 pt-2 bg-surface-50/50 border-t border-surface-100 shadow-inner">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {servicio.nivelessoporte.sort((a, b) => a.nivel - b.nivel).map(nivel => (
+                              {niveles.map(nivel => (
                                 <div key={nivel.id} className="bg-white border border-surface-200 p-4 rounded-xl shadow-sm hover:border-primary-200 transition-colors group">
                                   <div className="flex justify-between items-start mb-2">
                                     <span className="px-2 py-0.5 bg-surface-900 text-white text-[10px] font-bold uppercase rounded tracking-wider">
                                       Nivel {nivel.nivel}
                                     </span>
                                     <div className="flex gap-1">
-                                      <button onClick={() => abrirModalNivel(servicio, nivel)} className="p-1 text-surface-400 hover:bg-amber-50 hover:text-amber-600 group-hover:text-surface-500 rounded transition-colors">
+                                      <button onClick={() => abrirModalNivel(tipoServicio, nivel)} className="p-1 text-surface-400 hover:bg-amber-50 hover:text-amber-600 group-hover:text-surface-500 rounded transition-colors">
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                       </button>
                                       <button onClick={() => eliminarNivel(nivel)} className="p-1 text-surface-400 hover:bg-rose-50 hover:text-rose-600 group-hover:text-surface-500 rounded transition-colors">
@@ -461,41 +622,62 @@ export default function ProveedorDetailPage() {
                                     </div>
                                   </div>
                                   <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-sm text-surface-600 font-medium">
-                                      <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                      <span className="truncate">{nivel.email}</span>
-                                    </div>
+                                    {nivel.email && (
+                                      <div className="flex items-center gap-2 text-sm text-surface-600 font-medium">
+                                        <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                        <span className="truncate">{nivel.email}</span>
+                                      </div>
+                                    )}
                                     {nivel.telefono && (
                                       <div className="flex items-center gap-2 text-sm text-surface-600">
                                         <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                                         <span>{nivel.telefono}</span>
                                       </div>
                                     )}
+                                    {nivel.web && (
+                                      <div className="flex items-center gap-2 text-sm text-surface-600">
+                                        <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                                        <a href={nivel.web.startsWith('http') ? nivel.web : `https://${nivel.web}`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline truncate">{nivel.web}</a>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          ) : (
-                            <div className="px-4 py-8 text-center border-2 border-dashed border-surface-200 rounded-xl">
-                              <p className="text-surface-500 font-medium text-sm">No hay niveles de soporte definidos</p>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); abrirModalNivel(servicio); }}
-                                className="text-primary-600 text-xs font-bold mt-1 hover:underline"
-                              >
-                                Configurar el primer nivel
-                              </button>
-                            </div>
-                          )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Tipos SIN soporte - invitar a configurar */}
+                    {tiposSinSoporte.map(tipo => (
+                      <div key={tipo.id} className="p-5 flex items-center justify-between hover:bg-surface-50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-surface-100 text-surface-400">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                          </div>
+                          <div>
+                            <p className="font-bold text-surface-500 text-sm">{tipo.nombre}</p>
+                            <span className="text-xs text-surface-400">Sin soporte configurado</span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center text-surface-500 bg-surface-50">
-                  <p>No se han registrado servicios para este proveedor.</p>
-                </div>
-              )}
+                        <button
+                          onClick={() => abrirModalNivel(tipo)}
+                          className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-white border border-primary-200 hover:bg-primary-50 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                        >
+                          Configurar
+                        </button>
+                      </div>
+                    ))}
+
+                    {tiposConSoporte.length === 0 && tiposSinSoporte.length === 0 && (
+                      <div className="p-8 text-center text-surface-500 bg-surface-50">
+                        <p>Agregue servicios primero para poder configurar los datos de soporte.</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Executives */}
@@ -542,15 +724,36 @@ export default function ProveedorDetailPage() {
         <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 className="text-lg font-bold text-surface-900 mb-1">
-              {nivelEditando ? 'Editar Nivel' : 'Nuevo Nivel de Soporte'}
+              {nivelEditando ? 'Editar Nivel de Soporte' : 'Nuevo Nivel de Soporte'}
             </h3>
-            <p className="text-sm text-surface-500 mb-6">
-              Servicio: <span className="font-semibold text-primary-600">{servicioSeleccionado?.nombre}</span>
+            <p className="text-sm text-surface-400 mb-6">
+              Complete al menos un medio de contacto (email, teléfono o web)
             </p>
 
             <div className="space-y-4 mb-6">
+              {/* Tipo de Servicio dropdown */}
               <div>
-                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">Nivel de Escalado</label>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Tipo de Servicio <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={formNivel.tipoServicioId}
+                  onChange={(e) => setFormNivel({ ...formNivel, tipoServicioId: e.target.value })}
+                  disabled={!!nivelEditando}
+                  className={`w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-sm ${nivelEditando ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Seleccionar tipo de servicio...</option>
+                  {tiposServicio.map(tipo => (
+                    <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Nivel dropdown */}
+              <div>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Nivel de Escalado <span className="text-rose-500">*</span>
+                </label>
                 <select
                   value={formNivel.nivel}
                   onChange={(e) => setFormNivel({ ...formNivel, nivel: e.target.value })}
@@ -559,8 +762,12 @@ export default function ProveedorDetailPage() {
                   {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>Nivel {n}</option>)}
                 </select>
               </div>
+
+              {/* Email */}
               <div>
-                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">Email Contacto <span className="text-rose-500">*</span></label>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Email <span className="text-surface-400 normal-case font-medium">(opcional)</span>
+                </label>
                 <input
                   type="email"
                   value={formNivel.email}
@@ -569,14 +776,32 @@ export default function ProveedorDetailPage() {
                   placeholder="soporte@proveedor.com"
                 />
               </div>
+
+              {/* Teléfono */}
               <div>
-                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">Teléfono</label>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Teléfono <span className="text-surface-400 normal-case font-medium">(opcional)</span>
+                </label>
                 <input
                   type="tel"
                   value={formNivel.telefono}
                   onChange={(e) => setFormNivel({ ...formNivel, telefono: e.target.value })}
                   className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-sm"
-                  placeholder="Opcional"
+                  placeholder="(011) 1234-5678"
+                />
+              </div>
+
+              {/* Web */}
+              <div>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Web <span className="text-surface-400 normal-case font-medium">(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={formNivel.web}
+                  onChange={(e) => setFormNivel({ ...formNivel, web: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-sm"
+                  placeholder="soporte.proveedor.com"
                 />
               </div>
             </div>
