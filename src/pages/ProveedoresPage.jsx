@@ -4,7 +4,7 @@ import { proveedoresAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
-import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
+import { normalizeItemResponse } from '../utils/apiResponseNormalizer'
 import { getPaginationNumbers } from '../utils/paginationHelper'
 import Swal from 'sweetalert2'
 
@@ -16,6 +16,7 @@ export default function ProveedoresPage() {
 
   const [estadisticas, setEstadisticas] = useState(null)
   const [filtro, setFiltro] = useState('')
+  const [mostrarInactivos, setMostrarInactivos] = useState(false)
 
   const {
     data: proveedores,
@@ -31,7 +32,7 @@ export default function ProveedoresPage() {
     reload
   } = useListData(proveedoresAPI.list, {
     initialLimit: 9,
-    initialFilters: { search: '' }
+    initialFilters: { search: '', activo: true }
   })
 
   useEffect(() => {
@@ -41,16 +42,44 @@ export default function ProveedoresPage() {
   const cargarEstadisticas = async () => {
     try {
       const response = await proveedoresAPI.getEstadisticas()
-      const normalized = normalizeApiResponse(response)
-      setEstadisticas(normalized.data)
+      setEstadisticas(normalizeItemResponse(response))
     } catch (err) {
       console.error('Error cargando estadísticas:', err)
     }
   }
 
+  const toggleInactivos = () => {
+    const nuevo = !mostrarInactivos
+    setMostrarInactivos(nuevo)
+    updateFilters({ search: filtro, activo: nuevo ? false : true })
+  }
+
+  const reactivarProveedor = async (proveedor) => {
+    const result = await Swal.fire({
+      title: '¿Reactivar proveedor?',
+      text: `Se reactivará "${proveedor.empresa}" y volverá a estar disponible.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, reactivar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'bg-emerald-600 text-white px-4 py-2 rounded-lg', cancelButton: 'bg-surface-200 text-surface-700 px-4 py-2 rounded-lg ml-2' },
+      buttonsStyling: false
+    })
+    if (result.isConfirmed) {
+      try {
+        await proveedoresAPI.update(proveedor.id, { activo: true })
+        await Swal.fire({ title: 'Reactivado', text: 'El proveedor está activo nuevamente.', icon: 'success', timer: 1500, customClass: { popup: 'rounded-2xl' } })
+        reload()
+        cargarEstadisticas()
+      } catch (err) {
+        Swal.fire({ title: 'Error', text: err.message || 'No se pudo reactivar', icon: 'error', customClass: { popup: 'rounded-2xl' } })
+      }
+    }
+  }
+
   const handleBuscar = (e) => {
     e.preventDefault()
-    updateFilters({ search: filtro })
+    updateFilters({ search: filtro, activo: mostrarInactivos ? false : true })
   }
 
   const eliminarProveedor = async (proveedor) => {
@@ -206,8 +235,8 @@ export default function ProveedoresPage() {
 
       {/* Buscador */}
       <div className="card-base p-4 mb-8 bg-white border border-surface-200 shadow-sm">
-        <form onSubmit={handleBuscar} className="flex gap-2">
-          <div className="relative flex-1">
+        <form onSubmit={handleBuscar} className="flex gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-48">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
@@ -225,12 +254,22 @@ export default function ProveedoresPage() {
           >
             Buscar
           </button>
+          <button
+            type="button"
+            onClick={toggleInactivos}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm border transition-colors ${mostrarInactivos
+              ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+              : 'bg-white text-surface-600 border-surface-200 hover:bg-surface-50'
+            }`}
+          >
+            {mostrarInactivos ? 'Ver activos' : 'Ver inactivos'}
+          </button>
           {filtro && (
             <button
               type="button"
               onClick={() => {
                 setFiltro('')
-                updateFilters({ search: '' })
+                updateFilters({ search: '', activo: mostrarInactivos ? false : true })
               }}
               className="px-4 py-2.5 bg-white border border-surface-200 text-surface-600 rounded-xl hover:bg-surface-50 transition-colors font-medium text-sm"
             >
@@ -308,7 +347,16 @@ export default function ProveedoresPage() {
                   >
                     Detalles
                   </button>
-                  {canUpdate('proveedores') && (
+                  {!proveedor.activo && canUpdate('proveedores') && (
+                    <button
+                      onClick={() => reactivarProveedor(proveedor)}
+                      className="flex-1 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-all text-xs font-bold shadow-sm"
+                      title="Reactivar"
+                    >
+                      Reactivar
+                    </button>
+                  )}
+                  {proveedor.activo && canUpdate('proveedores') && (
                     <button
                       onClick={() => navigate(`/proveedores/${proveedor.id}/editar`)}
                       className="p-2 text-surface-500 hover:text-primary-600 hover:bg-white rounded-lg transition-colors"
@@ -317,7 +365,7 @@ export default function ProveedoresPage() {
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>
                   )}
-                  {canDelete('proveedores') && (
+                  {proveedor.activo && canDelete('proveedores') && (
                     <button
                       onClick={() => eliminarProveedor(proveedor)}
                       className="p-2 text-surface-500 hover:text-rose-600 hover:bg-white rounded-lg transition-colors"
