@@ -324,7 +324,13 @@ export default function ReportesVisitasPage() {
 
                     {/* Gráficos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <HorizontalBarChart title="Visitas por Sede" tooltipLabel="Visitas" data={data?.graficos?.sedes} showAll />
+                        <HorizontalBarChart
+                            title="Visitas por Sede"
+                            tooltipLabel="Visitas"
+                            data={data?.graficos?.sedes}
+                            showAll
+                            footnote="* No se incluyen las sedes de Córdoba (3), Rosario (2), Neuquén (1) y Uruguay (3) por no ser cubiertas por el equipo técnico."
+                        />
                         <HorizontalBarChart title="Casos Cerrados por Sede" tooltipLabel="Casos" data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
                         <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
@@ -377,7 +383,7 @@ function MetricCard({ title, value, icon, color }) {
 // Bar chart horizontal genérico
 // showAll: muestra todos los items en un contenedor scrollable
 // sin showAll: muestra top 15
-function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = false }) {
+function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = false, footnote = null }) {
     if (!data || data.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -441,6 +447,9 @@ function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = 
                 <ResponsiveContainer width="100%" height={chartHeight}>
                     {chart}
                 </ResponsiveContainer>
+            )}
+            {footnote && (
+                <p className="text-xs text-slate-400 mt-3 leading-relaxed">{footnote}</p>
             )}
         </div>
     );
