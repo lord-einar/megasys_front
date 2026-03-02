@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { proveedoresAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
+import { normalizeApiResponse, normalizeItemResponse } from '../utils/apiResponseNormalizer'
 import Swal from 'sweetalert2'
 
 export default function ProveedorFormPage() {
@@ -61,8 +61,7 @@ export default function ProveedorFormPage() {
     try {
       setLoading(true)
       const response = await proveedoresAPI.getById(id)
-      const normalized = normalizeApiResponse(response)
-      const proveedor = normalized.data
+      const proveedor = normalizeItemResponse(response)
 
       reset({
         empresa: proveedor.empresa || '',
