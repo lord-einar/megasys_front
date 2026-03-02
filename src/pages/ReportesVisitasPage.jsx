@@ -324,7 +324,8 @@ export default function ReportesVisitasPage() {
 
                     {/* Gráficos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <CasosPorSedeChart data={data?.graficos?.casosPorSede} />
+                        <HorizontalBarChart title="Visitas por Sede" tooltipLabel="Visitas" data={data?.graficos?.sedes} />
+                        <HorizontalBarChart title="Casos Cerrados por Sede" tooltipLabel="Casos" data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
                         <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
                         <ChartCard title="Problemas Causados por Usuario" data={data?.graficos?.problemasUsuario} />
@@ -373,12 +374,12 @@ function MetricCard({ title, value, icon, color }) {
     );
 }
 
-// Componente de Casos por Sede (bar chart horizontal, top 15)
-function CasosPorSedeChart({ data }) {
+// Bar chart horizontal genérico (top 15, legible con muchas sedes)
+function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad' }) {
     if (!data || data.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Casos Cerrados por Sede</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
                 <div className="h-64 flex items-center justify-center text-slate-400">
                     Sin datos disponibles
                 </div>
@@ -387,11 +388,11 @@ function CasosPorSedeChart({ data }) {
     }
 
     const top15 = data.slice(0, 15);
-    const chartHeight = Math.max(300, top15.length * 32);
+    const chartHeight = Math.max(300, top15.length * 34);
 
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Casos Cerrados por Sede</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">{title}</h3>
             {data.length > 15 && (
                 <p className="text-xs text-slate-400 mb-3">Top 15 de {data.length} sedes</p>
             )}
@@ -410,8 +411,8 @@ function CasosPorSedeChart({ data }) {
                         tick={{ fontSize: 11 }}
                         tickLine={false}
                     />
-                    <Tooltip formatter={(value) => [value, 'Casos']} />
-                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11 }}>
+                    <Tooltip formatter={(value) => [value, tooltipLabel]} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11 }}>
                         {top15.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
