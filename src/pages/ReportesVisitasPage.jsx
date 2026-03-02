@@ -324,7 +324,7 @@ export default function ReportesVisitasPage() {
 
                     {/* Gráficos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <HorizontalBarChart title="Visitas por Sede" tooltipLabel="Visitas" data={data?.graficos?.sedes} />
+                        <HorizontalBarChart title="Visitas por Sede" tooltipLabel="Visitas" data={data?.graficos?.sedes} showAll />
                         <HorizontalBarChart title="Casos Cerrados por Sede" tooltipLabel="Casos" data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
                         <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
@@ -374,8 +374,10 @@ function MetricCard({ title, value, icon, color }) {
     );
 }
 
-// Bar chart horizontal genérico (top 15, legible con muchas sedes)
-function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad' }) {
+// Bar chart horizontal genérico
+// showAll: muestra todos los items en un contenedor scrollable
+// sin showAll: muestra top 15
+function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = false }) {
     if (!data || data.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -387,38 +389,59 @@ function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad' }) {
         );
     }
 
-    const top15 = data.slice(0, 15);
-    const chartHeight = Math.max(300, top15.length * 34);
+    const displayData = showAll ? data : data.slice(0, 15);
+    const ROW_HEIGHT = 30;
+    const chartHeight = Math.max(200, displayData.length * ROW_HEIGHT + 20);
+    const MAX_VISIBLE = 480; // px antes de activar scroll
+
+    const chart = (
+        <BarChart
+            data={displayData}
+            layout="vertical"
+            width={9999} // se sobreescribe por el wrapper
+            height={chartHeight}
+            margin={{ top: 4, right: 44, left: 8, bottom: 4 }}
+        >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+            <YAxis
+                type="category"
+                dataKey="name"
+                width={130}
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+            />
+            <Tooltip formatter={(value) => [value, tooltipLabel]} />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11 }}>
+                {displayData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+            </Bar>
+        </BarChart>
+    );
 
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">{title}</h3>
-            {data.length > 15 && (
-                <p className="text-xs text-slate-400 mb-3">Top 15 de {data.length} sedes</p>
+            <div className="flex items-baseline justify-between mb-1">
+                <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+                {!showAll && data.length > 15 && (
+                    <span className="text-xs text-slate-400">Top 15 de {data.length}</span>
+                )}
+                {showAll && (
+                    <span className="text-xs text-slate-400">{data.length} sedes</span>
+                )}
+            </div>
+            {showAll && chartHeight > MAX_VISIBLE ? (
+                <div className="overflow-y-auto rounded" style={{ maxHeight: MAX_VISIBLE }}>
+                    <ResponsiveContainer width="100%" height={chartHeight}>
+                        {chart}
+                    </ResponsiveContainer>
+                </div>
+            ) : (
+                <ResponsiveContainer width="100%" height={chartHeight}>
+                    {chart}
+                </ResponsiveContainer>
             )}
-            <ResponsiveContainer width="100%" height={chartHeight}>
-                <BarChart
-                    data={top15}
-                    layout="vertical"
-                    margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis
-                        type="category"
-                        dataKey="name"
-                        width={130}
-                        tick={{ fontSize: 11 }}
-                        tickLine={false}
-                    />
-                    <Tooltip formatter={(value) => [value, tooltipLabel]} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11 }}>
-                        {top15.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
         </div>
     );
 }
