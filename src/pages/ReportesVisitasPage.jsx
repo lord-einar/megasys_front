@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
@@ -324,12 +324,10 @@ export default function ReportesVisitasPage() {
 
                     {/* Gráficos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <ChartCard title="Visitas por Sede" data={data?.graficos?.sedes} />
+                        <CasosPorSedeChart data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
                         <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
                         <ChartCard title="Problemas Causados por Usuario" data={data?.graficos?.problemasUsuario} />
-                        <ChartCard title="Estados de Visitas" data={data?.graficos?.estados} />
-                        <ChartCard title="Tipos de Visitas" data={data?.graficos?.tipos} />
                     </div>
 
                     {/* Tabla de Casos Cerrados */}
@@ -371,6 +369,55 @@ function MetricCard({ title, value, icon, color }) {
                 </div>
                 <div className="text-4xl">{icon}</div>
             </div>
+        </div>
+    );
+}
+
+// Componente de Casos por Sede (bar chart horizontal, top 15)
+function CasosPorSedeChart({ data }) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Casos Cerrados por Sede</h3>
+                <div className="h-64 flex items-center justify-center text-slate-400">
+                    Sin datos disponibles
+                </div>
+            </div>
+        );
+    }
+
+    const top15 = data.slice(0, 15);
+    const chartHeight = Math.max(300, top15.length * 32);
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">Casos Cerrados por Sede</h3>
+            {data.length > 15 && (
+                <p className="text-xs text-slate-400 mb-3">Top 15 de {data.length} sedes</p>
+            )}
+            <ResponsiveContainer width="100%" height={chartHeight}>
+                <BarChart
+                    data={top15}
+                    layout="vertical"
+                    margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
+                >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={130}
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                    />
+                    <Tooltip formatter={(value) => [value, 'Casos']} />
+                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11 }}>
+                        {top15.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
         </div>
     );
 }
