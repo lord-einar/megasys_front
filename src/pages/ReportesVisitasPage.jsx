@@ -329,7 +329,7 @@ export default function ReportesVisitasPage() {
                             tooltipLabel="Visitas"
                             data={data?.graficos?.sedes}
                             showAll
-                            footnote="* No se incluyen las sedes de Córdoba (3), Rosario (2), Neuquén (1) y Uruguay (3) por no ser cubiertas por el equipo técnico."
+                            footnote="* No se incluyen las sedes de Córdoba (3), Rosario (2), Neuquén (1), Uruguay (3), Central y Depósito por no ser cubiertas por el equipo técnico."
                         />
                         <HorizontalBarChart title="Casos Cerrados por Sede" tooltipLabel="Casos" data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
