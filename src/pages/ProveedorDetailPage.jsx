@@ -155,7 +155,8 @@ export default function ProveedorDetailPage() {
         nivel: nivel.nivel,
         email: nivel.email || '',
         telefono: nivel.telefono || '',
-        web: nivel.web || ''
+        web: nivel.web || '',
+        comentario: nivel.comentario || ''
       })
     } else {
       setFormNivel({
@@ -163,7 +164,8 @@ export default function ProveedorDetailPage() {
         nivel: 1,
         email: '',
         telefono: '',
-        web: ''
+        web: '',
+        comentario: ''
       })
     }
     setModalNivel(true)
@@ -172,7 +174,7 @@ export default function ProveedorDetailPage() {
   const cerrarModalNivel = () => {
     setModalNivel(false)
     setNivelEditando(null)
-    setFormNivel({ tipoServicioId: '', nivel: 1, email: '', telefono: '', web: '' })
+    setFormNivel({ tipoServicioId: '', nivel: 1, email: '', telefono: '', web: '', comentario: '' })
   }
 
   const guardarNivel = async () => {
@@ -212,7 +214,8 @@ export default function ProveedorDetailPage() {
         nivel: parseInt(formNivel.nivel),
         email: formNivel.email?.trim() || null,
         telefono: formNivel.telefono?.trim() || null,
-        web: formNivel.web?.trim() || null
+        web: formNivel.web?.trim() || null,
+        comentario: formNivel.comentario?.trim() || null
       }
 
       if (nivelEditando) {
@@ -640,6 +643,11 @@ export default function ProveedorDetailPage() {
                                         <a href={nivel.web.startsWith('http') ? nivel.web : `https://${nivel.web}`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline truncate">{nivel.web}</a>
                                       </div>
                                     )}
+                                    {nivel.comentario && (
+                                      <div className="mt-2 pt-2 border-t border-surface-100">
+                                        <p className="text-xs text-surface-500 italic leading-relaxed">{nivel.comentario}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -802,6 +810,20 @@ export default function ProveedorDetailPage() {
                   onChange={(e) => setFormNivel({ ...formNivel, web: e.target.value })}
                   className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-sm"
                   placeholder="soporte.proveedor.com"
+                />
+              </div>
+
+              {/* Comentario */}
+              <div>
+                <label className="text-xs font-bold text-surface-700 uppercase mb-1 block">
+                  Comentarios <span className="text-surface-400 normal-case font-medium">(opcional)</span>
+                </label>
+                <textarea
+                  value={formNivel.comentario}
+                  onChange={(e) => setFormNivel({ ...formNivel, comentario: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none text-sm resize-none"
+                  placeholder="Horario de atención, instrucciones especiales, número de contrato..."
                 />
               </div>
             </div>
