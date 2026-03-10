@@ -530,6 +530,24 @@ export const visitasAPI = {
   }),
 }
 
+// Visita Imagenes
+export const visitaImagenesAPI = {
+  upload: async (visitaId, file) => {
+    const token = localStorage.getItem('authToken');
+    const formData = new FormData();
+    formData.append('imagen', file);
+    const response = await fetch(`${API_BASE_URL}/visitas/${visitaId}/imagenes`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.message || `Error HTTP ${response.status}`);
+    return data;
+  },
+  delete: (visitaId, imagenId) => apiCall(`/visitas/${visitaId}/imagenes/${imagenId}`, { method: 'DELETE' }),
+};
+
 // Checklist Items Endpoints
 export const checklistItemsAPI = {
   list: (params = {}) => {

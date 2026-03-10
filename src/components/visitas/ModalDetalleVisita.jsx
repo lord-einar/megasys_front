@@ -1,10 +1,14 @@
 import React from 'react';
-import { visitasAPI } from '../../services/api';
+import { visitasAPI, visitaImagenesAPI } from '../../services/api';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarInforme }) => {
     const [visita, setVisita] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
+    const [imagenes, setImagenes] = React.useState([]);
+    const [subiendoImagen, setSubiendoImagen] = React.useState(false);
+    const [imagenLightbox, setImagenLightbox] = React.useState(null);
+    const fileInputRef = React.useRef(null);
     const { hasPermission } = usePermissions();
 
     React.useEffect(() => {
@@ -17,10 +21,36 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
         try {
             const response = await visitasAPI.getById(visitaId);
             setVisita(response.data);
+            setImagenes(response.data?.informe?.imagenes || []);
         } catch (error) {
             console.error('Error cargando visita:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSubirImagen = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setSubiendoImagen(true);
+        try {
+            const response = await visitaImagenesAPI.upload(visitaId, file);
+            setImagenes(prev => [...prev, response.data]);
+        } catch (error) {
+            alert('Error al subir la imagen: ' + (error.message || 'Error desconocido'));
+        } finally {
+            setSubiendoImagen(false);
+        }
+    };
+
+    const handleEliminarImagen = async (imagenId) => {
+        if (!window.confirm('¿Eliminar esta imagen?')) return;
+        try {
+            await visitaImagenesAPI.delete(visitaId, imagenId);
+            setImagenes(prev => prev.filter(img => img.id !== imagenId));
+        } catch (error) {
+            alert('Error al eliminar la imagen: ' + (error.message || 'Error desconocido'));
         }
     };
 
@@ -367,6 +397,94 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                     </div>
                                 </div>
                             )}
+
+                            {/* Imágenes */}
+                            <div className="mt-4 border-t border-slate-100 pt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h5 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Imágenes
+                                        {imagenes.length > 0 && (
+                                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">{imagenes.length}</span>
+                                        )}
+                                    </h5>
+                                    {hasPermission('visitas', 'completar_informe') && (
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={subiendoImagen}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors disabled:opacity-50"
+                                        >
+                                            {subiendoImagen ? (
+                                                <span className="inline-block w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            )}
+                                            {subiendoImagen ? 'Subiendo...' : 'Subir imagen'}
+                                        </button>
+                                    )}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        className="hidden"
+                                        onChange={handleSubirImagen}
+                                    />
+                                </div>
+                                {imagenes.length === 0 ? (
+                                    <p className="text-xs text-slate-400 italic">Sin imágenes adjuntas.</p>
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {imagenes.map((img) => (
+                                            <div key={img.id} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-100">
+                                                <img
+                                                    src={img.url}
+                                                    alt={img.nombre_original || 'Imagen'}
+                                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                    onClick={() => setImagenLightbox(img)}
+                                                />
+                                                {hasPermission('visitas', 'completar_informe') && (
+                                                    <button
+                                                        onClick={() => handleEliminarImagen(img.id)}
+                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity flex hover:bg-red-600"
+                                                        title="Eliminar imagen"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lightbox */}
+                    {imagenLightbox && (
+                        <div
+                            className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4"
+                            onClick={() => setImagenLightbox(null)}
+                        >
+                            <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
+                                <button
+                                    onClick={() => setImagenLightbox(null)}
+                                    className="absolute -top-10 right-0 text-white/80 hover:text-white text-2xl font-bold"
+                                >
+                                    ×
+                                </button>
+                                <img
+                                    src={imagenLightbox.url}
+                                    alt={imagenLightbox.nombre_original || 'Imagen'}
+                                    className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                                />
+                                {imagenLightbox.nombre_original && (
+                                    <p className="text-white/60 text-xs text-center mt-2">{imagenLightbox.nombre_original}</p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
