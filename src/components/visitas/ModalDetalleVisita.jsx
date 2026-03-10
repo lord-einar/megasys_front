@@ -6,9 +6,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
     const [visita, setVisita] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
     const [imagenes, setImagenes] = React.useState([]);
-    const [subiendoImagen, setSubiendoImagen] = React.useState(false);
     const [imagenLightbox, setImagenLightbox] = React.useState(null);
-    const fileInputRef = React.useRef(null);
     const { hasPermission } = usePermissions();
 
     React.useEffect(() => {
@@ -26,21 +24,6 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
             console.error('Error cargando visita:', error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSubirImagen = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        e.target.value = '';
-        setSubiendoImagen(true);
-        try {
-            const response = await visitaImagenesAPI.upload(visitaId, file);
-            setImagenes(prev => [...prev, response.data]);
-        } catch (error) {
-            alert('Error al subir la imagen: ' + (error.message || 'Error desconocido'));
-        } finally {
-            setSubiendoImagen(false);
         }
     };
 
@@ -410,29 +393,6 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                             <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">{imagenes.length}</span>
                                         )}
                                     </h5>
-                                    {hasPermission('visitas', 'completar_informe') && (
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={subiendoImagen}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors disabled:opacity-50"
-                                        >
-                                            {subiendoImagen ? (
-                                                <span className="inline-block w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                                            ) : (
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                                </svg>
-                                            )}
-                                            {subiendoImagen ? 'Subiendo...' : 'Subir imagen'}
-                                        </button>
-                                    )}
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/gif"
-                                        className="hidden"
-                                        onChange={handleSubirImagen}
-                                    />
                                 </div>
                                 {imagenes.length === 0 ? (
                                     <p className="text-xs text-slate-400 italic">Sin imágenes adjuntas.</p>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { visitasAPI, categoriasProblemasAPI } from '../../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { visitasAPI, categoriasProblemasAPI, visitaImagenesAPI } from '../../services/api';
 import LoadingOverlay from '../LoadingOverlay';
 import Swal from 'sweetalert2';
 
@@ -10,6 +10,9 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
     const [problemasResueltos, setProblemasResueltos] = useState([]);
     const [solicitudesResueltas, setSolicitudesResueltas] = useState([]);
     const [observaciones, setObservaciones] = useState('');
+    const [imagenesStaged, setImagenesStaged] = useState([]);
+    const [imagenesExistentes, setImagenesExistentes] = useState([]);
+    const fileInputRef = useRef(null);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -102,6 +105,9 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                 if (visita.informe.observaciones) {
                     setObservaciones(visita.informe.observaciones);
                 }
+                if (visita.informe.imagenes) {
+                    setImagenesExistentes(visita.informe.imagenes);
+                }
             }
         } catch (err) {
             console.error('Error cargando datos iniciales:', err);
@@ -143,6 +149,30 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                 categoria_id: categoriaOtro?.id || categoriasProblemas[0]?.id || '',
                 causado_por_usuario: false
             });
+        }
+    };
+
+    const handleAgregarImagen = (e) => {
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        const nuevas = files.map(file => ({ file, previewUrl: URL.createObjectURL(file) }));
+        setImagenesStaged(prev => [...prev, ...nuevas]);
+    };
+
+    const handleQuitarStagedImagen = (index) => {
+        setImagenesStaged(prev => {
+            URL.revokeObjectURL(prev[index].previewUrl);
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const handleEliminarImagenExistente = async (imagenId) => {
+        if (!window.confirm('¿Eliminar esta imagen?')) return;
+        try {
+            await visitaImagenesAPI.delete(visita.id, imagenId);
+            setImagenesExistentes(prev => prev.filter(img => img.id !== imagenId));
+        } catch (err) {
+            alert('Error al eliminar la imagen: ' + (err.message || 'Error desconocido'));
         }
     };
 
@@ -233,6 +263,13 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             console.log('📤 Problemas en el estado:', problemasResueltos);
 
             await visitasAPI.marcarRealizada(visita.id, payload);
+
+            // Subir imágenes staged
+            for (const { file } of imagenesStaged) {
+                await visitaImagenesAPI.upload(visita.id, file);
+            }
+            imagenesStaged.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
+
             onSave();
             onClose();
         } catch (err) {
@@ -464,6 +501,69 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                             rows="3"
                             className="textarea w-full"
                             placeholder="Comentarios generales sobre la visita..."
+                        />
+                    </section>
+
+                    {/* 6. Imágenes */}
+                    <section>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">6. Imágenes</h4>
+                        <p className="text-xs text-slate-500 mb-3">Adjuntá fotos del equipo, problemas encontrados o trabajo realizado.</p>
+
+                        {/* Imágenes existentes (modo edición) */}
+                        {imagenesExistentes.length > 0 && (
+                            <div className="mb-3">
+                                <p className="text-xs font-medium text-slate-600 mb-2">Imágenes guardadas ({imagenesExistentes.length}):</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {imagenesExistentes.map(img => (
+                                        <div key={img.id} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-100">
+                                            <img src={img.url} alt={img.nombre_original || 'Imagen'} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEliminarImagenExistente(img.id)}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                            >×</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Imágenes nuevas staged */}
+                        {imagenesStaged.length > 0 && (
+                            <div className="mb-3">
+                                <p className="text-xs font-medium text-slate-600 mb-2">Nuevas imágenes a subir ({imagenesStaged.length}):</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {imagenesStaged.map(({ previewUrl }, index) => (
+                                        <div key={index} className="relative group rounded-lg overflow-hidden border border-blue-300 aspect-square bg-slate-100">
+                                            <img src={previewUrl} alt="Nueva imagen" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleQuitarStagedImagen(index)}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                            >×</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Agregar imagen
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            className="hidden"
+                            onChange={handleAgregarImagen}
                         />
                     </section>
 
