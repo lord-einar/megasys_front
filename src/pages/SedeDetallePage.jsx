@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI, authAPI } from '../services/api'
+import { sedesAPI, authAPI, sedeImagenesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import TablaInventarioSede from '../components/TablaInventarioSede'
 
@@ -15,10 +15,21 @@ export default function SedeDetallePage() {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
   const [currentUser, setCurrentUser] = useState(null)
+  // Imágenes
+  const [imagenes, setImagenes] = useState([])
+  const [imagenesLoading, setImagenesLoading] = useState(false)
+  const [imagenLightbox, setImagenLightbox] = useState(null)
+  const [subiendoImagen, setSubiendoImagen] = useState(false)
+  const [tituloImagen, setTituloImagen] = useState('')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     cargarDatos()
   }, [id])
+
+  useEffect(() => {
+    if (activeTab === 'imagenes') cargarImagenes()
+  }, [activeTab])
 
   const cargarDatos = async () => {
     try {
@@ -42,6 +53,46 @@ export default function SedeDetallePage() {
       console.error('Error cargando sede:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const cargarImagenes = async () => {
+    try {
+      setImagenesLoading(true)
+      const res = await sedeImagenesAPI.list(id)
+      setImagenes(res?.data || res || [])
+    } catch (err) {
+      console.error('Error cargando imágenes:', err)
+    } finally {
+      setImagenesLoading(false)
+    }
+  }
+
+  const handleSubirImagen = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setSubiendoImagen(true)
+      const res = await sedeImagenesAPI.upload(id, file, tituloImagen)
+      const nueva = res?.data || res
+      setImagenes(prev => [...prev, nueva])
+      setTituloImagen('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    } catch (err) {
+      alert(err.message || 'Error al subir la imagen')
+    } finally {
+      setSubiendoImagen(false)
+    }
+  }
+
+  const handleEliminarImagen = async (imagenId) => {
+    if (!confirm('¿Eliminar esta imagen?')) return
+    try {
+      await sedeImagenesAPI.delete(id, imagenId)
+      setImagenes(prev => prev.filter(img => img.id !== imagenId))
+      if (imagenLightbox?.id === imagenId) setImagenLightbox(null)
+    } catch (err) {
+      alert(err.message || 'Error al eliminar la imagen')
     }
   }
 
@@ -92,6 +143,7 @@ export default function SedeDetallePage() {
   }
 
   return (
+    <>
     <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Breadcrumb & Actions */}
@@ -187,6 +239,12 @@ export default function SedeDetallePage() {
               onClick={() => setActiveTab('inventario')}
               label="Inventario"
               icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+            />
+            <TabButton
+              active={activeTab === 'imagenes'}
+              onClick={() => setActiveTab('imagenes')}
+              label={`Imágenes${imagenes.length > 0 ? ` (${imagenes.length})` : ''}`}
+              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
             />
           </div>
         </div>
@@ -474,9 +532,153 @@ export default function SedeDetallePage() {
               </div>
             </div>
           )}
+
+          {activeTab === 'imagenes' && (
+            <div className="space-y-6">
+              {/* Upload section — solo soporte e infra */}
+              {canUpdate('sedes') && (
+                <div className="card-base p-6">
+                  <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Subir imagen
+                  </h3>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      value={tituloImagen}
+                      onChange={e => setTituloImagen(e.target.value)}
+                      placeholder="Título opcional (ej: Rack principal)"
+                      className="flex-1 input-base text-sm"
+                      disabled={subiendoImagen}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={subiendoImagen}
+                      className="btn-primary text-sm py-2 px-4 flex items-center gap-2 shrink-0"
+                    >
+                      {subiendoImagen ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                          Subiendo...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          Agregar imagen
+                        </>
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleSubirImagen}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Grid de imágenes */}
+              <div className="card-base p-6">
+                {imagenesLoading ? (
+                  <div className="py-12 flex justify-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-surface-200 border-t-primary-600"></div>
+                  </div>
+                ) : imagenes.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-4 text-surface-300">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-surface-900 font-medium">Sin imágenes</p>
+                    <p className="text-surface-500 text-sm mt-1">
+                      {canUpdate('sedes') ? 'Usá el botón de arriba para subir la primera imagen.' : 'No hay imágenes cargadas para esta sede.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {imagenes.map(img => (
+                      <div key={img.id} className="group relative rounded-xl overflow-hidden bg-surface-100 aspect-square shadow-sm border border-surface-200 hover:shadow-md transition-all">
+                        {/* Thumbnail */}
+                        <img
+                          src={img.url}
+                          alt={img.titulo || img.nombre_original || 'Imagen'}
+                          className="w-full h-full object-cover cursor-pointer transition-transform duration-200 group-hover:scale-105"
+                          onClick={() => setImagenLightbox(img)}
+                        />
+
+                        {/* Fecha de subida — overlay inferior */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 pt-4 pb-1.5 pointer-events-none">
+                          {img.titulo && (
+                            <p className="text-white text-[11px] font-semibold truncate leading-tight">{img.titulo}</p>
+                          )}
+                          <p className="text-white/80 text-[10px] leading-tight">
+                            {new Date(img.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                          </p>
+                        </div>
+
+                        {/* Botón eliminar — solo para soporte e infra */}
+                        {canUpdate('sedes') && (
+                          <button
+                            onClick={() => handleEliminarImagen(img.id)}
+                            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-700 shadow-md"
+                            title="Eliminar imagen"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
+
+    {/* Lightbox */}
+    {imagenLightbox && (
+      <div
+        className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
+        onClick={() => setImagenLightbox(null)}
+      >
+        <div className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setImagenLightbox(null)}
+            className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors"
+            aria-label="Cerrar"
+          >
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={imagenLightbox.url}
+            alt={imagenLightbox.titulo || imagenLightbox.nombre_original || 'Imagen'}
+            className="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain"
+          />
+          <div className="mt-3 text-center">
+            {imagenLightbox.titulo && (
+              <p className="text-white font-medium text-sm">{imagenLightbox.titulo}</p>
+            )}
+            <p className="text-white/50 text-xs mt-0.5">
+              {imagenLightbox.nombre_original} · {new Date(imagenLightbox.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
