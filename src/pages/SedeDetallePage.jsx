@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { sedesAPI, authAPI, sedeImagenesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import TablaInventarioSede from '../components/TablaInventarioSede'
+import Swal from 'sweetalert2'
 
 export default function SedeDetallePage() {
   const { id } = useParams()
@@ -79,20 +80,30 @@ export default function SedeDetallePage() {
       setTituloImagen('')
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (err) {
-      alert(err.message || 'Error al subir la imagen')
+      Swal.fire({ icon: 'error', title: 'Error al subir', text: err.message || 'No se pudo subir la imagen', confirmButtonColor: '#3085d6' })
     } finally {
       setSubiendoImagen(false)
     }
   }
 
   const handleEliminarImagen = async (imagenId) => {
-    if (!confirm('¿Eliminar esta imagen?')) return
+    const result = await Swal.fire({
+      title: '¿Eliminar imagen?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+    if (!result.isConfirmed) return
     try {
       await sedeImagenesAPI.delete(id, imagenId)
       setImagenes(prev => prev.filter(img => img.id !== imagenId))
       if (imagenLightbox?.id === imagenId) setImagenLightbox(null)
     } catch (err) {
-      alert(err.message || 'Error al eliminar la imagen')
+      Swal.fire({ icon: 'error', title: 'Error al eliminar', text: err.message || 'No se pudo eliminar la imagen', confirmButtonColor: '#3085d6' })
     }
   }
 
