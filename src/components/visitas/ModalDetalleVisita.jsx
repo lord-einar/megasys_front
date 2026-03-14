@@ -401,7 +401,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                         {imagenes.map((img) => (
                                             <div key={img.id} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-100">
                                                 <img
-                                                    src={img.url}
+                                                    src={img.signed_url || img.url}
                                                     alt={img.nombre_original || 'Imagen'}
                                                     className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                                     onClick={() => setImagenLightbox(img)}
@@ -437,7 +437,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                     ×
                                 </button>
                                 <img
-                                    src={imagenLightbox.url}
+                                    src={imagenLightbox.signed_url || imagenLightbox.url}
                                     alt={imagenLightbox.nombre_original || 'Imagen'}
                                     className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
                                 />

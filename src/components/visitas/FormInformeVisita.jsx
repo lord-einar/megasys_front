@@ -516,7 +516,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                 <div className="grid grid-cols-4 gap-2">
                                     {imagenesExistentes.map(img => (
                                         <div key={img.id} className="relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-100">
-                                            <img src={img.url} alt={img.nombre_original || 'Imagen'} className="w-full h-full object-cover" />
+                                            <img src={img.signed_url || img.url} alt={img.nombre_original || 'Imagen'} className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
                                                 onClick={() => handleEliminarImagenExistente(img.id)}

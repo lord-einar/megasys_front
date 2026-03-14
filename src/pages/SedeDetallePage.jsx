@@ -618,7 +618,7 @@ export default function SedeDetallePage() {
                       <div key={img.id} className="group relative rounded-xl overflow-hidden bg-surface-100 aspect-square shadow-sm border border-surface-200 hover:shadow-md transition-all">
                         {/* Thumbnail */}
                         <img
-                          src={img.url}
+                          src={img.signed_url || img.url}
                           alt={img.titulo || img.nombre_original || 'Imagen'}
                           className="w-full h-full object-cover cursor-pointer transition-transform duration-200 group-hover:scale-105"
                           onClick={() => setImagenLightbox(img)}
@@ -674,7 +674,7 @@ export default function SedeDetallePage() {
             </svg>
           </button>
           <img
-            src={imagenLightbox.url}
+            src={imagenLightbox.signed_url || imagenLightbox.url}
             alt={imagenLightbox.titulo || imagenLightbox.nombre_original || 'Imagen'}
             className="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain"
           />
