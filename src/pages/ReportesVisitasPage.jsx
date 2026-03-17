@@ -35,6 +35,9 @@ export default function ReportesVisitasPage() {
     const [showDetalleVisita, setShowDetalleVisita] = useState(false);
     const [selectedVisitaId, setSelectedVisitaId] = useState(null);
 
+    // Modal de problemas causados por usuario
+    const [showProblemasModal, setShowProblemasModal] = useState(false);
+
     // Verificar permisos
     const tieneAccesoReportes = hasPermission('admin', 'reports');
 
@@ -334,7 +337,15 @@ export default function ReportesVisitasPage() {
                         <HorizontalBarChart title="Casos Cerrados por Sede" tooltipLabel="Casos" data={data?.graficos?.casosPorSede} />
                         <ChartCard title="Visitas por Técnico" data={data?.graficos?.tecnicos} />
                         <ChartCard title="Problemas por Categoría" data={data?.graficos?.categorias} />
-                        <ChartCard title="Problemas Causados por Usuario" data={data?.graficos?.problemasUsuario} />
+                        <ChartCard
+                            title="Problemas Causados por Usuario"
+                            data={data?.graficos?.problemasUsuario}
+                            onSliceClick={(entry) => {
+                                if (entry?.causado_por_usuario === true || entry?.name === 'Causado por Usuario') {
+                                    setShowProblemasModal(true);
+                                }
+                            }}
+                        />
                     </div>
 
                     {/* Tabla de Casos Cerrados */}
@@ -352,6 +363,14 @@ export default function ReportesVisitasPage() {
                 <ModalDetalleVisita
                     visitaId={selectedVisitaId}
                     onClose={handleCloseDetalle}
+                />
+            )}
+
+            {/* Modal Problemas Causados por Usuario */}
+            {showProblemasModal && (
+                <ModalProblemasUsuario
+                    problemas={data?.graficos?.problemasUsuarioDetalle || []}
+                    onClose={() => setShowProblemasModal(false)}
                 />
             )}
         </div>
@@ -456,7 +475,7 @@ function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = 
 }
 
 // Componente de Gráfico
-function ChartCard({ title, data }) {
+function ChartCard({ title, data, onSliceClick }) {
     if (!data || data.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -471,6 +490,9 @@ function ChartCard({ title, data }) {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
+            {onSliceClick && (
+                <p className="text-xs text-slate-400 mb-2">Hacé clic en un sector para ver el detalle</p>
+            )}
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
@@ -482,6 +504,8 @@ function ChartCard({ title, data }) {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
+                        onClick={onSliceClick ? (sliceData) => onSliceClick(sliceData) : undefined}
+                        style={onSliceClick ? { cursor: 'pointer' } : undefined}
                     >
                         {data.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -497,6 +521,9 @@ function ChartCard({ title, data }) {
 
 // Componente de Tabla de Casos
 function CasosTable({ casos }) {
+    const [pagina, setPagina] = useState(1);
+    const POR_PAGINA = 20;
+
     if (!casos || casos.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -508,11 +535,19 @@ function CasosTable({ casos }) {
         );
     }
 
+    const totalPaginas = Math.ceil(casos.length / POR_PAGINA);
+    const casosPagina = casos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                📋 Casos/Tickets Cerrados ({casos.length})
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">
+                    📋 Casos/Tickets Cerrados ({casos.length})
+                </h3>
+                <span className="text-sm text-slate-500">
+                    Página {pagina} de {totalPaginas}
+                </span>
+            </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
@@ -532,7 +567,7 @@ function CasosTable({ casos }) {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
-                        {casos.map((item, index) => (
+                        {casosPagina.map((item, index) => (
                             <tr key={index} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                     {new Date(item.fecha_visita).toLocaleDateString('es-AR')}
@@ -551,6 +586,50 @@ function CasosTable({ casos }) {
                     </tbody>
                 </table>
             </div>
+            {totalPaginas > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
+                    <button
+                        onClick={() => setPagina(p => Math.max(1, p - 1))}
+                        disabled={pagina === 1}
+                        className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                        ← Anterior
+                    </button>
+                    <div className="flex gap-1">
+                        {Array.from({ length: Math.min(totalPaginas, 7) }, (_, i) => {
+                            let pageNum;
+                            if (totalPaginas <= 7) {
+                                pageNum = i + 1;
+                            } else if (pagina <= 4) {
+                                pageNum = i + 1;
+                            } else if (pagina >= totalPaginas - 3) {
+                                pageNum = totalPaginas - 6 + i;
+                            } else {
+                                pageNum = pagina - 3 + i;
+                            }
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setPagina(pageNum)}
+                                    className={`w-9 h-9 text-sm font-medium rounded-lg transition-colors ${pagina === pageNum
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <button
+                        onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                        disabled={pagina === totalPaginas}
+                        className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Siguiente →
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -673,6 +752,92 @@ function VisitasTable({ visitas, onVerDetalle }) {
                         ))}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    );
+}
+
+// Modal de problemas causados por usuario
+function ModalProblemasUsuario({ problemas, onClose }) {
+    const [pagina, setPagina] = useState(1);
+    const POR_PAGINA = 15;
+    const totalPaginas = Math.ceil(problemas.length / POR_PAGINA);
+    const items = problemas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-900">Problemas causados por usuarios</h2>
+                        <p className="text-sm text-slate-500 mt-0.5">{problemas.length} registro{problemas.length !== 1 ? 's' : ''}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {problemas.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-slate-400 py-12">
+                        Sin registros disponibles
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex-1 overflow-y-auto">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-28">Fecha</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-36">Sede</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Descripción del problema</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {items.map((item, i) => (
+                                        <tr key={i} className="hover:bg-slate-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                                {item.fecha ? new Date(item.fecha).toLocaleDateString('es-AR') : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-900">
+                                                {item.sede}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-700">
+                                                {item.descripcion}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {totalPaginas > 1 && (
+                            <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200">
+                                <button
+                                    onClick={() => setPagina(p => Math.max(1, p - 1))}
+                                    disabled={pagina === 1}
+                                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    ← Anterior
+                                </button>
+                                <span className="text-sm text-slate-500">
+                                    Página {pagina} de {totalPaginas}
+                                </span>
+                                <button
+                                    onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                                    disabled={pagina === totalPaginas}
+                                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    Siguiente →
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
