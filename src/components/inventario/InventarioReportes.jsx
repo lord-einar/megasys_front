@@ -120,7 +120,7 @@ export default function InventarioReportes() {
     const cargar = async () => {
       try {
         setLoading(true)
-        const res = await inventarioAPI.list({ limit: 1000, page: 1 })
+        const res = await inventarioAPI.list({ limit: 500, page: 1 })
         const data = res?.data?.inventario || res?.data || []
         setItems(Array.isArray(data) ? data : [])
       } catch (err) {

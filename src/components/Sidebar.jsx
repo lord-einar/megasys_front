@@ -84,6 +84,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
         { label: 'Nuevo Artículo', href: '/inventario/crear' },
         { label: 'Tipos de Artículo', href: '/inventario/tipos-articulo' },
         { label: 'Stock Disponible', href: '/inventario?estado=disponible' },
+        { label: 'Reportes', href: '/inventario?tab=reportes' },
       ],
     },
     {

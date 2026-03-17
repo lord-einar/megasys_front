@@ -13,7 +13,7 @@ export default function InventarioPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { canCreate, canUpdate, canDelete } = usePermissions()
-  const [activeTab, setActiveTab] = useState('listado')
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'listado')
 
   // Hook para manejar errores de permisos
   usePermissionError()
