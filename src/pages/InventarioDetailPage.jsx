@@ -296,6 +296,56 @@ export default function InventarioDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* Monitor Specs */}
+              {(item.pulgadas || item.tipo_conector) && (
+                <div className="mt-6 pt-6 border-t border-surface-100">
+                  <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Especificaciones de Monitor
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                    <InfoItem label="Pulgadas" value={item.pulgadas ? `${item.pulgadas}"` : null} />
+                    <div>
+                      <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Conectores</p>
+                      {item.tipo_conector ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.tipo_conector.split(',').filter(Boolean).map(c => (
+                            <span key={c} className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-xs font-bold">
+                              {c.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-surface-400 text-sm italic">No especificado</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Switch Specs */}
+              {(item.puertos_ethernet != null || item.puertos_sfp != null || item.poe != null) && (
+                <div className="mt-6 pt-6 border-t border-surface-100">
+                  <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" /></svg>
+                    Especificaciones de Switch
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-8">
+                    <InfoItem label="Puertos Ethernet" value={item.puertos_ethernet != null ? String(item.puertos_ethernet) : null} />
+                    <InfoItem label="Puertos SFP" value={item.puertos_sfp != null ? String(item.puertos_sfp) : null} />
+                    <div>
+                      <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">PoE</p>
+                      <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${item.poe
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-surface-100 text-surface-500 border-surface-200'
+                        }`}>
+                        {item.poe ? 'Sí' : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Historial Timeline */}

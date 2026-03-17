@@ -31,7 +31,14 @@ const articuloSchema = yup.object().shape({
   procesador: yup.string().nullable().notRequired(),
   memoria: yup.string().nullable().notRequired(),
   disco: yup.string().nullable().notRequired(),
-  sistema_operativo: yup.string().nullable().notRequired()
+  sistema_operativo: yup.string().nullable().notRequired(),
+  // Monitor fields
+  pulgadas: yup.string().nullable().notRequired(),
+  tipo_conector: yup.string().nullable().notRequired(),
+  // Switch fields
+  puertos_ethernet: yup.number().nullable().transform((v, o) => o === '' ? null : v).notRequired(),
+  puertos_sfp: yup.number().nullable().transform((v, o) => o === '' ? null : v).notRequired(),
+  poe: yup.boolean().nullable().notRequired()
 })
 
 export default function CreateArticulo() {
@@ -76,7 +83,12 @@ export default function CreateArticulo() {
       procesador: '',
       memoria: '',
       disco: '',
-      sistema_operativo: ''
+      sistema_operativo: '',
+      pulgadas: '',
+      tipo_conector: '',
+      puertos_ethernet: '',
+      puertos_sfp: '',
+      poe: false
     }
   })
 
@@ -156,6 +168,13 @@ export default function CreateArticulo() {
       if (!dataToSend.memoria?.trim()) delete dataToSend.memoria
       if (!dataToSend.disco?.trim()) delete dataToSend.disco
       if (!dataToSend.sistema_operativo?.trim()) delete dataToSend.sistema_operativo
+      // Monitor fields
+      if (!dataToSend.pulgadas?.trim()) delete dataToSend.pulgadas
+      if (!dataToSend.tipo_conector?.trim()) delete dataToSend.tipo_conector
+      // Switch fields
+      if (dataToSend.puertos_ethernet === '' || dataToSend.puertos_ethernet === null) delete dataToSend.puertos_ethernet
+      if (dataToSend.puertos_sfp === '' || dataToSend.puertos_sfp === null) delete dataToSend.puertos_sfp
+      if (dataToSend.poe === false || dataToSend.poe === null) delete dataToSend.poe
 
       // Estado inicial siempre disponible
       dataToSend.estado = 'disponible'
@@ -415,6 +434,134 @@ export default function CreateArticulo() {
                         placeholder="Ej: Windows 10 Pro"
                         className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                       />
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Sección Monitor (Condicional) */}
+            {(() => {
+              const tipoId = watch('tipo_articulo_id')
+              const tipoSeleccionado = tiposArticulo.find(t => t.id === tipoId)
+              const nombreTipo = tipoSeleccionado?.nombre?.toLowerCase() || ''
+              const esMonitor = nombreTipo.includes('monitor')
+
+              if (!esMonitor) return null
+
+              const CONECTORES = ['VGA', 'HDMI', 'DisplayPort', 'DVI', 'USB-C']
+              const conectoresActuales = watch('tipo_conector')?.split(',').filter(Boolean) || []
+
+              const toggleConector = (conector) => {
+                const actuales = watch('tipo_conector')?.split(',').filter(Boolean) || []
+                const idx = actuales.indexOf(conector)
+                if (idx >= 0) {
+                  actuales.splice(idx, 1)
+                } else {
+                  actuales.push(conector)
+                }
+                setValue('tipo_conector', actuales.join(','))
+              }
+
+              return (
+                <div className="card-base p-6 md:p-8 bg-white space-y-6 animate-fade-in">
+                  <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </span>
+                    Especificaciones de Monitor
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Pulgadas */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="pulgadas" className="block text-sm font-semibold text-surface-700">Pulgadas</label>
+                      <input
+                        type="text"
+                        id="pulgadas"
+                        {...register('pulgadas')}
+                        placeholder='Ej: 24"'
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* Tipo de Conector */}
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-sm font-semibold text-surface-700">Conectores</label>
+                      <div className="flex flex-wrap gap-2">
+                        {CONECTORES.map(conector => (
+                          <button
+                            key={conector}
+                            type="button"
+                            onClick={() => toggleConector(conector)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${conectoresActuales.includes(conector)
+                                ? 'bg-primary-50 border-primary-300 text-primary-700 shadow-sm'
+                                : 'bg-surface-50 border-surface-200 text-surface-600 hover:border-surface-300'
+                              }`}
+                          >
+                            {conector}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="hidden" {...register('tipo_conector')} />
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Sección Switch (Condicional) */}
+            {(() => {
+              const tipoId = watch('tipo_articulo_id')
+              const tipoSeleccionado = tiposArticulo.find(t => t.id === tipoId)
+              const nombreTipo = tipoSeleccionado?.nombre?.toLowerCase() || ''
+              const esSwitch = nombreTipo.includes('switch')
+
+              if (!esSwitch) return null
+
+              return (
+                <div className="card-base p-6 md:p-8 bg-white space-y-6 animate-fade-in">
+                  <h2 className="text-lg font-bold text-surface-900 border-b border-surface-100 pb-4 mb-6 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-teal-50 text-teal-600 flex items-center justify-center text-xs">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" /></svg>
+                    </span>
+                    Especificaciones de Switch
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Puertos Ethernet */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="puertos_ethernet" className="block text-sm font-semibold text-surface-700">Puertos Ethernet</label>
+                      <input
+                        type="number"
+                        id="puertos_ethernet"
+                        {...register('puertos_ethernet')}
+                        placeholder="Ej: 24"
+                        min="0"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* Puertos SFP */}
+                    <div className="space-y-1.5">
+                      <label htmlFor="puertos_sfp" className="block text-sm font-semibold text-surface-700">Puertos SFP</label>
+                      <input
+                        type="number"
+                        id="puertos_sfp"
+                        {...register('puertos_sfp')}
+                        placeholder="Ej: 4"
+                        min="0"
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      />
+                    </div>
+                    {/* PoE */}
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-semibold text-surface-700">PoE</label>
+                      <label className="relative inline-flex items-center cursor-pointer mt-1">
+                        <input
+                          type="checkbox"
+                          {...register('poe')}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-surface-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-surface-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        <span className="ms-3 text-sm font-medium text-surface-700">{watch('poe') ? 'Sí' : 'No'}</span>
+                      </label>
                     </div>
                   </div>
                 </div>
