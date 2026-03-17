@@ -131,7 +131,8 @@ export default function InventarioPage() {
       'en_uso': 'bg-blue-50 text-blue-700 border-blue-100',
       'mantenimiento': 'bg-amber-50 text-amber-700 border-amber-100',
       'dado_de_baja': 'bg-rose-50 text-rose-700 border-rose-100',
-      'en_prestamo': 'bg-purple-50 text-purple-700 border-purple-100'
+      'en_prestamo': 'bg-purple-50 text-purple-700 border-purple-100',
+      'producto_proveedor': 'bg-orange-50 text-orange-700 border-orange-100'
     }
     return styles[estado] || 'bg-surface-100 text-surface-600 border-surface-200'
   }
@@ -244,6 +245,7 @@ export default function InventarioPage() {
               <option value="mantenimiento">Mantenimiento</option>
               <option value="dado_de_baja">Dado de Baja</option>
               <option value="en_prestamo">En Préstamo</option>
+              <option value="producto_proveedor">Producto de Proveedor</option>
             </select>
           </div>
 
