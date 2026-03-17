@@ -7,11 +7,13 @@ import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
 import { normalizeStatsResponse } from '../utils/apiResponseNormalizer'
 import { getPaginationNumbers } from '../utils/paginationHelper'
+import InventarioReportes from '../components/inventario/InventarioReportes'
 
 export default function InventarioPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { canCreate, canUpdate, canDelete } = usePermissions()
+  const [activeTab, setActiveTab] = useState('listado')
 
   // Hook para manejar errores de permisos
   usePermissionError()
@@ -164,6 +166,35 @@ export default function InventarioPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b border-surface-200 mb-6 -mt-2">
+        <button
+          onClick={() => setActiveTab('listado')}
+          className={`flex items-center gap-2 py-3 px-5 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === 'listado'
+            ? 'border-primary-500 text-primary-700'
+            : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'}`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          Listado
+        </button>
+        <button
+          onClick={() => setActiveTab('reportes')}
+          className={`flex items-center gap-2 py-3 px-5 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === 'reportes'
+            ? 'border-primary-500 text-primary-700'
+            : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'}`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Reportes
+        </button>
+      </div>
+
+      {activeTab === 'reportes' && <InventarioReportes />}
+
+      {activeTab === 'listado' && <>
       {/* Estadísticas */}
       {estadisticas && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -419,6 +450,7 @@ export default function InventarioPage() {
           </div>
         )}
       </div>
+      </>}
     </div>
   )
 }
