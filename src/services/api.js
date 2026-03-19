@@ -612,4 +612,29 @@ export const categoriasProblemasAPI = {
   }),
 }
 
+// CRM (Dynamics 365) Endpoints
+export const crmAPI = {
+  getCuentas: (q = '') => {
+    const query = q ? `?q=${encodeURIComponent(q)}` : ''
+    return apiCall(`/crm/cuentas${query}`)
+  },
+  getCasosBySede: (accountId, params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/crm/cuentas/${accountId}/casos${query ? '?' + query : ''}`)
+  },
+  getCasos: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return apiCall(`/crm/casos${query ? '?' + query : ''}`)
+  },
+  getCaso: (id) => apiCall(`/crm/casos/${id}`),
+  getResumen: () => apiCall('/crm/resumen'),
+  vincularSede: (sedeId, accountId) => apiCall(`/crm/sedes/${sedeId}/vincular`, {
+    method: 'PATCH',
+    body: JSON.stringify({ accountId })
+  }),
+  desvincularSede: (sedeId) => apiCall(`/crm/sedes/${sedeId}/vincular`, {
+    method: 'DELETE'
+  }),
+}
+
 export default apiCall

@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI, authAPI, sedeImagenesAPI } from '../services/api'
+import { sedesAPI, authAPI, sedeImagenesAPI, crmAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import { useAuth } from '../contexts/AuthContext'
 import TablaInventarioSede from '../components/TablaInventarioSede'
+import TablaCasosCRM from '../components/crm/TablaCasosCRM'
 import Swal from 'sweetalert2'
 
 export default function SedeDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { canUpdate } = usePermissions()
+  const { user: authUser } = useAuth()
+  const userRole = authUser?.role
   const [sede, setSede] = useState(null)
   const [tecnico, setTecnico] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,6 +27,11 @@ export default function SedeDetallePage() {
   const [subiendoImagen, setSubiendoImagen] = useState(false)
   const [tituloImagen, setTituloImagen] = useState('')
   const fileInputRef = useRef(null)
+  // CRM
+  const [crmCuentas, setCrmCuentas] = useState([])
+  const [crmCuentasLoading, setCrmCuentasLoading] = useState(false)
+  const [crmBusqueda, setCrmBusqueda] = useState('')
+  const [vinculandoCrm, setVinculandoCrm] = useState(false)
 
   useEffect(() => {
     cargarDatos()
@@ -117,6 +126,45 @@ export default function SedeDetallePage() {
       setTecnico(null)
     } finally {
       setTecnicoLoading(false)
+    }
+  }
+
+  const buscarCuentasCRM = async () => {
+    try {
+      setCrmCuentasLoading(true)
+      const res = await crmAPI.getCuentas(crmBusqueda)
+      setCrmCuentas(res?.data || res || [])
+    } catch (err) {
+      console.error('Error buscando cuentas CRM:', err)
+      Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con CRM. ' + (err.message || ''), confirmButtonColor: '#3085d6' })
+    } finally {
+      setCrmCuentasLoading(false)
+    }
+  }
+
+  const handleVincularCRM = async (accountId, nombreCuenta) => {
+    const result = await Swal.fire({
+      title: 'Vincular con CRM',
+      html: `¿Vincular esta sede con la cuenta <strong>${nombreCuenta}</strong>?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Vincular',
+      cancelButtonText: 'Cancelar'
+    })
+    if (!result.isConfirmed) return
+    try {
+      setVinculandoCrm(true)
+      await crmAPI.vincularSede(id, accountId)
+      setSede(prev => ({ ...prev, crm_account_id: accountId }))
+      setCrmCuentas([])
+      setCrmBusqueda('')
+      Swal.fire({ icon: 'success', title: 'Vinculada', text: `Sede vinculada con ${nombreCuenta}`, timer: 2000, showConfirmButton: false })
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'No se pudo vincular', confirmButtonColor: '#3085d6' })
+    } finally {
+      setVinculandoCrm(false)
     }
   }
 
@@ -257,6 +305,14 @@ export default function SedeDetallePage() {
               label={`Imágenes${imagenes.length > 0 ? ` (${imagenes.length})` : ''}`}
               icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
             />
+            {['super_admin', 'helpdesk', 'support'].includes(userRole) && (
+              <TabButton
+                active={activeTab === 'crm'}
+                onClick={() => setActiveTab('crm')}
+                label="Soporte CRM"
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+              />
+            )}
           </div>
         </div>
 
@@ -541,6 +597,123 @@ export default function SedeDetallePage() {
                   loading={loading}
                 />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'crm' && (
+            <div className="space-y-6">
+              {sede.crm_account_id ? (
+                <div className="card-base p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wider flex items-center gap-2">
+                      <span className="p-1.5 bg-blue-50 rounded-lg text-blue-500">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                      </span>
+                      Casos de Soporte
+                    </h3>
+                    {userRole === 'super_admin' && (
+                      <button
+                        onClick={async () => {
+                          const result = await Swal.fire({
+                            title: 'Desvincular cuenta CRM',
+                            text: 'Se eliminará la vinculación con Dynamics 365. Los casos no se verán más aquí.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#e11d48',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: 'Desvincular',
+                            cancelButtonText: 'Cancelar'
+                          })
+                          if (!result.isConfirmed) return
+                          try {
+                            await crmAPI.desvincularSede(id)
+                            setSede(prev => ({ ...prev, crm_account_id: null }))
+                            Swal.fire({ icon: 'success', title: 'Desvinculada', timer: 1500, showConfirmButton: false })
+                          } catch (err) {
+                            Swal.fire({ icon: 'error', title: 'Error', text: err.message })
+                          }
+                        }}
+                        className="text-xs text-rose-500 hover:text-rose-700 font-medium hover:underline transition-colors"
+                      >
+                        Desvincular CRM
+                      </button>
+                    )}
+                  </div>
+                  <TablaCasosCRM accountId={sede.crm_account_id} sedeId={id} />
+                </div>
+              ) : (
+                <div className="card-base p-8">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-400">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-surface-900">Sede sin vincular a CRM</h3>
+                    <p className="text-surface-500 text-sm mt-1">
+                      Vinculá esta sede con una cuenta de Dynamics 365 para ver sus casos de soporte.
+                    </p>
+                  </div>
+
+                  {userRole === 'super_admin' ? (
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={crmBusqueda}
+                          onChange={e => setCrmBusqueda(e.target.value)}
+                          placeholder="Buscar cuenta CRM por nombre..."
+                          className="flex-1 input-base text-sm"
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              buscarCuentasCRM()
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={buscarCuentasCRM}
+                          disabled={crmCuentasLoading}
+                          className="btn-primary text-sm py-2 px-4 shrink-0"
+                        >
+                          {crmCuentasLoading ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                          ) : (
+                            'Buscar'
+                          )}
+                        </button>
+                      </div>
+
+                      {crmCuentas.length > 0 && (
+                        <div className="border border-surface-200 rounded-lg divide-y divide-surface-100 max-h-60 overflow-y-auto">
+                          {crmCuentas.map(cuenta => (
+                            <button
+                              key={cuenta.id}
+                              onClick={() => handleVincularCRM(cuenta.id, cuenta.nombre)}
+                              disabled={vinculandoCrm}
+                              className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors flex items-center justify-between group"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-surface-900 group-hover:text-primary-700">{cuenta.nombre}</p>
+                                <p className="text-xs text-surface-500">
+                                  {[cuenta.ciudad, cuenta.pais].filter(Boolean).join(', ') || cuenta.email || 'Sin detalles'}
+                                </p>
+                              </div>
+                              <svg className="w-4 h-4 text-surface-300 group-hover:text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center text-surface-400 text-sm">Solo un super admin puede vincular esta sede con CRM.</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

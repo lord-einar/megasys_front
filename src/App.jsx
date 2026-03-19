@@ -46,6 +46,7 @@ import EjecutivoFormPage from './pages/EjecutivoFormPage'
 import TiposServicioPage from './pages/TiposServicioPage'
 import TipoServicioFormPage from './pages/TipoServicioFormPage'
 import TiposArticuloPage from './pages/TiposArticuloPage'
+import CasosSoportePage from './pages/CasosSoportePage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -135,6 +136,9 @@ function App() {
                   <Route path="/remitos/crear" element={<CreateRemitoPage />} />
                   <Route path="/remitos/:id" element={<RemitoDetailPage />} />
                   <Route path="/remitos" element={<RemitoListPage />} />
+
+                  {/* CRM / Soporte routes */}
+                  <Route path="/soporte" element={<CasosSoportePage />} />
 
                   {/* Visitas routes */}
                   <Route path="/visitas" element={<VisitasPage />} />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { visitasAPI, visitaImagenesAPI } from '../../services/api';
+import { visitasAPI, visitaImagenesAPI, crmAPI } from '../../services/api';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarInforme }) => {
@@ -7,6 +7,7 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
     const [loading, setLoading] = React.useState(true);
     const [imagenes, setImagenes] = React.useState([]);
     const [imagenLightbox, setImagenLightbox] = React.useState(null);
+    const [casosCRMDetalle, setCasosCRMDetalle] = React.useState({});
     const { hasPermission } = usePermissions();
 
     React.useEffect(() => {
@@ -20,10 +21,33 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
             const response = await visitasAPI.getById(visitaId);
             setVisita(response.data);
             setImagenes(response.data?.informe?.imagenes || []);
+
+            // Intentar cargar detalles de casos CRM vinculados
+            const tickets = response.data?.casos_tickets || [];
+            if (tickets.length > 0 && response.data?.sedePrincipal?.crm_account_id) {
+                cargarDetallesCRM(response.data.sedePrincipal.crm_account_id, tickets);
+            }
         } catch (error) {
             console.error('Error cargando visita:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const cargarDetallesCRM = async (accountId, tickets) => {
+        try {
+            const res = await crmAPI.getCasosBySede(accountId, { limit: 50 });
+            const data = res?.data || res;
+            const casos = data.casos || [];
+            const detalleMap = {};
+            for (const caso of casos) {
+                if (tickets.includes(caso.numeroCaso)) {
+                    detalleMap[caso.numeroCaso] = caso;
+                }
+            }
+            setCasosCRMDetalle(detalleMap);
+        } catch {
+            // Silently fail - tickets will show as plain badges
         }
     };
 
@@ -163,12 +187,28 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                 </svg>
                                 Tickets Relacionados
                             </h4>
-                            <div className="flex flex-wrap gap-2">
-                                {visita.casos_tickets.map((ticket, i) => (
-                                    <span key={i} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-100">
-                                        {ticket}
-                                    </span>
-                                ))}
+                            <div className="space-y-2">
+                                {visita.casos_tickets.map((ticket, i) => {
+                                    const detalleCRM = casosCRMDetalle[ticket];
+                                    if (detalleCRM) {
+                                        const estadoColors = { 1: 'bg-blue-50 text-blue-700 border-blue-100', 2: 'bg-emerald-50 text-emerald-700 border-emerald-100', 3: 'bg-slate-100 text-slate-600 border-slate-200' };
+                                        const estadoLabels = { 1: 'Activo', 2: 'Resuelto', 3: 'Cancelado' };
+                                        return (
+                                            <div key={i} className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-lg p-2.5">
+                                                <span className="font-mono text-xs text-blue-600 font-bold shrink-0">{ticket}</span>
+                                                <span className="text-sm text-slate-700 truncate flex-1">{detalleCRM.titulo}</span>
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border shrink-0 ${estadoColors[detalleCRM.estadoCodigo] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                                    {estadoLabels[detalleCRM.estadoCodigo] || detalleCRM.estado}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <span key={i} className="inline-flex items-center px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium border border-blue-100">
+                                            {ticket}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

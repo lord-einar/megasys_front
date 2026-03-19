@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { visitasAPI, sedesAPI, personalAPI } from '../../services/api';
+import { visitasAPI, sedesAPI, personalAPI, crmAPI } from '../../services/api';
 import LoadingOverlay from '../LoadingOverlay';
 import logger from '../../utils/logger';
 import Swal from 'sweetalert2';
@@ -10,6 +10,8 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
     const [sedes, setSedes] = useState([]);
     const [tecnicos, setTecnicos] = useState([]);
     const [ticketInput, setTicketInput] = useState('');
+    const [casosCRM, setCasosCRM] = useState([]);
+    const [casosCRMLoading, setCasosCRMLoading] = useState(false);
 
     // Función helper para convertir Date a formato yyyy-MM-dd
     const formatearFecha = (fecha) => {
@@ -50,6 +52,34 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
             });
         }
     }, [visitaEditar]);
+
+    // Cargar casos CRM activos cuando cambia la sede
+    useEffect(() => {
+        if (formData.sede_id) {
+            const sedeSeleccionada = sedes.find(s => s.id === formData.sede_id);
+            if (sedeSeleccionada?.crm_account_id) {
+                cargarCasosCRM(sedeSeleccionada.crm_account_id);
+            } else {
+                setCasosCRM([]);
+            }
+        } else {
+            setCasosCRM([]);
+        }
+    }, [formData.sede_id, sedes]);
+
+    const cargarCasosCRM = async (accountId) => {
+        try {
+            setCasosCRMLoading(true);
+            const res = await crmAPI.getCasosBySede(accountId, { estado: 'active', limit: 50 });
+            const data = res?.data || res;
+            setCasosCRM(data.casos || []);
+        } catch (err) {
+            logger.debug('No se pudieron cargar casos CRM:', err.message);
+            setCasosCRM([]);
+        } finally {
+            setCasosCRMLoading(false);
+        }
+    };
 
     const cargarDatos = async () => {
         try {
@@ -336,12 +366,63 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
 
                     <div className="space-y-1">
                         <label className="block text-sm font-semibold text-slate-700">Casos / Tickets Relacionados</label>
+
+                        {/* Casos CRM disponibles */}
+                        {casosCRMLoading ? (
+                            <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+                                <div className="w-3 h-3 rounded-full border-2 border-slate-300 border-t-blue-500 animate-spin"></div>
+                                Cargando casos CRM...
+                            </div>
+                        ) : casosCRM.length > 0 && (
+                            <div className="mb-3">
+                                <p className="text-xs text-slate-500 mb-2">Casos CRM activos de esta sede:</p>
+                                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-40 overflow-y-auto">
+                                    {casosCRM.map(caso => {
+                                        const yaAgregado = formData.casos_tickets.includes(caso.numeroCaso);
+                                        return (
+                                            <button
+                                                key={caso.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!yaAgregado) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            casos_tickets: [...prev.casos_tickets, caso.numeroCaso]
+                                                        }));
+                                                    }
+                                                }}
+                                                disabled={yaAgregado}
+                                                className={`w-full px-3 py-2 text-left flex items-center justify-between text-sm transition-colors ${
+                                                    yaAgregado
+                                                        ? 'bg-blue-50 text-blue-400 cursor-default'
+                                                        : 'hover:bg-slate-50 text-slate-700 cursor-pointer'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="font-mono text-xs text-blue-600 font-medium shrink-0">{caso.numeroCaso}</span>
+                                                    <span className="truncate">{caso.titulo}</span>
+                                                </div>
+                                                {yaAgregado ? (
+                                                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 shrink-0">+ Agregar</span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Input manual */}
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={ticketInput}
                                 onChange={(e) => setTicketInput(e.target.value)}
-                                placeholder="Ej: CRM-1234"
+                                placeholder="Ej: CRM-1234 (agregar manualmente)"
                                 className="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                 onKeyPress={(e) => e.key === 'Enter' && handleAddTicket(e)}
                             />
