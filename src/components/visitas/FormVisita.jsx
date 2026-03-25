@@ -12,6 +12,7 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
     const [ticketInput, setTicketInput] = useState('');
     const [casosCRM, setCasosCRM] = useState([]);
     const [casosCRMLoading, setCasosCRMLoading] = useState(false);
+    const [casoDetalle, setCasoDetalle] = useState(null);
 
     // Función helper para convertir Date a formato yyyy-MM-dd
     const formatearFecha = (fecha) => {
@@ -376,42 +377,83 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                         ) : casosCRM.length > 0 && (
                             <div className="mb-3">
                                 <p className="text-xs text-slate-500 mb-2">Casos CRM activos de esta sede:</p>
-                                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-40 overflow-y-auto">
+                                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
                                     {casosCRM.map(caso => {
                                         const yaAgregado = formData.casos_tickets.includes(caso.numeroCaso);
                                         return (
-                                            <button
-                                                key={caso.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (!yaAgregado) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            casos_tickets: [...prev.casos_tickets, caso.numeroCaso]
-                                                        }));
-                                                    }
-                                                }}
-                                                disabled={yaAgregado}
-                                                className={`w-full px-3 py-2 text-left flex items-center justify-between text-sm transition-colors ${
-                                                    yaAgregado
-                                                        ? 'bg-blue-50 text-blue-400 cursor-default'
-                                                        : 'hover:bg-slate-50 text-slate-700 cursor-pointer'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <span className="font-mono text-xs text-blue-600 font-medium shrink-0">{caso.numeroCaso}</span>
-                                                    <span className="truncate">{caso.titulo}</span>
-                                                </div>
-                                                {yaAgregado ? (
-                                                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            <div key={caso.id} className="flex items-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCasoDetalle(caso)}
+                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0"
+                                                    title="Ver detalle"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400 shrink-0">+ Agregar</span>
-                                                )}
-                                            </button>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!yaAgregado) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                casos_tickets: [...prev.casos_tickets, caso.numeroCaso]
+                                                            }));
+                                                        }
+                                                    }}
+                                                    disabled={yaAgregado}
+                                                    className={`flex-1 px-3 py-2 text-left flex items-center justify-between text-sm transition-colors ${
+                                                        yaAgregado
+                                                            ? 'bg-blue-50 text-blue-400 cursor-default'
+                                                            : 'hover:bg-slate-50 text-slate-700 cursor-pointer'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="font-mono text-xs text-blue-600 font-medium shrink-0">{caso.numeroCaso}</span>
+                                                        <span className="truncate">{caso.titulo}</span>
+                                                    </div>
+                                                    {yaAgregado ? (
+                                                        <svg className="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400 shrink-0">+ Agregar</span>
+                                                    )}
+                                                </button>
+                                            </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mini modal detalle de caso */}
+                        {casoDetalle && (
+                            <div className="mb-3 border border-blue-200 bg-blue-50/50 rounded-lg p-4 relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setCasoDetalle(null)}
+                                    className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 p-0.5"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-mono text-xs text-blue-600 font-bold bg-blue-100 px-1.5 py-0.5 rounded">{casoDetalle.numeroCaso}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{casoDetalle.estado}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{casoDetalle.prioridad}</span>
+                                </div>
+                                <p className="text-sm font-semibold text-slate-800 mb-1">{casoDetalle.titulo}</p>
+                                {casoDetalle.descripcion && (
+                                    <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto">{casoDetalle.descripcion}</p>
+                                )}
+                                <div className="flex gap-4 mt-2 text-[10px] text-slate-400">
+                                    {casoDetalle.asignadoA && <span>Asignado: {casoDetalle.asignadoA}</span>}
+                                    {casoDetalle.creadoEn && <span>Creado: {new Date(casoDetalle.creadoEn).toLocaleDateString('es-AR')}</span>}
+                                    {casoDetalle.origen && <span>Origen: {casoDetalle.origen}</span>}
                                 </div>
                             </div>
                         )}

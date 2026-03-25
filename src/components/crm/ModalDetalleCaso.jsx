@@ -13,12 +13,19 @@ const PRIORIDAD_BADGES = {
   3: { label: 'Baja', style: 'bg-surface-50 text-surface-600 border-surface-200' },
 }
 
+const TAREA_ESTADO = {
+  0: { label: 'Abierta', style: 'text-blue-700 bg-blue-50 border-blue-100' },
+  1: { label: 'Completada', style: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+  2: { label: 'Cancelada', style: 'text-surface-600 bg-surface-100 border-surface-200' },
+}
+
 export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
   const [caso, setCaso] = useState(casoInicial)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (casoInicial?.id && !casoInicial.descripcion) {
+    // Siempre cargar detalle para obtener tareas
+    if (casoInicial?.id) {
       cargarDetalle()
     }
   }, [casoInicial?.id])
@@ -37,6 +44,7 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
 
   const estadoBadge = ESTADO_BADGES[caso.estadoCodigo] || { label: caso.estado, style: 'bg-surface-100 text-surface-600 border-surface-200' }
   const prioridadBadge = PRIORIDAD_BADGES[caso.prioridadCodigo] || { label: caso.prioridad, style: 'bg-surface-100 text-surface-600 border-surface-200' }
+  const tareas = caso.tareas || []
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
@@ -82,20 +90,67 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
             <InfoField label="Origen" value={caso.origen || '-'} />
             <InfoField label="Creado" value={caso.creadoEn ? new Date(caso.creadoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} />
             <InfoField label="Modificado" value={caso.modificadoEn ? new Date(caso.modificadoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} />
-            {caso.resueltoEn && (
-              <InfoField label="Resuelto" value={new Date(caso.resueltoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })} />
-            )}
           </div>
 
           {/* Descripción */}
           {caso.descripcion && (
             <div>
-              <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-2">Descripcion</h4>
+              <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-2">Descripción</h4>
               <div className="bg-surface-50 border border-surface-200 rounded-lg p-4 text-sm text-surface-700 leading-relaxed whitespace-pre-wrap">
                 {caso.descripcion}
               </div>
             </div>
           )}
+
+          {/* Tareas */}
+          <div>
+            <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-2">
+              Tareas {tareas.length > 0 && <span className="text-surface-300 font-normal">({tareas.length})</span>}
+            </h4>
+            {tareas.length === 0 ? (
+              <p className="text-xs text-surface-400 italic">
+                {loading ? 'Cargando tareas...' : 'Sin tareas asociadas'}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {tareas.map(tarea => {
+                  const tareaEstado = TAREA_ESTADO[tarea.estadoCodigo] || { label: tarea.estado, style: 'text-surface-600 bg-surface-100 border-surface-200' }
+                  const vencida = tarea.vencimiento && tarea.estadoCodigo === 0 && new Date(tarea.vencimiento) < new Date()
+                  return (
+                    <div key={tarea.id} className={`border rounded-lg p-3 ${vencida ? 'border-rose-200 bg-rose-50/30' : 'border-surface-200 bg-surface-50/50'}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${tareaEstado.style}`}>
+                              {tareaEstado.label}
+                            </span>
+                            {vencida && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border border-rose-200 text-rose-600 bg-rose-50">
+                                Vencida
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-surface-800">{tarea.asunto}</p>
+                          {tarea.descripcion && (
+                            <p className="text-xs text-surface-500 mt-1 line-clamp-2 whitespace-pre-wrap">{tarea.descripcion}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-4 mt-2 text-[10px] text-surface-400">
+                        {tarea.asignadoA && <span>Asignado: {tarea.asignadoA}</span>}
+                        {tarea.vencimiento && (
+                          <span className={vencida ? 'text-rose-500 font-semibold' : ''}>
+                            Vence: {new Date(tarea.vencimiento).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                        {tarea.creadoEn && <span>Creada: {new Date(tarea.creadoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}

@@ -31,6 +31,7 @@ export default function CasosSoportePage() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroAntiguedad, setFiltroAntiguedad] = useState(0)
   const [filtroCuenta, setFiltroCuenta] = useState('')
+  const [soloConTareas, setSoloConTareas] = useState(false)
   const [casoSeleccionado, setCasoSeleccionado] = useState(null)
 
   // Lista única de cuentas/sedes extraída de los casos
@@ -42,7 +43,7 @@ export default function CasosSoportePage() {
 
   useEffect(() => {
     cargarCasos()
-  }, [filtroEstado, filtroPrioridad])
+  }, [filtroEstado, filtroPrioridad, filtroAntiguedad, soloConTareas])
 
   const cargarCasos = async () => {
     try {
@@ -51,6 +52,8 @@ export default function CasosSoportePage() {
       const params = { limit: 200 }
       if (filtroEstado) params.estado = filtroEstado
       if (filtroPrioridad) params.prioridad = filtroPrioridad
+      if (filtroAntiguedad > 0) params.diasMinimos = filtroAntiguedad
+      if (soloConTareas) params.soloConTareasAbiertas = 'true'
 
       const res = await crmAPI.getCasos(params)
       const data = res?.data || res
@@ -63,12 +66,8 @@ export default function CasosSoportePage() {
     }
   }
 
-  // Filtrar por antigüedad y sede en el cliente
+  // Filtrar por sede en el cliente (antigüedad se filtra en el backend)
   const casosFiltrados = casos.filter(caso => {
-    if (filtroAntiguedad > 0) {
-      const dias = Math.floor((Date.now() - new Date(caso.creadoEn).getTime()) / (1000 * 60 * 60 * 24))
-      if (dias < filtroAntiguedad) return false
-    }
     if (filtroCuenta && caso.cuentaId !== filtroCuenta) return false
     return true
   })
@@ -161,6 +160,19 @@ export default function CasosSoportePage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-center">
+            <input
+              type="checkbox"
+              id="soloConTareas"
+              checked={soloConTareas}
+              onChange={e => setSoloConTareas(e.target.checked)}
+              className="rounded border-surface-300 text-primary-600 focus:ring-primary-500 h-3.5 w-3.5"
+            />
+            <label htmlFor="soloConTareas" className="text-xs text-surface-500 cursor-pointer select-none">
+              Solo con tareas abiertas
+            </label>
           </div>
 
           <div className="ml-auto self-center">
