@@ -627,6 +627,12 @@ export const crmAPI = {
     return apiCall(`/crm/casos${query ? '?' + query : ''}`)
   },
   getCaso: (id) => apiCall(`/crm/casos/${id}`),
+  completarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/completar`, { method: 'PATCH' }),
+  cancelarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/cancelar`, { method: 'PATCH' }),
+  agregarNotaTarea: (tareaId, texto, asunto) => apiCall(`/crm/tareas/${tareaId}/nota`, {
+    method: 'POST',
+    body: JSON.stringify({ texto, asunto }),
+  }),
   getResumen: () => apiCall('/crm/resumen'),
   vincularSede: (sedeId, accountId) => apiCall(`/crm/sedes/${sedeId}/vincular`, {
     method: 'PATCH',

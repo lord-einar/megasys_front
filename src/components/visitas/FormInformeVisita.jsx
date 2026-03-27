@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { visitasAPI, categoriasProblemasAPI, visitaImagenesAPI } from '../../services/api';
+import { visitasAPI, categoriasProblemasAPI, visitaImagenesAPI, crmAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import LoadingOverlay from '../LoadingOverlay';
 import Swal from 'sweetalert2';
 
 const FormInformeVisita = ({ visita, onClose, onSave }) => {
+    const { user } = useAuth();
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistExtra, setChecklistExtra] = useState([]);
     const [casosResueltos, setCasosResueltos] = useState([]);
@@ -17,6 +19,12 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [categoriasProblemas, setCategoriasProblemas] = useState([]);
+
+    // Casos CRM vinculados a la visita (con sus tareas)
+    const [casosCRM, setCasosCRM] = useState([]); // { numeroCaso, titulo, id, tareas: [...] }
+    const [casosCRMLoading, setCasosCRMLoading] = useState(false);
+    // Estado por tarea individual: { [tareaId]: { estado: 'pendiente'|'realizado'|'postergado'|'cancelada', observacion } }
+    const [tareasEstado, setTareasEstado] = useState({});
 
     // Inputs temporales
     const [extraInput, setExtraInput] = useState('');
@@ -66,6 +74,55 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                     setProblemaInput(prev => ({ ...prev, categoria_id: categoriaOtro.id }));
                 } else if (categoriasRes.data.length > 0) {
                     setProblemaInput(prev => ({ ...prev, categoria_id: categoriasRes.data[0].id }));
+                }
+            }
+
+            // Cargar casos CRM vinculados a la visita (con detalle completo incluyendo tareas)
+            if (visita.casos_tickets && visita.casos_tickets.length > 0) {
+                setCasosCRMLoading(true);
+                try {
+                    const casosPromises = visita.casos_tickets.map(async (ticket) => {
+                        try {
+                            // Buscar el caso por ticketnumber
+                            const res = await crmAPI.getCasos({ busqueda: ticket, limit: 1 });
+                            const data = res?.data || res;
+                            const casoBasico = data.casos?.[0];
+                            if (!casoBasico) {
+                                return { numeroCaso: ticket, titulo: 'Caso no encontrado en CRM', prioridad: null, tareas: [], estado: 'pendiente', observacion: '' };
+                            }
+                            // Traer detalle completo con tareas
+                            const detalle = await crmAPI.getCaso(casoBasico.id);
+                            const casoCompleto = detalle?.data || detalle;
+                            const estadoPrevio = visita.informe?.casos_crm_estado?.find(c => c.numeroCaso === ticket);
+                            return {
+                                id: casoCompleto.id,
+                                numeroCaso: ticket,
+                                titulo: casoCompleto.titulo,
+                                prioridad: casoCompleto.prioridad,
+                                tareas: casoCompleto.tareas || [],
+                                estado: estadoPrevio?.estado || 'pendiente',
+                                observacion: estadoPrevio?.observacion || ''
+                            };
+                        } catch {
+                            return { numeroCaso: ticket, titulo: 'Error al consultar CRM', prioridad: null, tareas: [], estado: 'pendiente', observacion: '' };
+                        }
+                    });
+                    const casosResueltosCRM = await Promise.all(casosPromises);
+                    setCasosCRM(casosResueltosCRM);
+                    // Pre-cargar estado por tarea si hay informe previo
+                    if (visita.informe?.casos_crm_estado) {
+                        const estadosPrevios = {};
+                        for (const c of visita.informe.casos_crm_estado) {
+                            if (c.tareaId) {
+                                estadosPrevios[c.tareaId] = { estado: c.estado, observacion: c.observacion || '' };
+                            }
+                        }
+                        setTareasEstado(estadosPrevios);
+                    }
+                } catch (err) {
+                    console.error('Error cargando casos CRM:', err);
+                } finally {
+                    setCasosCRMLoading(false);
                 }
             }
 
@@ -256,6 +313,29 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                     causado_por_usuario: p.causado_por_usuario
                 })),
                 solicitudes_resueltas: solicitudesResueltas,
+                casos_crm_estado: Object.entries(tareasEstado)
+                    .filter(([, ts]) => ts.estado !== 'pendiente')
+                    .map(([tareaId, ts]) => {
+                        // Buscar el caso y tarea para enriquecer el payload
+                        let numeroCaso = '', titulo = '', tareaAsunto = '';
+                        for (const caso of casosCRM) {
+                            const tarea = (caso.tareas || []).find(t => t.id === tareaId);
+                            if (tarea) {
+                                numeroCaso = caso.numeroCaso;
+                                titulo = caso.titulo;
+                                tareaAsunto = tarea.asunto;
+                                break;
+                            }
+                        }
+                        return {
+                            tareaId,
+                            tareaAsunto,
+                            numeroCaso,
+                            titulo,
+                            estado: ts.estado,
+                            observacion: ts.observacion || null
+                        };
+                    }),
                 observaciones
             };
 
@@ -263,6 +343,24 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             console.log('📤 Problemas en el estado:', problemasResueltos);
 
             await visitasAPI.marcarRealizada(visita.id, payload);
+
+            // Ejecutar acciones CRM por tarea individual
+            for (const [tareaId, ts] of Object.entries(tareasEstado)) {
+                if (ts.estado === 'realizado') {
+                    try { await crmAPI.completarTarea(tareaId); } catch (e) { console.error(`Error completando tarea ${tareaId}:`, e); }
+                } else if (ts.estado === 'cancelada') {
+                    try { await crmAPI.cancelarTarea(tareaId); } catch (e) { console.error(`Error cancelando tarea ${tareaId}:`, e); }
+                }
+                // Agregar observación como nota en CRM si hay texto
+                // Agregar observación como nota en CRM (siempre, para los 3 estados)
+                const nombreUsuario = user?.fullName || user?.name || 'Usuario';
+                const asuntoNota = ts.estado === 'realizado' ? `Tarea completada - Portal IT - ${nombreUsuario}`
+                    : ts.estado === 'cancelada' ? `Tarea cancelada - Portal IT - ${nombreUsuario}`
+                    : `Tarea postergada - Portal IT - ${nombreUsuario}`;
+                if (ts.observacion && ts.observacion.trim()) {
+                    try { await crmAPI.agregarNotaTarea(tareaId, ts.observacion.trim(), asuntoNota); } catch (e) { console.error(`Error agregando nota a tarea ${tareaId}:`, e); }
+                }
+            }
 
             // Subir imágenes staged
             for (const { file } of imagenesStaged) {
@@ -373,9 +471,127 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                         </div>
                     </section>
 
-                    {/* 2. Problemas Resueltos */}
+                    {/* 2. Tareas CRM */}
+                    {(casosCRM.length > 0 || casosCRMLoading) && (
+                        <section>
+                            <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">2. Tareas CRM</h4>
+                            {casosCRMLoading ? (
+                                <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
+                                    <div className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-blue-500 animate-spin"></div>
+                                    Cargando tareas del CRM...
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {casosCRM.map(caso => {
+                                        const tareasAbiertas = (caso.tareas || []).filter(t => t.estadoCodigo === 0);
+                                        if (tareasAbiertas.length === 0) return null;
+                                        return (
+                                            <div key={caso.numeroCaso}>
+                                                {/* Caso header compacto */}
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="font-mono text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{caso.numeroCaso}</span>
+                                                    <span className="text-sm text-slate-600 truncate">{caso.titulo}</span>
+                                                </div>
+                                                {/* Tareas individuales */}
+                                                <div className="space-y-2">
+                                                    {tareasAbiertas.map(tarea => {
+                                                        const ts = tareasEstado[tarea.id] || { estado: 'pendiente', observacion: '' };
+                                                        return (
+                                                            <div key={tarea.id} className={`border rounded-lg p-3 transition-colors ${
+                                                                ts.estado === 'realizado' ? 'bg-emerald-50 border-emerald-200' :
+                                                                ts.estado === 'cancelada' ? 'bg-red-50 border-red-200' :
+                                                                ts.estado === 'postergado' ? 'bg-amber-50 border-amber-200' :
+                                                                'bg-white border-slate-200'
+                                                            }`}>
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-sm font-medium text-slate-800">{tarea.asunto}</p>
+                                                                        <div className="flex gap-3 mt-1 text-[10px] text-slate-400">
+                                                                            {tarea.asignadoA && <span>Asignado: {tarea.asignadoA}</span>}
+                                                                            {tarea.vencimiento && (
+                                                                                <span className={new Date(tarea.vencimiento) < new Date() ? 'text-rose-500 font-semibold' : ''}>
+                                                                                    Vence: {new Date(tarea.vencimiento).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex gap-1.5 shrink-0">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setTareasEstado(prev => ({ ...prev, [tarea.id]: { ...prev[tarea.id], estado: 'realizado' } }))}
+                                                                            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                                                                                ts.estado === 'realizado'
+                                                                                    ? 'bg-emerald-600 text-white'
+                                                                                    : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
+                                                                            }`}
+                                                                        >
+                                                                            ✓ Realizado
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setTareasEstado(prev => ({ ...prev, [tarea.id]: { ...prev[tarea.id], estado: 'postergado' } }))}
+                                                                            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                                                                                ts.estado === 'postergado'
+                                                                                    ? 'bg-amber-500 text-white'
+                                                                                    : 'bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700'
+                                                                            }`}
+                                                                        >
+                                                                            ⏳ Postergado
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setTareasEstado(prev => ({ ...prev, [tarea.id]: { ...prev[tarea.id], estado: 'cancelada' } }))}
+                                                                            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                                                                                ts.estado === 'cancelada'
+                                                                                    ? 'bg-red-600 text-white'
+                                                                                    : 'bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600'
+                                                                            }`}
+                                                                        >
+                                                                            ✕ Cancelada
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                {/* Observación */}
+                                                                {ts.estado !== 'pendiente' && (
+                                                                    <div className="mt-2">
+                                                                        <textarea
+                                                                            value={ts.observacion || ''}
+                                                                            onChange={(e) => setTareasEstado(prev => ({
+                                                                                ...prev,
+                                                                                [tarea.id]: { ...prev[tarea.id], observacion: e.target.value }
+                                                                            }))}
+                                                                            placeholder={
+                                                                                ts.estado === 'realizado' ? 'Observaciones sobre la resolución...' :
+                                                                                ts.estado === 'postergado' ? 'Motivo de la postergación...' :
+                                                                                'Motivo de la cancelación...'
+                                                                            }
+                                                                            rows="2"
+                                                                            className="textarea w-full text-sm"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                {/* Aviso */}
+                                                                {ts.estado === 'realizado' && (
+                                                                    <p className="mt-1.5 text-[11px] text-emerald-600 font-medium">Se completará esta tarea en el CRM al guardar</p>
+                                                                )}
+                                                                {ts.estado === 'cancelada' && (
+                                                                    <p className="mt-1.5 text-[11px] text-red-600 font-medium">Se cancelará esta tarea en el CRM al guardar</p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+                    )}
+
+                    {/* 3. Problemas Resueltos */}
                     <section>
-                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">2. Problemas Resueltos</h4>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">3. Problemas Resueltos</h4>
                         <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                             <input
                                 type="text"
@@ -440,7 +656,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                     {/* 3. Solicitudes Pre-Visita */}
                     {visita.solicitudesPrevias && visita.solicitudesPrevias.length > 0 && (
                         <section>
-                            <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">3. Solicitudes Pre-Visita</h4>
+                            <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">4. Solicitudes Pre-Visita</h4>
                             <div className="space-y-2">
                                 {visita.solicitudesPrevias.map(sol => (
                                     <label key={sol.id} className={`flex items-start space-x-3 p-3 border rounded cursor-pointer ${solicitudesResueltas.includes(sol.id) ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
@@ -465,7 +681,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                     {/* 4. Casos Resueltos */}
                     <section>
-                        <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">4. Casos/Tickets Resueltos</h4>
+                        <h4 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">5. Casos/Tickets Resueltos</h4>
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -494,7 +710,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                     {/* 5. Observaciones */}
                     <section>
-                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">5. Observaciones Finales</h4>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">6. Observaciones Finales</h4>
                         <textarea
                             value={observaciones}
                             onChange={(e) => setObservaciones(e.target.value)}
@@ -506,7 +722,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                     {/* 6. Imágenes */}
                     <section>
-                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">6. Imágenes</h4>
+                        <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">7. Imágenes</h4>
                         <p className="text-xs text-slate-500 mb-3">Adjuntá fotos del equipo, problemas encontrados o trabajo realizado.</p>
 
                         {/* Imágenes existentes (modo edición) */}

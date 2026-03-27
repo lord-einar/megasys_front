@@ -71,7 +71,7 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
     const cargarCasosCRM = async (accountId) => {
         try {
             setCasosCRMLoading(true);
-            const res = await crmAPI.getCasosBySede(accountId, { estado: 'active', limit: 50 });
+            const res = await crmAPI.getCasosBySede(accountId, { estado: 'active', soloConTareasAbiertas: 'true', limit: 50 });
             const data = res?.data || res;
             setCasosCRM(data.casos || []);
         } catch (err) {

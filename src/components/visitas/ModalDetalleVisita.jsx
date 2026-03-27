@@ -326,6 +326,50 @@ const ModalDetalleVisita = ({ visitaId, onClose, onEdit, onCompletar, onEditarIn
                                 </div>
                             )}
 
+                            {/* Casos CRM - Estado del Informe */}
+                            {visita.informe.casos_crm_estado && visita.informe.casos_crm_estado.length > 0 && (
+                                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-4">
+                                    <h5 className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        Tareas CRM ({visita.informe.casos_crm_estado.length})
+                                    </h5>
+                                    <div className="space-y-2">
+                                        {visita.informe.casos_crm_estado.map((entry, i) => (
+                                            <div key={i} className={`bg-white border rounded-lg p-3 ${
+                                                entry.estado === 'realizado' ? 'border-emerald-200' :
+                                                entry.estado === 'cancelada' ? 'border-red-200' :
+                                                'border-amber-200'
+                                            }`}>
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="font-mono text-xs text-blue-600 font-bold shrink-0">{entry.numeroCaso}</span>
+                                                        <span className="text-sm text-slate-700 truncate">{entry.tareaAsunto || entry.titulo}</span>
+                                                    </div>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
+                                                        entry.estado === 'realizado' ? 'bg-emerald-100 text-emerald-700' :
+                                                        entry.estado === 'cancelada' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                        {entry.estado === 'realizado' ? 'Completada' : entry.estado === 'cancelada' ? 'Cancelada' : 'Postergada'}
+                                                    </span>
+                                                </div>
+                                                {entry.observacion && (
+                                                    <p className={`text-xs rounded p-2 mt-2 italic ${
+                                                        entry.estado === 'realizado' ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' :
+                                                        entry.estado === 'cancelada' ? 'text-red-700 bg-red-50 border border-red-100' :
+                                                        'text-amber-700 bg-amber-50 border border-amber-100'
+                                                    }`}>
+                                                        {entry.observacion}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Problemas Resueltos */}
                             {visita.informe.problemasResueltos && visita.informe.problemasResueltos.length > 0 && (
                                 <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 mb-4">

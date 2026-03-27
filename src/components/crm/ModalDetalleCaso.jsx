@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { crmAPI } from '../../services/api'
+import Swal from 'sweetalert2'
 
 const ESTADO_BADGES = {
   0: { label: 'Activo', style: 'bg-blue-50 text-blue-700 border-blue-100' },
@@ -39,6 +40,50 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
       console.error('Error cargando detalle del caso:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCompletarTarea = async (tareaId, asunto) => {
+    const result = await Swal.fire({
+      title: '¿Completar tarea?',
+      html: `<p>Se marcará como completada:<br/><strong>${asunto}</strong></p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, completar',
+      cancelButtonText: 'Cancelar',
+    })
+    if (!result.isConfirmed) return
+
+    try {
+      await crmAPI.completarTarea(tareaId)
+      Swal.fire({ title: 'Tarea completada', icon: 'success', timer: 1500, showConfirmButton: false })
+      cargarDetalle() // recargar para ver el cambio
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo completar la tarea', icon: 'error' })
+    }
+  }
+
+  const handleCancelarTarea = async (tareaId, asunto) => {
+    const result = await Swal.fire({
+      title: '¿Cancelar tarea?',
+      html: `<p>Se marcará como cancelada:<br/><strong>${asunto}</strong></p>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, cancelar tarea',
+      cancelButtonText: 'Volver',
+    })
+    if (!result.isConfirmed) return
+
+    try {
+      await crmAPI.cancelarTarea(tareaId)
+      Swal.fire({ title: 'Tarea cancelada', icon: 'success', timer: 1500, showConfirmButton: false })
+      cargarDetalle()
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo cancelar la tarea', icon: 'error' })
     }
   }
 
@@ -136,14 +181,34 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-4 mt-2 text-[10px] text-surface-400">
-                        {tarea.asignadoA && <span>Asignado: {tarea.asignadoA}</span>}
-                        {tarea.vencimiento && (
-                          <span className={vencida ? 'text-rose-500 font-semibold' : ''}>
-                            Vence: {new Date(tarea.vencimiento).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex gap-4 text-[10px] text-surface-400">
+                          {tarea.asignadoA && <span>Asignado: {tarea.asignadoA}</span>}
+                          {tarea.vencimiento && (
+                            <span className={vencida ? 'text-rose-500 font-semibold' : ''}>
+                              Vence: {new Date(tarea.vencimiento).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          )}
+                          {tarea.creadoEn && <span>Creada: {new Date(tarea.creadoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>}
+                        </div>
+                        {tarea.estadoCodigo === 0 && (
+                          <div className="flex gap-1.5 shrink-0">
+                            <button
+                              onClick={() => handleCompletarTarea(tarea.id, tarea.asunto)}
+                              className="px-2.5 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded text-[11px] font-semibold transition-colors"
+                              title="Marcar como completada"
+                            >
+                              ✓ Completar
+                            </button>
+                            <button
+                              onClick={() => handleCancelarTarea(tarea.id, tarea.asunto)}
+                              className="px-2.5 py-1 bg-surface-100 text-surface-500 hover:bg-rose-100 hover:text-rose-600 rounded text-[11px] font-semibold transition-colors"
+                              title="Cancelar tarea"
+                            >
+                              ✕ Cancelar
+                            </button>
+                          </div>
                         )}
-                        {tarea.creadoEn && <span>Creada: {new Date(tarea.creadoEn).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>}
                       </div>
                     </div>
                   )
