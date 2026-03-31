@@ -31,7 +31,7 @@ export default function CasosSoportePage() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
   const [filtroAntiguedad, setFiltroAntiguedad] = useState(0)
   const [filtroCuenta, setFiltroCuenta] = useState('')
-  const [soloConTareas, setSoloConTareas] = useState(false)
+  const [soloConTareas, setSoloConTareas] = useState(true)
   const [casoSeleccionado, setCasoSeleccionado] = useState(null)
 
   // Lista única de cuentas/sedes extraída de los casos

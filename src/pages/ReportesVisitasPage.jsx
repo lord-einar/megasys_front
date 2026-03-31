@@ -419,11 +419,12 @@ function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = 
     const chartHeight = Math.max(200, displayData.length * ROW_HEIGHT + 20);
     const MAX_VISIBLE = 480; // px antes de activar scroll
 
+    const MIN_CHART_WIDTH = 480; // ancho mínimo para que las barras se vean bien
+
     const chart = (
         <BarChart
             data={displayData}
             layout="vertical"
-            width={9999} // se sobreescribe por el wrapper
             height={chartHeight}
             margin={{ top: 4, right: 44, left: 8, bottom: 4 }}
         >
@@ -458,14 +459,22 @@ function HorizontalBarChart({ title, data, tooltipLabel = 'Cantidad', showAll = 
             </div>
             {showAll && chartHeight > MAX_VISIBLE ? (
                 <div className="overflow-y-auto rounded" style={{ maxHeight: MAX_VISIBLE }}>
-                    <ResponsiveContainer width="100%" height={chartHeight}>
-                        {chart}
-                    </ResponsiveContainer>
+                    <div className="overflow-x-auto">
+                        <div style={{ minWidth: MIN_CHART_WIDTH }}>
+                            <ResponsiveContainer width="100%" height={chartHeight}>
+                                {chart}
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
             ) : (
-                <ResponsiveContainer width="100%" height={chartHeight}>
-                    {chart}
-                </ResponsiveContainer>
+                <div className="overflow-x-auto">
+                    <div style={{ minWidth: MIN_CHART_WIDTH }}>
+                        <ResponsiveContainer width="100%" height={chartHeight}>
+                            {chart}
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             )}
             {footnote && (
                 <p className="text-xs text-slate-400 mt-3 leading-relaxed">{footnote}</p>

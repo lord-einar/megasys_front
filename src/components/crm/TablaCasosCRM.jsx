@@ -20,13 +20,14 @@ export default function TablaCasosCRM({ accountId, sedeId }) {
   const [error, setError] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('active')
   const [filtroPrioridad, setFiltroPrioridad] = useState('')
+  const [soloConTareas, setSoloConTareas] = useState(true)
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState(null)
   const [casoSeleccionado, setCasoSeleccionado] = useState(null)
 
   useEffect(() => {
     if (accountId) cargarCasos()
-  }, [accountId, filtroEstado, filtroPrioridad, page])
+  }, [accountId, filtroEstado, filtroPrioridad, soloConTareas, page])
 
   const cargarCasos = async () => {
     try {
@@ -35,6 +36,7 @@ export default function TablaCasosCRM({ accountId, sedeId }) {
       const params = { page, limit: 15 }
       if (filtroEstado) params.estado = filtroEstado
       if (filtroPrioridad) params.prioridad = filtroPrioridad
+      if (soloConTareas) params.soloConTareasAbiertas = 'true'
 
       const res = await crmAPI.getCasosBySede(accountId, params)
       const data = res?.data || res
@@ -105,6 +107,18 @@ export default function TablaCasosCRM({ accountId, sedeId }) {
           <option value="normal">Normal</option>
           <option value="low">Baja</option>
         </select>
+        <div className="flex items-center gap-2 self-center">
+          <input
+            type="checkbox"
+            id="soloConTareasSede"
+            checked={soloConTareas}
+            onChange={e => { setSoloConTareas(e.target.checked); setPage(1) }}
+            className="rounded border-surface-300 text-primary-600 focus:ring-primary-500 h-3.5 w-3.5"
+          />
+          <label htmlFor="soloConTareasSede" className="text-xs text-surface-500 cursor-pointer select-none">
+            Solo con tareas abiertas
+          </label>
+        </div>
         {pagination?.total != null && (
           <span className="text-xs text-surface-500 self-center ml-auto">
             {pagination.total} caso{pagination.total !== 1 ? 's' : ''} encontrado{pagination.total !== 1 ? 's' : ''}
