@@ -68,6 +68,25 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
         }
     }, [formData.sede_id, sedes]);
 
+    // Autoasignar técnico según la sede seleccionada (solo al crear visita)
+    useEffect(() => {
+        if (visitaEditar || !formData.sede_id) return;
+        let cancelado = false;
+        (async () => {
+            try {
+                const res = await sedesAPI.getById(formData.sede_id);
+                const sedeDetalle = res?.data || res;
+                const tecnicoId = sedeDetalle?.tecnicoAsignado?.id;
+                if (!cancelado && tecnicoId) {
+                    setFormData(prev => ({ ...prev, tecnico_asignado_id: tecnicoId }));
+                }
+            } catch (err) {
+                logger.debug('No se pudo obtener técnico asignado de la sede:', err.message);
+            }
+        })();
+        return () => { cancelado = true; };
+    }, [formData.sede_id, visitaEditar]);
+
     const cargarCasosCRM = async (accountId) => {
         try {
             setCasosCRMLoading(true);

@@ -258,6 +258,20 @@ export default function SedeDetallePage() {
                     {sede.activo ? 'Activa' : 'Inactiva'}
                   </span>
                 </div>
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  <span className="text-xs font-bold text-surface-400 uppercase tracking-wider">Técnico asignado</span>
+                  <span className="text-surface-300">:</span>
+                  {sede.tecnicoAsignado ? (
+                    <button
+                      onClick={() => navigate(`/personal/${sede.tecnicoAsignado.id}`)}
+                      className="font-semibold text-primary-700 hover:text-primary-900 hover:underline"
+                    >
+                      {sede.tecnicoAsignado.nombre} {sede.tecnicoAsignado.apellido}
+                    </button>
+                  ) : (
+                    <span className="italic text-surface-400">Sin asignar</span>
+                  )}
+                </div>
               </div>
             </div>
 
