@@ -446,7 +446,10 @@ export default function SedeDetallePage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="text-primary-600 hover:text-primary-800 font-medium text-sm hover:underline">
+                            <button
+                              onClick={() => navigate(`/personal/${person.id}`)}
+                              className="text-primary-600 hover:text-primary-800 font-medium text-sm hover:underline"
+                            >
                               Ver Perfil
                             </button>
                           </td>

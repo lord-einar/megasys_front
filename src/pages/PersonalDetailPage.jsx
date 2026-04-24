@@ -200,7 +200,7 @@ export default function PersonalDetailPage() {
                       Ubicación y Empresa
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <InfoItem label="Empresa" value={personal.empresa?.nombre_empresa} />
+                      <InfoItem label="Empresa" value={personal.sede?.empresa?.nombre_empresa} />
                       <InfoItem label="Sede Principal" value={personal.sede?.nombre_sede} />
                     </div>
                   </div>
