@@ -643,4 +643,24 @@ export const crmAPI = {
   }),
 }
 
+export const asignacionesAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/asignaciones${qs ? `?${qs}` : ''}`)
+  },
+  getById: (id) => apiCall(`/asignaciones/${id}`),
+  crear: (data) => apiCall('/asignaciones', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  actualizar: (id, data) => apiCall(`/asignaciones/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  cerrar: (id, data = {}) => apiCall(`/asignaciones/${id}/cerrar`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  }),
+}
+
 export default apiCall

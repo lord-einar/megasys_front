@@ -365,7 +365,6 @@ export default function EditArticulo() {
                 nombreTipo.includes('pc') ||
                 nombreTipo.includes('comp') ||
                 nombreTipo.includes('all') ||
-                nombreTipo.includes('cel') ||
                 nombreTipo.includes('servidor')
 
               if (!esOrdenador) return null

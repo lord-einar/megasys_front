@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { personalAPI, authAPI } from '../services/api'
+import { personalAPI, authAPI, asignacionesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 
 export default function PersonalDetailPage() {
@@ -11,7 +11,10 @@ export default function PersonalDetailPage() {
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
   const [currentUser, setCurrentUser] = useState(null)
-  const { canUpdate } = usePermissions()
+  const [asignaciones, setAsignaciones] = useState([])
+  const [editandoFechaId, setEditandoFechaId] = useState(null)
+  const [nuevaFecha, setNuevaFecha] = useState('')
+  const { canUpdate, isSuperAdmin } = usePermissions()
 
   useEffect(() => {
     cargarDatos()
@@ -30,6 +33,16 @@ export default function PersonalDetailPage() {
       const response = await personalAPI.getById(id)
       const personalData = response?.data || response
       setPersonal(personalData)
+
+      // Load historial de asignaciones de inventario (celulares, etc)
+      try {
+        const asigResp = await asignacionesAPI.list({ personal_id: id })
+        const asigData = asigResp?.data || asigResp || []
+        setAsignaciones(Array.isArray(asigData) ? asigData : [])
+      } catch (asigErr) {
+        console.warn('No se pudieron cargar las asignaciones:', asigErr)
+        setAsignaciones([])
+      }
     } catch (err) {
       setError(err.message || 'Error al cargar los datos')
       console.error('Error cargando datos:', err)
@@ -177,6 +190,11 @@ export default function PersonalDetailPage() {
                 onClick={() => setActiveTab('remitos')}
                 label="Estadísticas"
               />
+              <TabButton
+                active={activeTab === 'celulares'}
+                onClick={() => setActiveTab('celulares')}
+                label={`Celulares (${asignaciones.filter(a => a.inventario?.tipoArticulo?.nombre === 'Celular').length})`}
+              />
             </div>
 
             {/* Tab Panels */}
@@ -266,6 +284,33 @@ export default function PersonalDetailPage() {
                   />
                 </div>
               )}
+
+              {activeTab === 'celulares' && (
+                <CelularesTab
+                  asignaciones={asignaciones.filter(a => a.inventario?.tipoArticulo?.nombre === 'Celular')}
+                  isSuperAdmin={isSuperAdmin}
+                  editandoFechaId={editandoFechaId}
+                  nuevaFecha={nuevaFecha}
+                  onIniciarEditFecha={(asig) => {
+                    setEditandoFechaId(asig.id)
+                    setNuevaFecha(asig.fecha_asignacion)
+                  }}
+                  onCambiarFecha={setNuevaFecha}
+                  onCancelarEdit={() => { setEditandoFechaId(null); setNuevaFecha('') }}
+                  onGuardarFecha={async (asigId) => {
+                    try {
+                      await asignacionesAPI.actualizar(asigId, { fecha_asignacion: nuevaFecha })
+                      const asigResp = await asignacionesAPI.list({ personal_id: id })
+                      setAsignaciones(asigResp?.data || asigResp || [])
+                      setEditandoFechaId(null)
+                      setNuevaFecha('')
+                    } catch (err) {
+                      alert(err.message || 'Error al actualizar fecha')
+                    }
+                  }}
+                  formatDate={formatDate}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -314,6 +359,136 @@ function StatBox({ label, value, color }) {
     <div className={`p-6 rounded-xl border flex flex-col items-center justify-center text-center ${colorStyles[color]}`}>
       <span className="text-4xl font-extrabold tracking-tight mb-2">{value}</span>
       <span className="text-xs font-bold uppercase tracking-wide opacity-80">{label}</span>
+    </div>
+  )
+}
+
+function CelularesTab({ asignaciones, isSuperAdmin, editandoFechaId, nuevaFecha, onIniciarEditFecha, onCambiarFecha, onCancelarEdit, onGuardarFecha, formatDate }) {
+  if (!asignaciones || asignaciones.length === 0) {
+    return (
+      <div className="text-center py-12 bg-surface-50 rounded-xl border border-dashed border-surface-200">
+        <p className="text-surface-500 font-medium">Sin celulares asignados</p>
+        <p className="text-surface-400 text-sm mt-1">Todavía no se registró ninguna entrega de celular a esta persona.</p>
+      </div>
+    )
+  }
+
+  const activos = asignaciones.filter(a => a.activo)
+  const historial = asignaciones.filter(a => !a.activo)
+
+  return (
+    <div className="space-y-8">
+      {activos.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wide mb-4">Celular actual</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {activos.map(a => (
+              <AsignacionCard
+                key={a.id}
+                asignacion={a}
+                isSuperAdmin={isSuperAdmin}
+                editandoFechaId={editandoFechaId}
+                nuevaFecha={nuevaFecha}
+                onIniciarEditFecha={onIniciarEditFecha}
+                onCambiarFecha={onCambiarFecha}
+                onCancelarEdit={onCancelarEdit}
+                onGuardarFecha={onGuardarFecha}
+                formatDate={formatDate}
+                highlight
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {historial.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wide mb-4">Historial</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {historial.map(a => (
+              <AsignacionCard
+                key={a.id}
+                asignacion={a}
+                isSuperAdmin={isSuperAdmin}
+                editandoFechaId={editandoFechaId}
+                nuevaFecha={nuevaFecha}
+                onIniciarEditFecha={onIniciarEditFecha}
+                onCambiarFecha={onCambiarFecha}
+                onCancelarEdit={onCancelarEdit}
+                onGuardarFecha={onGuardarFecha}
+                formatDate={formatDate}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AsignacionCard({ asignacion, isSuperAdmin, editandoFechaId, nuevaFecha, onIniciarEditFecha, onCambiarFecha, onCancelarEdit, onGuardarFecha, formatDate, highlight }) {
+  const editando = editandoFechaId === asignacion.id
+  return (
+    <div className={`p-5 rounded-xl border ${highlight ? 'border-primary-200 bg-primary-50/30' : 'border-surface-200 bg-surface-50'}`}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <p className="text-lg font-bold text-surface-900">
+            {asignacion.inventario?.marca} {asignacion.inventario?.modelo}
+          </p>
+          {asignacion.inventario?.numero_serie && (
+            <p className="text-xs text-surface-500 mt-1">S/N: {asignacion.inventario.numero_serie}</p>
+          )}
+        </div>
+        <div>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${asignacion.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-surface-200 text-surface-600'}`}>
+            {asignacion.activo ? 'Activo' : 'Devuelto'}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Fecha de asignación</p>
+          {editando ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={nuevaFecha}
+                onChange={(e) => onCambiarFecha(e.target.value)}
+                className="px-2 py-1 border border-surface-300 rounded text-sm"
+              />
+              <button onClick={() => onGuardarFecha(asignacion.id)} className="text-xs font-bold text-emerald-700 hover:underline">Guardar</button>
+              <button onClick={onCancelarEdit} className="text-xs font-bold text-surface-500 hover:underline">Cancelar</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-surface-900 font-medium">{formatDate(asignacion.fecha_asignacion)}</p>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => onIniciarEditFecha(asignacion)}
+                  className="text-xs text-primary-600 hover:text-primary-800 hover:underline"
+                  title="Editar fecha (super_admin)"
+                >
+                  Editar
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        {asignacion.fecha_devolucion && (
+          <div>
+            <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Fecha de devolución</p>
+            <p className="text-surface-900 font-medium">{formatDate(asignacion.fecha_devolucion)}</p>
+          </div>
+        )}
+      </div>
+
+      {asignacion.motivo && (
+        <div className="mt-3 pt-3 border-t border-surface-200">
+          <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Motivo</p>
+          <p className="text-surface-700 text-sm">{asignacion.motivo}</p>
+        </div>
+      )}
     </div>
   )
 }

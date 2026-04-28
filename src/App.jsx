@@ -24,6 +24,7 @@ import InventarioDetailPage from './pages/InventarioDetailPage'
 import RemitoListPage from './pages/RemitoListPage'
 import CreateRemitoPage from './pages/CreateRemitoPage'
 import RemitoDetailPage from './pages/RemitoDetailPage'
+import CelularesPage from './pages/CelularesPage'
 import ConfirmacionRecepcionPage from './pages/ConfirmacionRecepcionPage'
 import VisitasPage from './pages/VisitasPage'
 import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
@@ -136,6 +137,9 @@ function App() {
                   <Route path="/remitos/crear" element={<CreateRemitoPage />} />
                   <Route path="/remitos/:id" element={<RemitoDetailPage />} />
                   <Route path="/remitos" element={<RemitoListPage />} />
+
+                  {/* Celulares / Asignaciones de inventario a personal */}
+                  <Route path="/celulares" element={<CelularesPage />} />
 
                   {/* CRM / Soporte routes */}
                   <Route path="/soporte" element={<CasosSoportePage />} />

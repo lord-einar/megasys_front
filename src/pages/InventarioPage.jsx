@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { inventarioAPI } from '../services/api'
+import { inventarioAPI, sedesAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 import { useListData } from '../hooks/useListData'
@@ -21,6 +21,8 @@ export default function InventarioPage() {
   // Estado de filtros
   const [filtro, setFiltro] = useState('')
   const [estado, setEstado] = useState(searchParams.get('estado') || '')
+  const [sedeId, setSedeId] = useState(searchParams.get('sede_id') || '')
+  const [sedes, setSedes] = useState([])
 
   // Hook para manejar listado con paginación
   const {
@@ -38,7 +40,11 @@ export default function InventarioPage() {
     reload
   } = useListData(inventarioAPI.list, {
     initialLimit: 10,
-    initialFilters: { search: '', estado: searchParams.get('estado') || '' }
+    initialFilters: {
+      search: '',
+      estado: searchParams.get('estado') || '',
+      sede_id: searchParams.get('sede_id') || ''
+    }
   })
 
   // Estadísticas
@@ -46,7 +52,17 @@ export default function InventarioPage() {
 
   useEffect(() => {
     cargarEstadisticas()
+    cargarSedes()
   }, [])
+
+  const cargarSedes = async () => {
+    try {
+      const res = await sedesAPI.list({ limit: 500 })
+      setSedes(res?.data || [])
+    } catch (err) {
+      console.error('Error cargando sedes:', err)
+    }
+  }
 
   // Actualizar estado desde URL params
   useEffect(() => {
@@ -61,6 +77,11 @@ export default function InventarioPage() {
   useEffect(() => {
     updateFilters({ estado })
   }, [estado])
+
+  // Actualizar filtros cuando cambie la sede
+  useEffect(() => {
+    updateFilters({ sede_id: sedeId })
+  }, [sedeId])
 
   const cargarEstadisticas = async () => {
     try {
@@ -249,6 +270,22 @@ export default function InventarioPage() {
             </select>
           </div>
 
+          <div className="w-full md:w-64">
+            <label className="block text-xs font-bold text-surface-500 mb-1.5 uppercase tracking-wide">
+              Sede
+            </label>
+            <select
+              value={sedeId}
+              onChange={(e) => setSedeId(e.target.value)}
+              className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-surface-900"
+            >
+              <option value="">Todas las sedes</option>
+              {sedes.map(s => (
+                <option key={s.id} value={s.id}>{s.nombre_sede}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-2">
             <button
               type="submit"
@@ -261,7 +298,8 @@ export default function InventarioPage() {
               onClick={() => {
                 setFiltro('')
                 setEstado('')
-                updateFilters({ search: '', estado: '' })
+                setSedeId('')
+                updateFilters({ search: '', estado: '', sede_id: '' })
               }}
               className="px-4 py-2.5 bg-white border border-surface-200 text-surface-600 rounded-xl hover:bg-surface-50 hover:text-surface-900 transition-colors font-medium text-sm"
             >
