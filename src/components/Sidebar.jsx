@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/logo.png'
+import { usePermissions } from '../hooks/usePermissions'
 
 function Sidebar({ isOpen, onNavigate, onClose }) {
+  const {
+    hasLegacyAccess,
+    canViewSolicitudesCompra,
+    hasInfraestructura
+  } = usePermissions()
   const [expandedMenu, setExpandedMenu] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const location = useLocation()
@@ -37,18 +43,20 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     return false
   }
 
-  const menuItems = [
+  // Cada item puede declarar `visible: bool`. Si no, se asume true.
+  const allMenuItems = [
     {
       label: 'Dashboard',
+      href: hasLegacyAccess ? '/' : '/solicitudes-compra/dashboard',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
-      href: '/',
     },
     {
       label: 'Sedes',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -61,6 +69,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Personal',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -74,6 +83,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Inventario',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -89,6 +99,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Remitos',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -101,6 +112,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Celulares',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -109,7 +121,23 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
       href: '/celulares',
     },
     {
+      label: 'Solicitudes de compra',
+      visible: canViewSolicitudesCompra,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+      ),
+      submenu: [
+        { label: 'Dashboard', href: '/solicitudes-compra/dashboard' },
+        { label: 'Listar solicitudes', href: '/solicitudes-compra' },
+        { label: 'Nueva solicitud', href: '/solicitudes-compra/nueva' },
+        ...(hasInfraestructura ? [{ label: 'Catálogo de equipos', href: '/catalogo-equipos' }] : [])
+      ],
+    },
+    {
       label: 'Visitas',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -123,6 +151,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Soporte CRM',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -132,6 +161,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
     },
     {
       label: 'Proveedores',
+      visible: hasLegacyAccess,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -147,6 +177,8 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
       ],
     },
   ]
+
+  const menuItems = allMenuItems.filter(item => item.visible !== false)
 
   return (
     <>

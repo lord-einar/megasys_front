@@ -52,6 +52,23 @@ const PERMISSIONS = {
     user_management: ['super_admin'],
     audit_logs: ['super_admin', 'helpdesk'],
     reports: ['super_admin']
+  },
+  solicitudes_compra: {
+    read: ['super_admin', 'rrhh', 'compras'],
+    create: ['super_admin', 'rrhh', 'compras'],
+    update: ['super_admin', 'rrhh', 'compras'],
+    cancelar: ['super_admin', 'rrhh', 'compras'],
+    aprobar_infra: ['super_admin'],
+    aprobar_rrhh: ['rrhh'],
+    registrar_compra: ['compras'],
+    rechazar: ['super_admin', 'rrhh'],
+    dashboard: ['super_admin', 'rrhh', 'compras']
+  },
+  catalogo_equipos: {
+    read: ['super_admin', 'helpdesk', 'support', 'rrhh', 'compras'],
+    create: ['super_admin'],
+    update: ['super_admin'],
+    delete: ['super_admin']
   }
 };
 
@@ -113,6 +130,22 @@ export const usePermissions = () => {
     return roles.includes(user.role);
   };
 
+  // Pertenencia a grupos Azure (independiente del role jerárquico).
+  // El backend expone esto en `user.groupAnalysis`.
+  const ga = user?.groupAnalysis || {};
+  const hasInfraestructura = !!ga.hasInfraestructura;
+  const hasRRHH = !!ga.hasRRHH;
+  const hasCompras = !!ga.hasCompras;
+  const hasMesaAyuda = !!ga.hasMesaAyuda;
+  const hasSoporte = !!ga.hasSoporte;
+
+  // Atajos de visibilidad para el módulo de Solicitudes de Compra
+  const canViewSolicitudesCompra = hasInfraestructura || hasRRHH || hasCompras;
+
+  // Acceso a módulos legacy (todos menos Solicitudes de Compra y catálogo).
+  // Los miembros que solo están en RRHH o Compras quedan bloqueados por backend.
+  const hasLegacyAccess = hasInfraestructura || hasMesaAyuda || hasSoporte;
+
   return {
     hasPermission,
     canCreate,
@@ -123,6 +156,15 @@ export const usePermissions = () => {
     hasRole,
     isSuperAdmin: user?.role === 'super_admin',
     isSupport: user?.role === 'support',
-    isHelpdesk: user?.role === 'helpdesk'
+    isHelpdesk: user?.role === 'helpdesk',
+    isRRHH: user?.role === 'rrhh',
+    isCompras: user?.role === 'compras',
+    hasInfraestructura,
+    hasRRHH,
+    hasCompras,
+    hasMesaAyuda,
+    hasSoporte,
+    canViewSolicitudesCompra,
+    hasLegacyAccess
   };
 };

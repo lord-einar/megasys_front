@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
+import { authAPI } from '../services/api';
 import logo from '../assets/logo.png';
 
 export default function Login() {
@@ -10,7 +11,9 @@ export default function Login() {
   const { login, loading } = useAuth();
   const [error, setError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [devUsers, setDevUsers] = useState([]);
   const hasProcessedRef = useRef(false);
+  const showDevLogin = import.meta.env.DEV;
 
   // Handle Azure AD callback
   useEffect(() => {
@@ -86,6 +89,19 @@ export default function Login() {
     };
   }, [searchParams, login, navigate, loading]);
 
+  useEffect(() => {
+    if (!showDevLogin) return;
+
+    authAPI.devUsers()
+      .then((response) => {
+        const users = response?.data?.users || [];
+        setDevUsers(users);
+      })
+      .catch(() => {
+        setDevUsers([]);
+      });
+  }, [showDevLogin]);
+
   const handleLoginClick = async () => {
     setIsLoggingIn(true);
     setError(null);
@@ -108,6 +124,26 @@ export default function Login() {
       }
     } catch (err) {
       setError('Error de conexión con el servidor');
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleDevLoginClick = async (devUser) => {
+    setIsLoggingIn(true);
+    setError(null);
+
+    try {
+      const response = await authAPI.devLogin(devUser.key);
+      const authData = response?.data;
+
+      if (!authData?.user || !authData?.token) {
+        throw new Error('Respuesta de autenticación incompleta');
+      }
+
+      login(authData.user, authData.token, authData.profilePhotoUrl);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión local');
       setIsLoggingIn(false);
     }
   };
@@ -208,6 +244,32 @@ export default function Login() {
               )}
             </button>
           </div>
+
+          {showDevLogin && devUsers.length > 0 && (
+            <div className="text-left bg-amber-50 p-6 rounded-2xl border border-amber-100">
+              <h3 className="text-sm font-bold text-amber-950 mb-1">
+                Acceso local de desarrollo
+              </h3>
+              <p className="text-xs text-amber-700 mb-4">
+                Usuarios de prueba para validar permisos y flujos.
+              </p>
+
+              <div className="space-y-2">
+                {devUsers.map((devUser) => (
+                  <button
+                    key={devUser.key}
+                    type="button"
+                    onClick={() => handleDevLoginClick(devUser)}
+                    disabled={isLoggingIn}
+                    className="w-full py-3 px-4 bg-white text-surface-900 rounded-xl font-bold text-sm hover:bg-amber-100 transition-colors border border-amber-200 flex items-center justify-between gap-3"
+                  >
+                    <span className="capitalize">{devUser.role.replace('_', ' ')}</span>
+                    <span className="text-xs font-medium text-surface-500 truncate">{devUser.email}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-2 text-xs text-surface-400 font-medium">
             <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

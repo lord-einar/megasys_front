@@ -48,11 +48,18 @@ import TiposServicioPage from './pages/TiposServicioPage'
 import TipoServicioFormPage from './pages/TipoServicioFormPage'
 import TiposArticuloPage from './pages/TiposArticuloPage'
 import CasosSoportePage from './pages/CasosSoportePage'
+import SolicitudesCompraDashboard from './pages/SolicitudesCompraDashboard'
+import SolicitudesCompraListPage from './pages/SolicitudesCompraListPage'
+import SolicitudCompraFormPage from './pages/SolicitudCompraFormPage'
+import SolicitudCompraDetailPage from './pages/SolicitudCompraDetailPage'
+import CatalogoEquiposPage from './pages/CatalogoEquiposPage'
 import { useAuth } from './contexts/AuthContext'
+import { usePermissions } from './hooks/usePermissions'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const { isAuthenticated, loading } = useAuth()
+  const { hasLegacyAccess, canViewSolicitudesCompra, hasInfraestructura } = usePermissions()
 
   if (loading) {
     return (
@@ -107,8 +114,13 @@ function App() {
               {/* Content Area */}
               <main className="flex-1 overflow-y-auto">
                 <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-compra/dashboard'} replace />} />
+                  <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-compra/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/dashboard" element={canViewSolicitudesCompra ? <SolicitudesCompraDashboard /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/nueva" element={canViewSolicitudesCompra ? <SolicitudCompraFormPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/:id" element={canViewSolicitudesCompra ? <SolicitudCompraDetailPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra" element={canViewSolicitudesCompra ? <SolicitudesCompraListPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/catalogo-equipos" element={hasInfraestructura ? <CatalogoEquiposPage /> : <Navigate to="/solicitudes-compra/dashboard" replace />} />
                   <Route path="/profile" element={<Profile />} />
 
                   {/* Sedes routes - más específicas primero */}

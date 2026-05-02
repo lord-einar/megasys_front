@@ -55,9 +55,29 @@ const apiCall = async (endpoint, options = {}) => {
   }
 }
 
+const apiUpload = async (endpoint, formData) => {
+  const token = localStorage.getItem('authToken')
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData
+  })
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.message || `Error HTTP ${response.status}`)
+  }
+  return data
+}
+
 // Auth Endpoints
 export const authAPI = {
   login: () => apiCall('/auth/login'),
+  devUsers: () => apiCall('/auth/dev-users'),
+  devLogin: (user) => apiCall('/auth/dev-login', {
+    method: 'POST',
+    body: JSON.stringify({ user })
+  }),
   callback: (code) => apiCall(`/auth/callback?code=${code}`),
   getMe: () => apiCall('/auth/me'),
   getStatus: () => apiCall('/auth/status'),
@@ -661,6 +681,87 @@ export const asignacionesAPI = {
     method: 'PATCH',
     body: JSON.stringify(data)
   }),
+}
+
+// Catálogo de equipos aprobados (celulares y notebooks)
+export const catalogoEquiposAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/catalogo-equipos${qs ? `?${qs}` : ''}`)
+  },
+  getById: (id) => apiCall(`/catalogo-equipos/${id}`),
+  crear: (data) => apiCall('/catalogo-equipos', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  actualizar: (id, data) => apiCall(`/catalogo-equipos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  eliminar: (id) => apiCall(`/catalogo-equipos/${id}`, { method: 'DELETE' })
+}
+
+// Solicitudes de compra de equipos
+export const solicitudesCompraAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-compra${qs ? `?${qs}` : ''}`)
+  },
+  lookupPersonal: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-compra/lookups/personal${qs ? `?${qs}` : ''}`)
+  },
+  lookupSedes: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-compra/lookups/sedes${qs ? `?${qs}` : ''}`)
+  },
+  lookupInventarioAsignado: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-compra/lookups/inventario-asignado${qs ? `?${qs}` : ''}`)
+  },
+  getById: (id) => apiCall(`/solicitudes-compra/${id}`),
+  crear: (data) => apiCall('/solicitudes-compra', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  actualizar: (id, data) => apiCall(`/solicitudes-compra/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  aprobarInfra: (id, data) => apiCall(`/solicitudes-compra/${id}/aprobar-infra`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  aprobarRrhh: (id, data = {}) => apiCall(`/solicitudes-compra/${id}/aprobar-rrhh`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  registrarCompra: (id, data) => apiCall(`/solicitudes-compra/${id}/registrar-compra`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  actualizarEstadoCompra: (id, data) => apiCall(`/solicitudes-compra/${id}/estado-compra`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  finalizarSistemas: (id, data) => apiCall(`/solicitudes-compra/${id}/finalizar-sistemas`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  subirAdjunto: (id, { tipo, archivo }) => {
+    const formData = new FormData()
+    formData.append('tipo', tipo)
+    formData.append('archivo', archivo)
+    return apiUpload(`/solicitudes-compra/${id}/adjuntos`, formData)
+  },
+  rechazar: (id, data) => apiCall(`/solicitudes-compra/${id}/rechazar`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  cancelar: (id, data) => apiCall(`/solicitudes-compra/${id}/cancelar`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
 }
 
 export default apiCall
