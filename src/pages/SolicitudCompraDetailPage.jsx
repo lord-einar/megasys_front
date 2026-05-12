@@ -255,12 +255,18 @@ export default function SolicitudCompraDetailPage() {
             </section>
           )}
 
-          {['pendiente_infra', 'aprobada_infra'].includes(solicitud.estado) && (hasInfraestructura || hasRRHH) && (
+          {((solicitud.estado === 'pendiente_infra' && hasInfraestructura) || (solicitud.estado === 'aprobada_infra' && hasRRHH)) && (
             <section className="card-base p-6">
               <h2 className="font-bold text-surface-900 mb-4">Rechazar solicitud</h2>
               <div className="flex flex-col md:flex-row gap-3">
                 <input value={rechazo} onChange={e => setRechazo(e.target.value)} className="input-base flex-1" placeholder="Motivo de rechazo" />
-                <button className="btn-secondary" onClick={() => ejecutar(() => solicitudesCompraAPI.rechazar(id, { motivo: rechazo }))}>Rechazar</button>
+                <button
+                  className="btn-secondary"
+                  disabled={!rechazo.trim()}
+                  onClick={() => ejecutar(() => solicitudesCompraAPI.rechazar(id, { motivo: rechazo }))}
+                >
+                  Rechazar
+                </button>
               </div>
             </section>
           )}

@@ -4,6 +4,7 @@ import { solicitudesCompraAPI } from '../services/api'
 import StatusBadge from '../components/solicitudesCompra/StatusBadge'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import { usePermissions } from '../hooks/usePermissions'
+import { Plus } from 'lucide-react'
 
 const ESTADOS_TARJETA = [
   'pendiente_infra',
@@ -12,11 +13,12 @@ const ESTADOS_TARJETA = [
   'pedido',
   'recibido',
   'entregado_sistemas',
+  'entregado_destinatario',
   'finalizada',
   'rechazada'
 ]
 
-const ESTADOS_PENDIENTES = ['pendiente_infra', 'aprobada_infra', 'pendiente_pedido', 'pedido', 'recibido', 'entregado_sistemas']
+const ESTADOS_PENDIENTES = ['pendiente_infra', 'aprobada_infra', 'pendiente_pedido', 'pedido', 'recibido', 'entregado_sistemas', 'entregado_destinatario']
 
 export default function SolicitudesCompraDashboard() {
   const navigate = useNavigate()
@@ -45,24 +47,22 @@ export default function SolicitudesCompraDashboard() {
   const pendientes = solicitudes.filter(s => ESTADOS_PENDIENTES.includes(s.estado)).slice(0, 8)
 
   return (
-    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="page-shell">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Solicitudes de compra</h1>
-          <p className="text-surface-500 mt-1 font-medium">Panel operativo para Infraestructura, RRHH y Compras</p>
+          <h1 className="page-title">Solicitudes de compra</h1>
+          <p className="page-description">Panel operativo para Infraestructura, RRHH y Compras</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="responsive-actions">
           <button onClick={() => navigate('/solicitudes-compra')} className="btn-secondary">Ver listado</button>
           {hasInfraestructura && (
             <button onClick={() => navigate('/catalogo-equipos')} className="btn-secondary">Catálogo</button>
           )}
           <button
             onClick={() => navigate('/solicitudes-compra/nueva')}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary-900/10 transition-all bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20"
+            className="btn-accent"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Nueva solicitud
           </button>
         </div>
@@ -147,7 +147,7 @@ export default function SolicitudesCompraDashboard() {
               <button
                 key={s.id}
                 onClick={() => navigate(`/solicitudes-compra/${s.id}`)}
-                className="w-full text-left px-6 py-4 hover:bg-surface-50/60 transition-colors flex items-center justify-between gap-4"
+            className="w-full text-left px-4 sm:px-6 py-4 hover:bg-surface-50/60 transition-colors flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <div className="min-w-0">
                   <p className="font-semibold text-surface-900">SC-{String(s.numero).padStart(4, '0')}</p>
