@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { inventarioAPI } from '../services/api'
+import { inventarioAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 import GarantiaCard from '../components/GarantiaCard'
@@ -15,12 +15,30 @@ export default function InventarioDetailPage() {
   const [changingState, setChangingState] = useState(false)
   const [newState, setNewState] = useState('')
   const [observaciones, setObservaciones] = useState('')
+  const [categorias, setCategorias] = useState([])
+  const [guardandoCategoria, setGuardandoCategoria] = useState(false)
   const { canUpdate, canDelete } = usePermissions()
 
   useEffect(() => {
     cargarDetalle()
     cargarHistorial()
   }, [id])
+
+  // Cargar categorías cuando sabemos que es notebook o celular
+  useEffect(() => {
+    if (!item) return
+    const nombre = item.tipoArticulo?.nombre?.toLowerCase() || ''
+    const esNotebook = nombre.includes('notebook')
+    const esCelular = nombre.includes('celular')
+    if (!esNotebook && !esCelular) return
+    const tipo = esNotebook ? 'notebook' : 'celular'
+    categoriaEquiposAsignacionAPI.list({ tipo, activo: true })
+      .then(res => {
+        const data = Array.isArray(res?.data) ? res.data : (res?.data?.data || [])
+        setCategorias(data)
+      })
+      .catch(() => {})
+  }, [item?.id, item?.tipoArticulo?.nombre])
 
   const cargarDetalle = async () => {
     try {
@@ -60,6 +78,18 @@ export default function InventarioDetailPage() {
 
   const formatEstado = (estado) => {
     return estado ? estado.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A'
+  }
+
+  const handleAsignarCategoria = async (categoriaId) => {
+    try {
+      setGuardandoCategoria(true)
+      await inventarioAPI.update(id, { categoria_id: categoriaId || null })
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo asignar la categoría', icon: 'error', timer: 2000 })
+    } finally {
+      setGuardandoCategoria(false)
+    }
   }
 
   const handleCambiarEstado = async () => {
@@ -262,6 +292,28 @@ export default function InventarioDetailPage() {
                   <h1 className="text-2xl font-bold text-surface-900 tracking-tight">{item.marca} {item.modelo}</h1>
                   {item.tipoArticulo?.nombre && (
                     <p className="text-surface-500 font-medium mt-1">{item.tipoArticulo.nombre}</p>
+                  )}
+                  {/* Categoría inline (solo para notebook/celular) */}
+                  {categorias.length > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <select
+                        value={item.categoria_id || ''}
+                        onChange={e => handleAsignarCategoria(e.target.value)}
+                        disabled={!canUpdate || guardandoCategoria}
+                        className="text-xs border border-surface-200 rounded-lg px-2 py-1 bg-white text-surface-700 focus:ring-1 focus:ring-primary-500 focus:border-primary-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Sin categoría</option>
+                        {categorias.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                      {guardandoCategoria && (
+                        <span className="text-xs text-surface-400 animate-pulse">Guardando…</span>
+                      )}
+                      {!guardandoCategoria && item.categoria_id && (
+                        <span className="text-xs text-emerald-600 font-medium">✓ Categoría asignada</span>
+                      )}
+                    </div>
                   )}
                 </div>
 

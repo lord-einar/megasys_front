@@ -50,22 +50,33 @@ export default function SolicitudAsignacionDetailPage() {
 
   useEffect(() => { cargar() }, [id])
 
+  // Cargar categorías cuando la solicitud entra en pendiente_infra
   useEffect(() => {
-    if (!solicitud) return
-
-    if (hasInfraestructura && solicitud.estado === 'pendiente_infra') {
-      solicitudesAsignacionAPI.lookupInventarioDisponible({ tipo_equipo: solicitud.tipo_equipo })
-        .then(res => {
-          const data = Array.isArray(res?.data) ? res.data : (res?.data?.data || [])
-          setInventarioDisponible(data)
-        })
-        .catch(() => setInventarioDisponible([]))
-
-      categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
-        .then(res => setCategorias(normalizeApiResponse(res, 200).data))
-        .catch(() => setCategorias([]))
-    }
+    if (!solicitud || !hasInfraestructura || solicitud.estado !== 'pendiente_infra') return
+    categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
+      .then(res => setCategorias(normalizeApiResponse(res, 200).data))
+      .catch(() => setCategorias([]))
   }, [solicitud?.id, solicitud?.estado])
+
+  // Recargar inventario disponible cada vez que cambia la categoría seleccionada
+  useEffect(() => {
+    if (!solicitud || solicitud.estado !== 'pendiente_infra') return
+    if (!asignacion.categoria_id) { setInventarioDisponible([]); return }
+    solicitudesAsignacionAPI.lookupInventarioDisponible({
+      tipo_equipo: solicitud.tipo_equipo,
+      categoria_id: asignacion.categoria_id
+    })
+      .then(res => {
+        const data = Array.isArray(res?.data) ? res.data : (res?.data?.data || [])
+        setInventarioDisponible(data)
+        // Limpiar equipo seleccionado si ya no está en la nueva lista
+        setAsignacion(prev => ({
+          ...prev,
+          inventario_id: data.find(i => i.id === prev.inventario_id) ? prev.inventario_id : ''
+        }))
+      })
+      .catch(() => setInventarioDisponible([]))
+  }, [asignacion.categoria_id, solicitud?.id])
 
   const ejecutar = async (fn) => {
     try {
@@ -234,39 +245,71 @@ export default function SolicitudAsignacionDetailPage() {
           {/* Acción: Asignar equipo (pendiente_infra + Infra) */}
           {hasInfraestructura && solicitud.estado === 'pendiente_infra' && (
             <section className="card-base p-6 border-l-4 border-l-sky-500">
-              <h2 className="font-bold text-surface-900 mb-4">Asignar equipo</h2>
+              <h2 className="font-bold text-surface-900 mb-1">Asignar equipo</h2>
+              <p className="text-sm text-surface-500 mb-4">
+                Seleccioná primero la categoría para ver los equipos disponibles correspondientes.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* 1. Categoría — obligatoria, primer paso */}
                 <div>
-                  <label className="label-base block mb-1">Equipo disponible</label>
-                  <select
-                    value={asignacion.inventario_id}
-                    onChange={e => setAsignacion(prev => ({ ...prev, inventario_id: e.target.value }))}
-                    className="input-base"
-                  >
-                    <option value="">Seleccionar equipo del stock</option>
-                    {inventarioDisponible.map(inv => (
-                      <option key={inv.id} value={inv.id}>
-                        {inv.marca} {inv.modelo}
-                        {inv.numero_serie ? ` — S/N ${inv.numero_serie}` : ''}
-                        {inv.sede?.nombre_sede ? ` — ${inv.sede.nombre_sede}` : ''}
-                        {inv.categoria?.nombre ? ` — ${inv.categoria.nombre}` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="label-base block mb-1">
+                    Categoría <span className="text-rose-500">*</span>
+                  </label>
+                  {categorias.length === 0 ? (
+                    <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      No hay categorías definidas para {solicitud.tipo_equipo}.{' '}
+                      <button
+                        type="button"
+                        onClick={() => navigate('/categoria-equipos-asignacion')}
+                        className="underline font-medium"
+                      >
+                        Crear categorías
+                      </button>
+                    </p>
+                  ) : (
+                    <select
+                      value={asignacion.categoria_id}
+                      onChange={e => setAsignacion(prev => ({ ...prev, categoria_id: e.target.value, inventario_id: '' }))}
+                      className="input-base"
+                    >
+                      <option value="">— Seleccionar categoría —</option>
+                      {categorias.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
+                {/* 2. Equipo — habilitado solo tras elegir categoría */}
                 <div>
-                  <label className="label-base block mb-1">Categoría (opcional)</label>
-                  <select
-                    value={asignacion.categoria_id}
-                    onChange={e => setAsignacion(prev => ({ ...prev, categoria_id: e.target.value }))}
-                    className="input-base"
-                  >
-                    <option value="">Sin categoría</option>
-                    {categorias.map(c => (
-                      <option key={c.id} value={c.id}>{c.nombre}</option>
-                    ))}
-                  </select>
+                  <label className="label-base block mb-1">
+                    Equipo disponible <span className="text-rose-500">*</span>
+                  </label>
+                  {!asignacion.categoria_id ? (
+                    <p className="text-sm text-surface-400 bg-surface-50 border border-surface-200 rounded-lg px-3 py-2">
+                      Seleccioná una categoría primero
+                    </p>
+                  ) : inventarioDisponible.length === 0 ? (
+                    <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      No hay {solicitud.tipo_equipo}s disponibles en esa categoría
+                    </p>
+                  ) : (
+                    <select
+                      value={asignacion.inventario_id}
+                      onChange={e => setAsignacion(prev => ({ ...prev, inventario_id: e.target.value }))}
+                      className="input-base"
+                    >
+                      <option value="">— Seleccionar equipo —</option>
+                      {inventarioDisponible.map(inv => (
+                        <option key={inv.id} value={inv.id}>
+                          {inv.marca} {inv.modelo}
+                          {inv.numero_serie ? ` · S/N ${inv.numero_serie}` : ''}
+                          {inv.sedePrincipal?.nombre_sede ? ` · ${inv.sedePrincipal.nombre_sede}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {esReposicion && solicitud.inventario_anterior_id && (
@@ -297,10 +340,10 @@ export default function SolicitudAsignacionDetailPage() {
               <div className="mt-4 flex gap-3">
                 <button
                   className="btn-primary"
-                  disabled={!asignacion.inventario_id}
+                  disabled={!asignacion.inventario_id || !asignacion.categoria_id}
                   onClick={() => ejecutar(() => solicitudesAsignacionAPI.asignarEquipo(id, {
                     inventario_id: asignacion.inventario_id,
-                    categoria_id: asignacion.categoria_id || null,
+                    categoria_id: asignacion.categoria_id,
                     observacion: asignacion.observacion || null,
                     equipo_anterior_accion: asignacion.equipo_anterior_accion || null
                   }))}
