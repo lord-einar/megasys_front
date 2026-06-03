@@ -91,8 +91,8 @@ function ReporteCard({ titulo, subtitulo, datos, sinDatos, loading }) {
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                {datos.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {datos.map((d, i) => (
+                  <Cell key={d.name} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>

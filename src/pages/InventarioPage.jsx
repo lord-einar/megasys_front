@@ -8,6 +8,7 @@ import { usePermissionError } from '../hooks/usePermissionError'
 import { normalizeStatsResponse } from '../utils/apiResponseNormalizer'
 import { getPaginationNumbers } from '../utils/paginationHelper'
 import InventarioReportes from '../components/inventario/InventarioReportes'
+import { BarChart3, Eye, List, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 
 export default function InventarioPage() {
   const navigate = useNavigate()
@@ -163,26 +164,24 @@ export default function InventarioPage() {
   }
 
   return (
-    <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
+    <div className="page-shell">
       {/* Encabezado */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Gestión de Inventario</h1>
-          <p className="text-surface-500 mt-1 font-medium">Administra y rastrea los activos tecnológicos</p>
+          <h1 className="page-title">Gestión de Inventario</h1>
+          <p className="page-description">Administra y rastrea los activos tecnológicos</p>
         </div>
-        <div>
+        <div className="responsive-actions">
           <button
             onClick={() => navigate('/inventario/crear')}
             disabled={!canCreate('inventario')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary-900/10 transition-all ${canCreate('inventario')
-              ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-900/20'
+            className={`btn-accent ${canCreate('inventario')
+              ? ''
               : 'bg-surface-200 text-surface-400 cursor-not-allowed'
               }`}
             title={!canCreate('inventario') ? 'No tienes permiso para crear artículos' : ''}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Nuevo Artículo
           </button>
         </div>
@@ -196,9 +195,7 @@ export default function InventarioPage() {
             ? 'border-primary-500 text-primary-700'
             : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'}`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
+          <List className="w-4 h-4" />
           Listado
         </button>
         <button
@@ -207,9 +204,7 @@ export default function InventarioPage() {
             ? 'border-primary-500 text-primary-700'
             : 'border-transparent text-surface-500 hover:text-surface-800 hover:bg-surface-50'}`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+          <BarChart3 className="w-4 h-4" />
           Reportes
         </button>
       </div>
@@ -237,9 +232,7 @@ export default function InventarioPage() {
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="w-5 h-5" />
               </div>
               <input
                 type="text"
@@ -286,10 +279,10 @@ export default function InventarioPage() {
             </select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex w-full gap-2 md:w-auto">
             <button
               type="submit"
-              className="px-6 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-sm hover:shadow-md font-bold text-sm"
+              className="btn-accent flex-1 md:flex-none"
             >
               Buscar
             </button>
@@ -301,7 +294,7 @@ export default function InventarioPage() {
                 setSedeId('')
                 updateFilters({ search: '', estado: '', sede_id: '' })
               }}
-              className="px-4 py-2.5 bg-white border border-surface-200 text-surface-600 rounded-xl hover:bg-surface-50 hover:text-surface-900 transition-colors font-medium text-sm"
+              className="btn-secondary flex-1 md:flex-none"
             >
               Limpiar
             </button>
@@ -387,10 +380,7 @@ export default function InventarioPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-surface-600">
                       <div className="flex items-center gap-1.5">
-                        <svg className="w-3.5 h-3.5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <MapPin className="w-3.5 h-3.5 text-surface-400" />
                         {item.sedePrincipal?.nombre_sede || item.sede?.nombre_sede || 'Sin ubicación'}
                       </div>
                     </td>
@@ -408,11 +398,9 @@ export default function InventarioPage() {
                           onClick={() => navigate(`/inventario/${item.id}`)}
                           className="p-1.5 text-surface-400 hover:text-primary-600 hover:bg-primary-50 group-hover:text-surface-600 rounded-lg transition-colors"
                           title="Ver Detalles"
+                          aria-label={`Ver detalles de ${item.descripcionCompleta || 'item'}`}
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                          <Eye className="w-4 h-4" />
                         </button>
 
                         {canUpdate('inventario') && (
@@ -420,10 +408,9 @@ export default function InventarioPage() {
                             onClick={() => navigate(`/inventario/${item.id}/editar`)}
                             className="p-1.5 text-surface-400 hover:text-amber-600 hover:bg-amber-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Editar"
+                            aria-label={`Editar ${item.descripcionCompleta || 'item'}`}
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <Pencil className="w-4 h-4" />
                           </button>
                         )}
 
@@ -432,10 +419,9 @@ export default function InventarioPage() {
                             onClick={() => eliminarItem(item)}
                             className="p-1.5 text-surface-400 hover:text-rose-600 hover:bg-rose-50 group-hover:text-surface-600 rounded-lg transition-colors"
                             title="Eliminar"
+                            aria-label={`Eliminar ${item.descripcionCompleta || 'item'}`}
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import { authAPI } from '../services/api';
 import logo from '../assets/logo.png';
+import LoginLoadingScreen from '../components/LoginLoadingScreen';
 
 export default function Login() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -149,42 +150,28 @@ export default function Login() {
   };
 
   if (loading || isLoggingIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-950 p-6 overflow-hidden relative">
-        {/* Background Animation */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-900/40 rounded-full blur-[120px] animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-900/30 rounded-full blur-[120px] animate-pulse delay-1000"></div>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12 w-full max-w-sm text-center shadow-2xl relative z-10 flex flex-col items-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-8 ring-1 ring-white/20 shadow-lg shadow-black/20">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Conectando</h2>
-          <p className="text-surface-400 text-sm">Validando credenciales...</p>
-        </div>
-      </div>
-    );
+    return <LoginLoadingScreen />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-950 p-6 relative overflow-hidden">
-      {/* Abstract Background Shapes */}
-      <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary-900/30 blur-[120px]"></div>
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-indigo-900/20 blur-[100px]"></div>
-        <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px]"></div>
+    <div className="min-h-screen flex items-center justify-center bg-surface-950 p-4 sm:p-6 relative overflow-hidden">
+      <div
+        className="absolute inset-0 overflow-hidden z-0 pointer-events-none opacity-[0.08]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+          backgroundSize: '56px 56px',
+        }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-primary-500"></div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] w-full max-w-md p-8 md:p-12 relative z-10 transition-all duration-500 border border-surface-100/50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-[21rem] p-6 sm:max-w-[28rem] sm:p-8 md:p-10 relative z-10 transition-colors duration-200 border border-surface-200 overflow-hidden">
 
         {/* Logo Section */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
-            <div className="h-20 w-20 rounded-2xl bg-surface-50 flex items-center justify-center p-4 shadow-sm border border-surface-100">
-              <img src={logo} alt="Portal IT Megatlon" className="h-full w-full object-contain" />
-            </div>
+            <img src={logo} alt="Grupo Megatlon" className="h-12 max-w-full w-auto object-contain" />
           </div>
           <h1 className="text-2xl font-extrabold text-surface-900 tracking-tight">Portal IT Megatlon</h1>
           <p className="text-surface-500 mt-2 text-sm font-medium">Sistema Integral de Gestión</p>
@@ -213,7 +200,7 @@ export default function Login() {
 
         {/* Login Action */}
         <div className="space-y-8">
-          <div className="text-left bg-surface-50 p-6 rounded-2xl border border-surface-100">
+          <div className="text-left bg-surface-50 p-5 sm:p-6 rounded-xl border border-surface-100">
             <h3 className="text-sm font-bold text-surface-900 mb-1">
               Acceso Corporativo
             </h3>
@@ -224,11 +211,8 @@ export default function Login() {
             <button
               onClick={handleLoginClick}
               disabled={isLoggingIn}
-              className="w-full py-3.5 px-4 bg-surface-900 text-white rounded-xl font-bold text-sm hover:bg-surface-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-3 group relative overflow-hidden"
+              className="w-full min-w-0 py-3.5 px-4 bg-surface-900 text-white rounded-lg font-bold text-sm hover:bg-surface-800 transition-colors duration-150 flex items-center justify-center gap-3 group relative overflow-hidden"
             >
-              {/* Button Shine Effect */}
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-
               {isLoggingIn ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -239,14 +223,14 @@ export default function Login() {
                   <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6v-11.4H24V24zM11.4 12.6H0V1.2h11.4v11.4zm12.6 0H12.6V1.2H24v11.4z" />
                   </svg>
-                  <span>Ingresar con Microsoft</span>
+                  <span className="truncate">Ingresar con Microsoft</span>
                 </>
               )}
             </button>
           </div>
 
           {showDevLogin && devUsers.length > 0 && (
-            <div className="text-left bg-amber-50 p-6 rounded-2xl border border-amber-100">
+            <div className="text-left bg-amber-50 p-5 sm:p-6 rounded-xl border border-amber-100">
               <h3 className="text-sm font-bold text-amber-950 mb-1">
                 Acceso local de desarrollo
               </h3>
@@ -275,7 +259,7 @@ export default function Login() {
             <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <span>Conexión cifrada de extremo a extremo</span>
+            <span>Acceso corporativo protegido</span>
           </div>
         </div>
 

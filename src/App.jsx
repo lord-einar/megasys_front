@@ -52,14 +52,23 @@ import SolicitudesCompraDashboard from './pages/SolicitudesCompraDashboard'
 import SolicitudesCompraListPage from './pages/SolicitudesCompraListPage'
 import SolicitudCompraFormPage from './pages/SolicitudCompraFormPage'
 import SolicitudCompraDetailPage from './pages/SolicitudCompraDetailPage'
+import StockEquiposPage from './pages/StockEquiposPage'
+import SolicitudesAsignacionDashboard from './pages/SolicitudesAsignacionDashboard'
+import SolicitudesAsignacionListPage from './pages/SolicitudesAsignacionListPage'
+import SolicitudAsignacionFormPage from './pages/SolicitudAsignacionFormPage'
+import SolicitudAsignacionDetailPage from './pages/SolicitudAsignacionDetailPage'
+import CategoriaEquiposAsignacionPage from './pages/CategoriaEquiposAsignacionPage'
+import HistorialEquiposPersonalPage from './pages/HistorialEquiposPersonalPage'
+import HistorialEquiposSedePage from './pages/HistorialEquiposSedePage'
 import CatalogoEquiposPage from './pages/CatalogoEquiposPage'
+import LoginLoadingPreview from './pages/LoginLoadingPreview'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const { isAuthenticated, loading } = useAuth()
-  const { hasLegacyAccess, canViewSolicitudesCompra, hasInfraestructura } = usePermissions()
+  const { hasLegacyAccess, canViewSolicitudesCompra, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
 
   if (loading) {
     return (
@@ -74,7 +83,7 @@ function App() {
 
   // Public routes that don't require authentication
   // Check first before authentication check
-  const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar']
+  const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar', '/preview/login-loading']
   const isFeedbackPath = window.location.pathname.startsWith('/visitas/feedback/')
   if (publicPaths.includes(window.location.pathname) || isFeedbackPath) {
     return <Routes>
@@ -82,6 +91,7 @@ function App() {
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
       <Route path="/visitas/feedback/:token" element={<VisitaFeedbackPublico />} />
+      <Route path="/preview/login-loading" element={<LoginLoadingPreview />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   }
@@ -99,7 +109,7 @@ function App() {
       <Route
         path="/*"
         element={
-          <div className="flex h-screen bg-slate-50">
+          <div className="flex h-screen bg-surface-50">
             {/* Sidebar */}
             <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} />
 
@@ -112,15 +122,23 @@ function App() {
               />
 
               {/* Content Area */}
-              <main className="flex-1 overflow-y-auto">
+              <main className="flex-1 overflow-y-auto overscroll-contain">
                 <Routes>
-                  <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-compra/dashboard'} replace />} />
-                  <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-compra/dashboard" replace />} />
+                  <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-asignacion/dashboard'} replace />} />
+                  <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
                   <Route path="/solicitudes-compra/dashboard" element={canViewSolicitudesCompra ? <SolicitudesCompraDashboard /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/stock" element={canViewSolicitudesCompra ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/historial-equipos/personal/:id" element={canViewSolicitudesCompra ? <HistorialEquiposPersonalPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/historial-equipos/sede/:id" element={canViewSolicitudesCompra ? <HistorialEquiposSedePage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-compra/nueva" element={canViewSolicitudesCompra ? <SolicitudCompraFormPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-compra/:id" element={canViewSolicitudesCompra ? <SolicitudCompraDetailPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-compra" element={canViewSolicitudesCompra ? <SolicitudesCompraListPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/catalogo-equipos" element={hasInfraestructura ? <CatalogoEquiposPage /> : <Navigate to="/solicitudes-compra/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion/dashboard" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionDashboard /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion/nueva" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionFormPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion/:id" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionDetailPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionListPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/categoria-equipos-asignacion" element={hasInfraestructura ? <CategoriaEquiposAsignacionPage /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
                   <Route path="/profile" element={<Profile />} />
 
                   {/* Sedes routes - más específicas primero */}

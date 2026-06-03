@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
 import { API_BASE_URL } from '../config/api';
+import { BarChart3, CalendarDays, CheckCircle2, ClipboardList, Search, TicketCheck, Wrench } from 'lucide-react';
 
 // Colores para los gráficos
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
@@ -172,16 +173,22 @@ export default function ReportesVisitasPage() {
     ) || [];
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="page-shell space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">📊 Dashboard de Reportes de Visitas</h1>
-                <p className="text-slate-600">Estadísticas y análisis de minutas de visitas</p>
+            <div className="card-base p-6">
+                <h1 className="page-title flex items-center gap-3">
+                    <BarChart3 className="h-6 w-6 text-primary-600" />
+                    Dashboard de Reportes de Visitas
+                </h1>
+                <p className="page-description">Estadísticas y análisis de minutas de visitas</p>
             </div>
 
             {/* Filtros */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">🔍 Filtros</h2>
+            <div className="card-base p-6">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <Search className="h-5 w-5 text-surface-500" />
+                    Filtros
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Desde</label>
@@ -254,16 +261,16 @@ export default function ReportesVisitasPage() {
                         </select>
                     </div>
                 </div>
-                <div className="flex gap-3 mt-4">
+                <div className="flex flex-col gap-3 mt-4 sm:flex-row">
                     <button
                         onClick={aplicarFiltros}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="btn-accent"
                     >
                         Aplicar Filtros
                     </button>
                     <button
                         onClick={limpiarFiltros}
-                        className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                        className="btn-secondary"
                     >
                         Limpiar
                     </button>
@@ -271,25 +278,27 @@ export default function ReportesVisitasPage() {
             </div>
 
             {/* Pestañas */}
-            <div className="bg-white rounded-lg shadow-sm p-2">
-                <div className="flex gap-2">
+            <div className="card-base p-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                         onClick={() => setVistaActual('dashboard')}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all ${vistaActual === 'dashboard'
+                        className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${vistaActual === 'dashboard'
                                 ? 'bg-blue-600 text-white shadow-md'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                     >
-                        📊 Dashboard
+                        <BarChart3 className="h-4 w-4" />
+                        Dashboard
                     </button>
                     <button
                         onClick={() => setVistaActual('lista')}
-                        className={`px-6 py-3 rounded-lg font-medium transition-all ${vistaActual === 'lista'
+                        className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${vistaActual === 'lista'
                                 ? 'bg-blue-600 text-white shadow-md'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                     >
-                        📋 Lista de Visitas ({visitasFiltradas.length})
+                        <ClipboardList className="h-4 w-4" />
+                        Lista de Visitas ({visitasFiltradas.length})
                     </button>
                 </div>
             </div>
@@ -302,25 +311,25 @@ export default function ReportesVisitasPage() {
                         <MetricCard
                             title="Total Visitas"
                             value={data?.metricas?.totalVisitas || 0}
-                            icon="📅"
+                            icon={CalendarDays}
                             color="blue"
                         />
                         <MetricCard
                             title="Visitas Realizadas"
                             value={data?.metricas?.visitasRealizadas || 0}
-                            icon="✅"
+                            icon={CheckCircle2}
                             color="green"
                         />
                         <MetricCard
                             title="Problemas Resueltos"
                             value={data?.metricas?.problemasResueltos || 0}
-                            icon="🔧"
+                            icon={Wrench}
                             color="purple"
                         />
                         <MetricCard
                             title="Casos Cerrados"
                             value={data?.metricas?.totalCasos || 0}
-                            icon="🎫"
+                            icon={TicketCheck}
                             color="orange"
                         />
                     </div>
@@ -378,7 +387,7 @@ export default function ReportesVisitasPage() {
 }
 
 // Componente de Métrica
-function MetricCard({ title, value, icon, color }) {
+function MetricCard({ title, value, icon: Icon, color }) {
     const colorClasses = {
         blue: 'bg-blue-50 text-blue-600 border-blue-200',
         green: 'bg-green-50 text-green-600 border-green-200',
@@ -393,7 +402,7 @@ function MetricCard({ title, value, icon, color }) {
                     <p className="text-sm font-medium opacity-75">{title}</p>
                     <p className="text-3xl font-bold mt-2">{value}</p>
                 </div>
-                <div className="text-4xl">{icon}</div>
+                <Icon className="h-8 w-8" />
             </div>
         </div>
     );
@@ -536,7 +545,10 @@ function CasosTable({ casos }) {
     if (!casos || casos.length === 0) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">📋 Casos/Tickets Cerrados</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-surface-500" />
+                    Casos/Tickets Cerrados
+                </h3>
                 <div className="text-slate-400 text-center py-8">
                     No hay casos cerrados para mostrar
                 </div>
@@ -550,8 +562,9 @@ function CasosTable({ casos }) {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                    📋 Casos/Tickets Cerrados ({casos.length})
+                <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-surface-500" />
+                    Casos/Tickets Cerrados ({casos.length})
                 </h3>
                 <span className="text-sm text-slate-500">
                     Página {pagina} de {totalPaginas}
@@ -576,8 +589,8 @@ function CasosTable({ casos }) {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
-                        {casosPagina.map((item, index) => (
-                            <tr key={index} className="hover:bg-slate-50">
+                        {casosPagina.map((item) => (
+                            <tr key={item.caso} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                     {new Date(item.fecha_visita).toLocaleDateString('es-AR')}
                                 </td>
@@ -807,8 +820,8 @@ function ModalProblemasUsuario({ problemas, onClose }) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-slate-200">
-                                    {items.map((item, i) => (
-                                        <tr key={i} className="hover:bg-slate-50">
+                                    {items.map((item) => (
+                                        <tr key={`${item.fecha}-${item.sede}-${item.descripcion}`} className="hover:bg-slate-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                                 {item.fecha ? new Date(item.fecha).toLocaleDateString('es-AR') : '-'}
                                             </td>

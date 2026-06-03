@@ -7,6 +7,7 @@ import { usePermissionError } from '../hooks/usePermissionError'
 import { normalizeItemResponse } from '../utils/apiResponseNormalizer'
 import { getPaginationNumbers } from '../utils/paginationHelper'
 import Swal from 'sweetalert2'
+import { BriefcaseBusiness, ClipboardList, Laptop, Wrench } from 'lucide-react'
 
 export default function ProveedoresPage() {
   const navigate = useNavigate()
@@ -210,19 +211,20 @@ export default function ProveedoresPage() {
       {/* Accesos Rápidos */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: '🔧', label: 'Servicios', desc: 'Catálogo completo', path: '/proveedores/servicios', color: 'from-blue-500 to-blue-600' },
-          { icon: '💻', label: 'Equipos', desc: 'Inventario externo', path: '/proveedores/equipos', color: 'from-indigo-500 to-indigo-600' },
-          { icon: '👔', label: 'Ejecutivos', desc: 'Contactos clave', path: '/proveedores/ejecutivos', color: 'from-cyan-500 to-cyan-600' },
-          { icon: '📋', label: 'Tipos', desc: 'Configuración', path: '/proveedores/tipos-servicio', color: 'from-teal-500 to-teal-600' }
+          { icon: Wrench, label: 'Servicios', desc: 'Catálogo completo', path: '/proveedores/servicios', color: 'text-blue-600 bg-blue-50' },
+          { icon: Laptop, label: 'Equipos', desc: 'Inventario externo', path: '/proveedores/equipos', color: 'text-indigo-600 bg-indigo-50' },
+          { icon: BriefcaseBusiness, label: 'Ejecutivos', desc: 'Contactos clave', path: '/proveedores/ejecutivos', color: 'text-cyan-600 bg-cyan-50' },
+          { icon: ClipboardList, label: 'Tipos', desc: 'Configuración', path: '/proveedores/tipos-servicio', color: 'text-teal-600 bg-teal-50' }
         ].map((item, idx) => (
           <button
             key={idx}
             onClick={() => navigate(item.path)}
-            className="group relative overflow-hidden bg-white p-5 rounded-2xl border border-surface-200 shadow-sm hover:shadow-lg transition-all text-left"
+            className="group relative overflow-hidden bg-white p-5 rounded-xl border border-surface-200 shadow-sm hover:shadow-md transition-colors text-left"
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
             <div className="relative z-10">
-              <div className="text-2xl mb-2">{item.icon}</div>
+              <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${item.color}`}>
+                <item.icon className="h-5 w-5" />
+              </div>
               <div className="font-bold text-surface-900">{item.label}</div>
               <div className="text-xs text-surface-500">{item.desc}</div>
             </div>

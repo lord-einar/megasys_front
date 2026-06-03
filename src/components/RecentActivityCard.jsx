@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { remitosAPI } from '../services/api'
+import { Clock3, FileText, Package, User, Wrench, ClipboardList } from 'lucide-react'
 
 function RecentActivityCard() {
   const [activities, setActivities] = useState([])
@@ -35,12 +36,12 @@ function RecentActivityCard() {
 
   const getActivityIcon = (type) => {
     const icons = {
-      transfer: '📤',
-      inventory: '📦',
-      staff: '👤',
-      service: '🔧',
+      transfer: FileText,
+      inventory: Package,
+      staff: User,
+      service: Wrench,
     }
-    return icons[type] || '📝'
+    return icons[type] || ClipboardList
   }
 
   const getEstadoBadgeColor = (estado) => {
@@ -60,9 +61,7 @@ function RecentActivityCard() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-surface-900 tracking-tight flex items-center gap-2">
           <span className="p-1.5 bg-surface-50 rounded-lg text-surface-500">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Clock3 className="w-5 h-5" />
           </span>
           Actividad Reciente
         </h2>
@@ -81,36 +80,39 @@ function RecentActivityCard() {
         </div>
       ) : (
         <div className="space-y-0 relative before:absolute before:inset-y-0 before:left-6 before:w-px before:bg-surface-100">
-          {activities.map((activity, index) => (
-            <div
-              key={activity.id}
-              className="flex gap-4 pb-6 last:pb-0 group relative z-10"
-            >
-              <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-white border border-surface-100 flex items-center justify-center text-xl shadow-sm z-10 group-hover:scale-110 group-hover:border-primary-200 group-hover:text-primary-600 transition-all duration-300">
-                {getActivityIcon(activity.type)}
-              </div>
+          {activities.map((activity) => {
+            const ActivityIcon = getActivityIcon(activity.type)
+            return (
+              <div
+                key={activity.id}
+                className="flex gap-4 pb-6 last:pb-0 group relative z-10"
+              >
+                <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-white border border-surface-100 flex items-center justify-center text-surface-500 shadow-sm z-10 group-hover:border-primary-200 group-hover:text-primary-600 transition-colors duration-150">
+                  <ActivityIcon className="w-5 h-5" />
+                </div>
 
-              <div className="flex-1 min-w-0 pt-1 group-hover:translate-x-1 transition-transform duration-200">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-surface-900 leading-tight">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-surface-500 mt-1 flex items-center gap-1.5">
-                      <span className="font-medium text-surface-600">{activity.user}</span>
-                      <span className="w-1 h-1 rounded-full bg-surface-300"></span>
-                      <span>{activity.timestamp}</span>
-                    </p>
+                <div className="flex-1 min-w-0 pt-1">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-surface-900 leading-tight">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-surface-500 mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="font-medium text-surface-600">{activity.user}</span>
+                        <span className="w-1 h-1 rounded-full bg-surface-300"></span>
+                        <span>{activity.timestamp}</span>
+                      </p>
+                    </div>
+                    {activity.estado && (
+                      <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide flex-shrink-0 ${getEstadoBadgeColor(activity.estado)}`}>
+                        {activity.estado}
+                      </span>
+                    )}
                   </div>
-                  {activity.estado && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide flex-shrink-0 ${getEstadoBadgeColor(activity.estado)}`}>
-                      {activity.estado}
-                    </span>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

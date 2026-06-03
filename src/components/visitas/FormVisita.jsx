@@ -497,8 +497,8 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                         </div>
                         {formData.casos_tickets.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-2">
-                                {formData.casos_tickets.map((ticket, index) => (
-                                    <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                {formData.casos_tickets.map((ticket) => (
+                                    <span key={ticket} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
                                         {ticket}
                                         <button
                                             type="button"

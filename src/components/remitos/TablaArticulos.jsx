@@ -56,8 +56,8 @@ function TablaArticulos({
           </tr>
         </thead>
         <tbody>
-          {articulos.map((articulo, index) => (
-            <React.Fragment key={`${articulo.id}-${index}`}>
+          {articulos.map((articulo) => (
+            <React.Fragment key={articulo.id}>
               <tr className={articulo.es_prestamo ? 'row-prestamo' : 'row-transferencia'}>
                 <td className="col-expand">
                   <button

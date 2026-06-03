@@ -719,6 +719,14 @@ export const solicitudesCompraAPI = {
     const qs = new URLSearchParams(params).toString()
     return apiCall(`/solicitudes-compra/lookups/inventario-asignado${qs ? `?${qs}` : ''}`)
   },
+  stockEquipos: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-compra/stock-equipos${qs ? `?${qs}` : ''}`)
+  },
+  historialEquiposPersonal: (personalId) =>
+    apiCall(`/solicitudes-compra/historial-equipos/personal/${personalId}`),
+  historialEquiposSede: (sedeId) =>
+    apiCall(`/solicitudes-compra/historial-equipos/sede/${sedeId}`),
   getById: (id) => apiCall(`/solicitudes-compra/${id}`),
   crear: (data) => apiCall('/solicitudes-compra', {
     method: 'POST',
@@ -762,6 +770,48 @@ export const solicitudesCompraAPI = {
     method: 'POST',
     body: JSON.stringify(data)
   })
+}
+
+// Categorías de equipo (ABM para solicitudes de asignación)
+export const categoriaEquiposAsignacionAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/categoria-equipos${qs ? `?${qs}` : ''}`)
+  },
+  getById: (id) => apiCall(`/categoria-equipos/${id}`),
+  crear: (data) => apiCall('/categoria-equipos', { method: 'POST', body: JSON.stringify(data) }),
+  actualizar: (id, data) => apiCall(`/categoria-equipos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  eliminar: (id) => apiCall(`/categoria-equipos/${id}`, { method: 'DELETE' })
+}
+
+// Solicitudes de asignación de equipos
+export const solicitudesAsignacionAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-asignacion${qs ? `?${qs}` : ''}`)
+  },
+  getById: (id) => apiCall(`/solicitudes-asignacion/${id}`),
+  lookupPersonal: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-asignacion/lookups/personal${qs ? `?${qs}` : ''}`)
+  },
+  lookupInventarioDisponible: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiCall(`/solicitudes-asignacion/lookups/inventario-disponible${qs ? `?${qs}` : ''}`)
+  },
+  crear: (data) => apiCall('/solicitudes-asignacion', { method: 'POST', body: JSON.stringify(data) }),
+  asignarEquipo: (id, data) => apiCall(`/solicitudes-asignacion/${id}/asignar-equipo`, { method: 'POST', body: JSON.stringify(data) }),
+  aprobarRrhh: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/aprobar-rrhh`, { method: 'POST', body: JSON.stringify(data) }),
+  generarRemito: (id) => apiCall(`/solicitudes-asignacion/${id}/generar-remito`, { method: 'POST', body: JSON.stringify({}) }),
+  finalizar: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/finalizar`, { method: 'POST', body: JSON.stringify(data) }),
+  subirAdjunto: (id, { tipo, archivo }) => {
+    const formData = new FormData()
+    formData.append('tipo', tipo)
+    formData.append('archivo', archivo)
+    return apiUpload(`/solicitudes-asignacion/${id}/adjuntos`, formData)
+  },
+  rechazar: (id, data) => apiCall(`/solicitudes-asignacion/${id}/rechazar`, { method: 'POST', body: JSON.stringify(data) }),
+  cancelar: (id, data) => apiCall(`/solicitudes-asignacion/${id}/cancelar`, { method: 'POST', body: JSON.stringify(data) })
 }
 
 export default apiCall

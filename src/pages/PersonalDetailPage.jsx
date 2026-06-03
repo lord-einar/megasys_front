@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { personalAPI, authAPI, asignacionesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
+import HistorialEquipos from '../components/solicitudesCompra/HistorialEquipos'
 
 export default function PersonalDetailPage() {
   const { id } = useParams()
@@ -14,7 +15,7 @@ export default function PersonalDetailPage() {
   const [asignaciones, setAsignaciones] = useState([])
   const [editandoFechaId, setEditandoFechaId] = useState(null)
   const [nuevaFecha, setNuevaFecha] = useState('')
-  const { canUpdate, isSuperAdmin } = usePermissions()
+  const { canUpdate, isSuperAdmin, canViewSolicitudesCompra } = usePermissions()
 
   useEffect(() => {
     cargarDatos()
@@ -195,6 +196,13 @@ export default function PersonalDetailPage() {
                 onClick={() => setActiveTab('celulares')}
                 label={`Celulares (${asignaciones.filter(a => a.inventario?.tipoArticulo?.nombre === 'Celular').length})`}
               />
+              {canViewSolicitudesCompra && (
+                <TabButton
+                  active={activeTab === 'equipos'}
+                  onClick={() => setActiveTab('equipos')}
+                  label="Historial de equipos"
+                />
+              )}
             </div>
 
             {/* Tab Panels */}
@@ -283,6 +291,10 @@ export default function PersonalDetailPage() {
                     color="violet"
                   />
                 </div>
+              )}
+
+              {activeTab === 'equipos' && canViewSolicitudesCompra && (
+                <HistorialEquipos scope="personal" id={id} showHeader={false} />
               )}
 
               {activeTab === 'celulares' && (

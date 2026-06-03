@@ -5,12 +5,13 @@ import { usePermissions } from '../hooks/usePermissions'
 import { useAuth } from '../contexts/AuthContext'
 import TablaInventarioSede from '../components/TablaInventarioSede'
 import TablaCasosCRM from '../components/crm/TablaCasosCRM'
+import HistorialEquipos from '../components/solicitudesCompra/HistorialEquipos'
 import Swal from 'sweetalert2'
 
 export default function SedeDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { canUpdate } = usePermissions()
+  const { canUpdate, canViewSolicitudesCompra } = usePermissions()
   const { user: authUser } = useAuth()
   const userRole = authUser?.role
   const [sede, setSede] = useState(null)
@@ -313,6 +314,14 @@ export default function SedeDetallePage() {
               label="Inventario"
               icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
             />
+            {canViewSolicitudesCompra && (
+              <TabButton
+                active={activeTab === 'equipos-historial'}
+                onClick={() => setActiveTab('equipos-historial')}
+                label="Historial de equipos"
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+              />
+            )}
             <TabButton
               active={activeTab === 'imagenes'}
               onClick={() => setActiveTab('imagenes')}
@@ -614,6 +623,12 @@ export default function SedeDetallePage() {
                   loading={loading}
                 />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'equipos-historial' && canViewSolicitudesCompra && (
+            <div className="card-base p-6">
+              <HistorialEquipos scope="sede" id={id} />
             </div>
           )}
 

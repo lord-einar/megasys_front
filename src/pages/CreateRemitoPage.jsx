@@ -510,7 +510,7 @@ function CreateRemitoPage() {
                   {formData.articulos.length > 0 ? (
                     <div className="divide-y divide-surface-200">
                       {formData.articulos.map((art, index) => (
-                        <div key={`idx-${index}`} className="p-4 hover:bg-white transition-colors group">
+                        <div key={art.inventario_id} className="p-4 hover:bg-white transition-colors group">
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <p className="font-bold text-surface-900 text-sm">{art.marca_modelo}</p>

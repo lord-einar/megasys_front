@@ -1,26 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { solicitudesCompraAPI } from '../services/api'
-import StatusBadge from '../components/solicitudesCompra/StatusBadge'
+import { solicitudesAsignacionAPI } from '../services/api'
+import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import { usePermissions } from '../hooks/usePermissions'
 import { Plus, Laptop } from 'lucide-react'
 
 const ESTADOS_TARJETA = [
   'pendiente_infra',
-  'aprobada_infra',
-  'pendiente_pedido',
-  'pedido',
-  'recibido',
-  'entregado_sistemas',
-  'entregado_destinatario',
+  'pendiente_rrhh',
+  'aprobada',
+  'remito_generado',
   'finalizada',
   'rechazada'
 ]
 
-const ESTADOS_PENDIENTES = ['pendiente_infra', 'aprobada_infra', 'pendiente_pedido', 'pedido', 'recibido', 'entregado_sistemas', 'entregado_destinatario']
+const ESTADOS_PENDIENTES = ['pendiente_infra', 'pendiente_rrhh', 'aprobada', 'remito_generado']
 
-export default function SolicitudesCompraDashboard() {
+export default function SolicitudesAsignacionDashboard() {
   const navigate = useNavigate()
   const { hasInfraestructura } = usePermissions()
   const [solicitudes, setSolicitudes] = useState([])
@@ -29,7 +26,7 @@ export default function SolicitudesCompraDashboard() {
 
   useEffect(() => {
     setLoading(true)
-    solicitudesCompraAPI.list({ limit: 100 })
+    solicitudesAsignacionAPI.list({ limit: 100 })
       .then(res => setSolicitudes(normalizeApiResponse(res, 100).data))
       .catch(err => setError(err.message || 'No se pudo cargar el panel'))
       .finally(() => setLoading(false))
@@ -40,8 +37,8 @@ export default function SolicitudesCompraDashboard() {
     return acc
   }, {})
 
-  const totalActivas = solicitudes.filter(s => !['finalizada', 'rechazada', 'cancelada', 'comprada'].includes(s.estado)).length
-  const totalFinalizadas = solicitudes.filter(s => ['finalizada', 'comprada'].includes(s.estado)).length
+  const totalActivas = solicitudes.filter(s => !['finalizada', 'rechazada', 'cancelada'].includes(s.estado)).length
+  const totalFinalizadas = solicitudes.filter(s => s.estado === 'finalizada').length
   const totalRechazadas = solicitudes.filter(s => s.estado === 'rechazada').length
 
   const pendientes = solicitudes.filter(s => ESTADOS_PENDIENTES.includes(s.estado)).slice(0, 8)
@@ -50,20 +47,20 @@ export default function SolicitudesCompraDashboard() {
     <div className="page-shell">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Solicitudes de compra</h1>
+          <h1 className="page-title">Solicitudes de asignación</h1>
           <p className="page-description">Panel operativo para Infraestructura, RRHH y Compras</p>
         </div>
         <div className="responsive-actions">
           <button onClick={() => navigate('/solicitudes-compra/stock')} className="btn-secondary flex items-center gap-2">
             <Laptop className="w-4 h-4" />
-            Stock notebooks y celulares
+            Stock de equipos
           </button>
-          <button onClick={() => navigate('/solicitudes-compra')} className="btn-secondary">Ver listado</button>
+          <button onClick={() => navigate('/solicitudes-asignacion')} className="btn-secondary">Ver listado</button>
           {hasInfraestructura && (
-            <button onClick={() => navigate('/catalogo-equipos')} className="btn-secondary">Catálogo</button>
+            <button onClick={() => navigate('/categoria-equipos-asignacion')} className="btn-secondary">Categorías</button>
           )}
           <button
-            onClick={() => navigate('/solicitudes-compra/nueva')}
+            onClick={() => navigate('/solicitudes-asignacion/nueva')}
             className="btn-accent"
           >
             <Plus className="w-4 h-4" />
@@ -90,7 +87,7 @@ export default function SolicitudesCompraDashboard() {
         <SummaryCard
           title="Finalizadas"
           value={totalFinalizadas}
-          subtitle="Equipos entregados y dados de alta"
+          subtitle="Equipos entregados y asignados"
           accent="emerald"
           iconPath="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
         />
@@ -106,10 +103,10 @@ export default function SolicitudesCompraDashboard() {
       {/* Distribución por estado */}
       <div className="card-base p-6 mb-8">
         <h2 className="text-sm font-bold text-surface-400 uppercase tracking-wider mb-4">Distribución por estado</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           {ESTADOS_TARJETA.map(estado => (
             <div key={estado} className="flex flex-col gap-2">
-              <StatusBadge estado={estado} />
+              <StatusBadgeAsignacion estado={estado} />
               <p className="text-2xl font-extrabold text-surface-900">{counts[estado] || 0}</p>
             </div>
           ))}
@@ -124,7 +121,7 @@ export default function SolicitudesCompraDashboard() {
             <p className="text-xs text-surface-500 mt-0.5">Las primeras 8 solicitudes que requieren intervención</p>
           </div>
           <button
-            onClick={() => navigate('/solicitudes-compra')}
+            onClick={() => navigate('/solicitudes-asignacion')}
             className="text-sm text-primary-700 hover:text-primary-800 font-medium hover:underline"
           >
             Ver todas →
@@ -150,11 +147,11 @@ export default function SolicitudesCompraDashboard() {
             {pendientes.map(s => (
               <button
                 key={s.id}
-                onClick={() => navigate(`/solicitudes-compra/${s.id}`)}
-            className="w-full text-left px-4 sm:px-6 py-4 hover:bg-surface-50/60 transition-colors flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                onClick={() => navigate(`/solicitudes-asignacion/${s.id}`)}
+                className="w-full text-left px-4 sm:px-6 py-4 hover:bg-surface-50/60 transition-colors flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <div className="min-w-0">
-                  <p className="font-semibold text-surface-900">SC-{String(s.numero).padStart(4, '0')}</p>
+                  <p className="font-semibold text-surface-900">SA-{String(s.numero).padStart(4, '0')}</p>
                   <p className="text-sm text-surface-500 truncate">
                     {s.beneficiario ? `${s.beneficiario.apellido}, ${s.beneficiario.nombre}` : 'Sin beneficiario'}
                     <span className="text-surface-300 mx-1.5">·</span>
@@ -163,7 +160,7 @@ export default function SolicitudesCompraDashboard() {
                     <span className="capitalize">{(s.motivo || '').replaceAll('_', ' ')}</span>
                   </p>
                 </div>
-                <StatusBadge estado={s.estado} />
+                <StatusBadgeAsignacion estado={s.estado} />
               </button>
             ))}
           </div>

@@ -5,6 +5,7 @@ import RecentActivityCard from '../components/RecentActivityCard'
 import LoansAboutToExpireCard from '../components/LoansAboutToExpireCard'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
+import { FileText, Package, Users, Truck, Plus, AlertTriangle, Zap } from 'lucide-react'
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -81,30 +82,26 @@ function Dashboard() {
   }
 
   return (
-    <div className="p-6 sm:p-8 min-h-full animate-fade-in">
+    <div className="page-shell">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Dashboard</h1>
-          <p className="text-surface-500 mt-1 font-medium">Resumen general del sistema</p>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-description">Resumen general del sistema</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="responsive-actions">
           <button
             onClick={() => navigate('/remitos')}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <FileText className="w-4 h-4" />
             Ver Remitos
           </button>
           <button
             onClick={() => navigate('/remitos/crear')}
-            className="btn-primary flex items-center gap-2 shadow-lg shadow-surface-900/20"
+            className="btn-primary"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Nuevo Remito
           </button>
         </div>
@@ -116,28 +113,24 @@ function Dashboard() {
           title="Sedes Activas"
           value={stats.sedes}
           icon="building"
-          trend={12}
           subtitle="Total operativo"
         />
         <StatCard
           title="Personal"
           value={stats.personal}
           icon="users"
-          trend={5}
           subtitle="Activos hoy"
         />
         <StatCard
           title="Inventario"
           value={stats.inventario}
           icon="package"
-          trend={-2}
           subtitle="Items registrados"
         />
         <StatCard
           title="Remitos"
           value={stats.remitos}
           icon="document"
-          trend={8}
           subtitle="Movimientos"
         />
       </div>
@@ -155,9 +148,7 @@ function Dashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-surface-900 flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <AlertTriangle className="w-4 h-4" />
                   </span>
                   Remitos Pendientes
                 </h2>
@@ -178,9 +169,7 @@ function Dashboard() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-surface-50 flex items-center justify-center text-surface-400 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <FileText className="w-5 h-5" />
                       </div>
                       <div>
                         <p className="font-bold text-surface-900 group-hover:text-primary-700 transition-colors">
@@ -216,44 +205,32 @@ function Dashboard() {
           <div className="card-base p-6 sticky top-24">
             <h2 className="text-lg font-bold text-surface-900 mb-6 flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <Zap className="w-4 h-4" />
               </span>
               Acciones Rápidas
             </h2>
             <div className="grid gap-3">
               <ActionButton
-                icon="📄"
+                icon={FileText}
                 label="Nuevo Remito"
                 onClick={() => navigate('/remitos/crear')}
                 primary
               />
               <ActionButton
-                icon="📦"
+                icon={Package}
                 label="Nuevo Artículo"
                 onClick={() => navigate('/inventario/crear')}
               />
               <ActionButton
-                icon="👥"
+                icon={Users}
                 label="Nuevo Personal"
                 onClick={() => navigate('/personal/crear')}
               />
               <ActionButton
-                icon="🤝"
+                icon={Truck}
                 label="Nuevo Proveedor"
                 onClick={() => navigate('/proveedores/nuevo')}
               />
-            </div>
-
-            {/* Mini System Status */}
-            <div className="mt-8 pt-6 border-t border-surface-100">
-              <h3 className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-4">Estado del Sistema</h3>
-              <div className="space-y-3">
-                <StatusItem label="Servidor API" status="online" />
-                <StatusItem label="Base de Datos" status="online" />
-                <StatusItem label="Sincronización" status="warning" />
-              </div>
             </div>
           </div>
         </div>
@@ -262,39 +239,23 @@ function Dashboard() {
   )
 }
 
-function ActionButton({ icon, label, onClick, primary = false }) {
+function ActionButton({ icon: Icon, label, onClick, primary = false }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full px-4 py-3.5 rounded-xl border transition-all duration-200 font-medium text-left flex items-center gap-3 group ${primary
-          ? 'bg-primary-50 border-primary-100 text-primary-900 hover:bg-primary-100 hover:shadow-md hover:shadow-primary-900/5'
+      className={`w-full px-4 py-3 rounded-lg border transition-colors duration-150 font-medium text-left flex items-center gap-3 group ${primary
+          ? 'bg-primary-50 border-primary-100 text-primary-900 hover:bg-primary-100'
           : 'bg-white border-surface-200 text-surface-700 hover:border-primary-200 hover:text-primary-700 hover:shadow-sm'
         }`}
     >
-      <span className="text-xl group-hover:scale-110 transition-transform duration-200 filter drop-shadow-sm">{icon}</span>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${primary ? 'bg-white text-primary-600' : 'bg-surface-50 text-surface-500 group-hover:text-primary-600'}`}>
+        <Icon className="w-5 h-5" />
+      </span>
       <span className="font-semibold text-sm">{label}</span>
       <svg className={`w-4 h-4 ml-auto transition-transform ${primary ? 'text-primary-400 group-hover:text-primary-600' : 'text-surface-300 group-hover:text-primary-500'} group-hover:translate-x-1`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
     </button>
-  )
-}
-
-function StatusItem({ label, status }) {
-  const colors = {
-    online: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    offline: 'bg-rose-500'
-  }
-
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-surface-600">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className={`w-2 h-2 rounded-full ${colors[status]} ring-2 ring-white shadow-sm`}></span>
-        <span className="text-xs font-medium text-surface-500 capitalize">{status}</span>
-      </div>
-    </div>
   )
 }
 

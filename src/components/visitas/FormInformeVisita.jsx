@@ -143,9 +143,10 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                 if (problemasExistentes && problemasExistentes.length > 0) {
                     // Necesitamos agregar el nombre de la categoría desde categoriasRes
-                    const problemasConCategoria = problemasExistentes.map(prob => {
+                    const problemasConCategoria = problemasExistentes.map((prob, idx) => {
                         const categoria = categoriasRes.data?.find(c => c.id === prob.categoria_id);
                         return {
+                            _key: `loaded-${idx}-${prob.categoria_id}`,
                             descripcion: prob.descripcion,
                             categoria_id: prob.categoria_id,
                             causado_por_usuario: prob.causado_por_usuario || false,
@@ -197,6 +198,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
             const categoria = categoriasProblemas.find(c => c.id === problemaInput.categoria_id);
             setProblemasResueltos([...problemasResueltos, {
                 ...problemaInput,
+                _key: `prob-${Date.now()}-${Math.random()}`,
                 categoria_nombre: categoria?.nombre || 'Sin categoría'
             }]);
             // Resetear con la categoría "otro" por defecto
@@ -431,7 +433,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                         <h4 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">1. Checklist de Control</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {checklistItems.map((item, index) => (
-                                <label key={index} className="flex items-start space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                                <label key={item.nombre} className="flex items-start space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={item.completado}
@@ -459,8 +461,8 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                 <button type="button" onClick={handleAddExtra} className="btn btn-secondary">Agregar</button>
                             </div>
                             <div className="mt-2 space-y-1">
-                                {checklistExtra.map((item, i) => (
-                                    <div key={i} className="flex items-center text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg w-fit">
+                                {checklistExtra.map((item) => (
+                                    <div key={item.nombre} className="flex items-center text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg w-fit">
                                         <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
@@ -630,7 +632,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
                         <div className="mt-4 space-y-2">
                             {problemasResueltos.map((prob, i) => (
-                                <div key={i} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                <div key={prob._key} className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                     <div>
                                         <p className="font-medium text-slate-900">{prob.descripcion}</p>
                                         <div className="flex gap-2 text-xs mt-1">
@@ -700,7 +702,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {casosResueltos.map((caso, i) => (
-                                <span key={i} className="bg-purple-100 text-purple-800 px-3 py-1 rounded flex items-center gap-2">
+                                <span key={caso} className="bg-purple-100 text-purple-800 px-3 py-1 rounded flex items-center gap-2">
                                     {caso}
                                     <button type="button" onClick={() => setCasosResueltos(casosResueltos.filter((_, idx) => idx !== i))}>&times;</button>
                                 </span>
@@ -750,7 +752,7 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
                                 <p className="text-xs font-medium text-slate-600 mb-2">Nuevas imágenes a subir ({imagenesStaged.length}):</p>
                                 <div className="grid grid-cols-4 gap-2">
                                     {imagenesStaged.map(({ previewUrl }, index) => (
-                                        <div key={index} className="relative group rounded-lg overflow-hidden border border-blue-300 aspect-square bg-slate-100">
+                                        <div key={previewUrl} className="relative group rounded-lg overflow-hidden border border-blue-300 aspect-square bg-slate-100">
                                             <img src={previewUrl} alt="Nueva imagen" className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
