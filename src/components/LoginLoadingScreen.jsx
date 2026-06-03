@@ -82,7 +82,7 @@ export default function LoginLoadingScreen({
 
         {/* Steps */}
         <div className="w-full space-y-4 mb-10">
-          {STEPS.map((s) => (
+          {STEPS.map((s, i) => (
             <StepRow
               key={s.label}
               label={s.label}
