@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { remitosAPI, personalAPI, sedesAPI } from '../services/api'
+import { remitosAPI, personalAPI, sedesAPI, tipoArticuloAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 
@@ -34,6 +34,9 @@ function RemitoDetailPage() {
   const [personal, setPersonal] = useState([])
   const [sedes, setSedes] = useState([])
   // Gestión de artículos en edición
+  const [tiposArticulo, setTiposArticulo] = useState([])
+  const [tipoSeleccionado, setTipoSeleccionado] = useState('')
+  const [sedeArticulo, setSedeArticulo] = useState('')
   const [articulosDisponibles, setArticulosDisponibles] = useState([])
   const [articuloSeleccionado, setArticuloSeleccionado] = useState('')
   const [cargandoArticulos, setCargandoArticulos] = useState(false)
@@ -45,6 +48,7 @@ function RemitoDetailPage() {
     cargarDetalle()
     personalAPI.list({ limit: 500 }).then(r => setPersonal(r?.data?.rows || r?.data || [])).catch(() => {})
     sedesAPI.list({ limit: 100 }).then(r => setSedes(r?.data || [])).catch(() => {})
+    tipoArticuloAPI.list().then(r => setTiposArticulo(r?.data || [])).catch(() => {})
   }, [id])
 
   // Solo muestran como técnicos quienes tienen rol soporte o helpdesk
@@ -63,16 +67,31 @@ function RemitoDetailPage() {
       observaciones: remito.observaciones || ''
     })
     setArticuloSeleccionado('')
-    // Cargar artículos disponibles solo si el remito está en preparado
-    if (remito.estado === 'preparado') {
-      setCargandoArticulos(true)
-      remitosAPI.getArticulosDisponibles({})
-        .then(r => setArticulosDisponibles(r?.data?.articulos || r?.data || []))
-        .catch(() => setArticulosDisponibles([]))
-        .finally(() => setCargandoArticulos(false))
-    }
+    setTipoSeleccionado('')
+    setArticulosDisponibles([])
+    // Sede por defecto: la primera sede que tenga "dep" en el nombre
+    const sedeDeposito = sedes.find(s => s.nombre_sede?.toLowerCase().includes('dep'))
+    setSedeArticulo(sedeDeposito?.id || sedes[0]?.id || '')
     setEditando(true)
   }
+
+  // Cargar artículos cuando cambia tipo o sede
+  useEffect(() => {
+    if (!editando || !tipoSeleccionado || !sedeArticulo) {
+      setArticulosDisponibles([])
+      setArticuloSeleccionado('')
+      return
+    }
+    setCargandoArticulos(true)
+    remitosAPI.getArticulosDisponibles({ tipo_articulo_id: tipoSeleccionado, sede_id: sedeArticulo, limit: 100 })
+      .then(r => {
+        const rows = r?.rows || r?.data?.rows || r?.data || []
+        setArticulosDisponibles(rows)
+        setArticuloSeleccionado('')
+      })
+      .catch(() => setArticulosDisponibles([]))
+      .finally(() => setCargandoArticulos(false))
+  }, [tipoSeleccionado, sedeArticulo, editando])
 
   const handleQuitarDetalle = async (detalleId) => {
     setQuitando(detalleId)
@@ -93,10 +112,12 @@ function RemitoDetailPage() {
       await remitosAPI.agregarDetalle(id, { inventario_id: articuloSeleccionado })
       setArticuloSeleccionado('')
       await cargarDetalle()
-      // Recargar artículos disponibles
-      remitosAPI.getArticulosDisponibles({})
-        .then(r => setArticulosDisponibles(r?.data?.articulos || r?.data || []))
-        .catch(() => {})
+      // Recargar artículos disponibles con los filtros actuales
+      if (tipoSeleccionado && sedeArticulo) {
+        remitosAPI.getArticulosDisponibles({ tipo_articulo_id: tipoSeleccionado, sede_id: sedeArticulo, limit: 100 })
+          .then(r => setArticulosDisponibles(r?.rows || r?.data?.rows || r?.data || []))
+          .catch(() => {})
+      }
     } catch (err) {
       Swal.fire({ title: 'Error', text: err.message || 'No se pudo agregar el artículo', icon: 'error', customClass: { popup: 'rounded-2xl' } })
     } finally {
@@ -641,70 +662,114 @@ function RemitoDetailPage() {
                 <input value={editForm.observaciones} onChange={e => setEditForm(p => ({ ...p, observaciones: e.target.value }))} className="input-base" placeholder="Observaciones opcionales" />
               </label>
             </div>
-            {/* Gestión de artículos — siempre visible, editable solo en preparado */}
+            {/* Gestión de artículos — siempre visible */}
             <div className="md:col-span-2 mt-2 border-t border-surface-100 pt-4">
               <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">
                 Artículos del remito
               </p>
 
-              {/* Lista actual */}
+              {/* Lista actual con quitar */}
               {remito.detalles?.length > 0 ? (
                 <div className="space-y-2 mb-4">
-                  {remito.detalles.map(det => (
-                    <div key={det.id} className="flex items-center justify-between bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 text-sm">
-                      <span className="font-medium text-surface-800">
-                        {det.inventario?.marca} {det.inventario?.modelo}
-                        {det.inventario?.numero_serie
-                          ? <span className="text-surface-400 font-mono ml-2">S/N {det.inventario.numero_serie}</span>
-                          : null}
-                      </span>
-                      {remito.estado === 'preparado' && (
-                        <button
-                          onClick={() => handleQuitarDetalle(det.id)}
-                          disabled={quitando === det.id}
-                          className="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          {quitando === det.id ? '...' : 'Quitar'}
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {remito.detalles.map(det => {
+                    const inv = det.inventarioDetalle || det.inventario || {}
+                    return (
+                      <div key={det.id} className="flex items-center justify-between bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 text-sm">
+                        <span className="font-medium text-surface-800">
+                          {inv.marca || '—'} {inv.modelo || ''}
+                          {inv.numero_serie
+                            ? <span className="text-surface-400 font-mono ml-2">S/N {inv.numero_serie}</span>
+                            : null}
+                        </span>
+                        {remito.estado === 'preparado' && (
+                          <button
+                            onClick={() => handleQuitarDetalle(det.id)}
+                            disabled={quitando === det.id}
+                            className="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1 rounded hover:bg-rose-50 transition-colors"
+                          >
+                            {quitando === det.id ? '...' : 'Quitar'}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-surface-400 mb-4">Sin artículos cargados.</p>
               )}
 
-              {/* Agregar — solo en preparado */}
+              {/* Agregar artículo — solo en preparado */}
               {remito.estado === 'preparado' ? (
-                <div className="flex gap-2">
-                  <select
-                    value={articuloSeleccionado}
-                    onChange={e => setArticuloSeleccionado(e.target.value)}
-                    className="input-base flex-1"
-                    disabled={cargandoArticulos}
-                  >
-                    <option value="">{cargandoArticulos ? 'Cargando...' : '— Agregar artículo disponible —'}</option>
-                    {articulosDisponibles
-                      .filter(a => !remito.detalles?.some(d => d.inventario_id === a.id))
-                      .map(a => (
-                        <option key={a.id} value={a.id}>
-                          {a.marca} {a.modelo}
-                          {a.numero_serie ? ` · S/N ${a.numero_serie}` : ''}
-                          {a.sedePrincipal?.nombre_sede ? ` · ${a.sedePrincipal.nombre_sede}` : ''}
+                <div className="space-y-3 bg-surface-50 border border-surface-200 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-surface-500">Agregar artículo</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* 1. Tipo */}
+                    <div>
+                      <label className="label-base block mb-1 text-xs">Tipo de artículo</label>
+                      <select
+                        value={tipoSeleccionado}
+                        onChange={e => { setTipoSeleccionado(e.target.value); setArticuloSeleccionado('') }}
+                        className="input-base"
+                      >
+                        <option value="">— Seleccionar tipo —</option>
+                        {tiposArticulo.map(t => (
+                          <option key={t.id} value={t.id}>{t.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* 2. Sede (depósito por defecto) */}
+                    <div>
+                      <label className="label-base block mb-1 text-xs">Sede / Depósito</label>
+                      <select
+                        value={sedeArticulo}
+                        onChange={e => { setSedeArticulo(e.target.value); setArticuloSeleccionado('') }}
+                        className="input-base"
+                      >
+                        <option value="">— Seleccionar sede —</option>
+                        {sedes.map(s => (
+                          <option key={s.id} value={s.id}>{s.nombre_sede}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* 3. Artículo filtrado */}
+                    <div>
+                      <label className="label-base block mb-1 text-xs">
+                        Artículo disponible {cargandoArticulos && <span className="text-surface-400">(cargando...)</span>}
+                      </label>
+                      <select
+                        value={articuloSeleccionado}
+                        onChange={e => setArticuloSeleccionado(e.target.value)}
+                        className="input-base"
+                        disabled={!tipoSeleccionado || !sedeArticulo || cargandoArticulos}
+                      >
+                        <option value="">
+                          {!tipoSeleccionado || !sedeArticulo
+                            ? '— Seleccioná tipo y sede primero —'
+                            : articulosDisponibles.length === 0
+                            ? 'Sin artículos disponibles'
+                            : '— Seleccionar artículo —'}
                         </option>
-                      ))}
-                  </select>
+                        {articulosDisponibles
+                          .filter(a => !remito.detalles?.some(d => (d.inventarioDetalle?.id || d.inventario_id) === a.id))
+                          .map(a => (
+                            <option key={a.id} value={a.id}>
+                              {a.marca} {a.modelo}{a.numero_serie ? ` · S/N ${a.numero_serie}` : ''}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
                   <button
                     onClick={handleAgregarDetalle}
                     disabled={!articuloSeleccionado || agregando}
-                    className="btn-secondary whitespace-nowrap"
+                    className="btn-primary text-sm"
                   >
-                    {agregando ? 'Agregando...' : '+ Agregar'}
+                    {agregando ? 'Agregando...' : '+ Agregar al remito'}
                   </button>
                 </div>
               ) : (
                 <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  Los artículos solo se pueden agregar o quitar cuando el remito está en estado <strong>Preparado</strong>. Estado actual: <strong>{remito.estado}</strong>
+                  Los artículos solo se pueden modificar en estado <strong>Preparado</strong>. Estado actual: <strong>{remito.estado}</strong>
                 </p>
               )}
             </div>
