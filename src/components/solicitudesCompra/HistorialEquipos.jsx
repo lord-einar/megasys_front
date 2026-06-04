@@ -196,7 +196,7 @@ function CardEquipoPersonal({ item, navigate, highlight }) {
       {item.motivo_asignacion && (
         <div className="mt-3 pt-3 border-t border-surface-200">
           <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Motivo de asignación</p>
-          <p className="text-sm text-surface-700">{item.motivo_asignacion}</p>
+          <MotivoAsignacion motivo={item.motivo_asignacion} navigate={navigate} />
         </div>
       )}
 
@@ -238,7 +238,7 @@ function CardEquipoSede({ item, navigate, highlight }) {
       {item.motivo_asignacion && (
         <div className="mt-3 pt-3 border-t border-surface-200">
           <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Motivo de asignación</p>
-          <p className="text-sm text-surface-700">{item.motivo_asignacion}</p>
+          <MotivoAsignacion motivo={item.motivo_asignacion} navigate={navigate} />
         </div>
       )}
 
@@ -282,7 +282,7 @@ function CardAsignacionSede({ item, navigate }) {
       {item.motivo_asignacion && (
         <div className="mt-3 pt-3 border-t border-surface-200">
           <p className="text-xs font-bold text-surface-500 uppercase tracking-wide mb-1">Motivo</p>
-          <p className="text-sm text-surface-700">{item.motivo_asignacion}</p>
+          <MotivoAsignacion motivo={item.motivo_asignacion} navigate={navigate} />
         </div>
       )}
 
@@ -291,6 +291,33 @@ function CardAsignacionSede({ item, navigate }) {
       )}
     </div>
   )
+}
+
+// Detecta "Solicitud SA-XXXX [uuid]" y lo convierte en link
+function MotivoAsignacion({ motivo, navigate }) {
+  if (!motivo) return null
+
+  // Patrón: "Solicitud SA-0001 [550e8400-e29b-41d4-a716-446655440000]"
+  const saMatch = motivo.match(/Solicitud\s+(SA-\d+)\s+\[([0-9a-f-]{36})\]/i)
+  if (saMatch) {
+    const [, codigo, solicitudId] = saMatch
+    return (
+      <p className="text-sm text-surface-700">
+        <button
+          onClick={() => navigate(`/solicitudes-asignacion/${solicitudId}`)}
+          className="text-primary-700 font-semibold hover:underline"
+        >
+          {codigo}
+        </button>
+        {motivo.replace(`Solicitud ${codigo} [${solicitudId}]`, '').trim() && (
+          <span className="ml-1 text-surface-500">{motivo.replace(`Solicitud ${codigo} [${solicitudId}]`, '').trim()}</span>
+        )}
+      </p>
+    )
+  }
+
+  // Patrón legacy: solo texto plano (sin ID)
+  return <p className="text-sm text-surface-700">{motivo}</p>
 }
 
 function BloqueMotivoCambio({ motivo, navigate }) {
