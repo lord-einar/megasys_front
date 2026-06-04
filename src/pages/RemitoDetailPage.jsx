@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { remitosAPI } from '../services/api'
+import { remitosAPI, personalAPI, sedesAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 
@@ -27,11 +27,48 @@ function RemitoDetailPage() {
   const [receptorNombre, setReceptorNombre] = useState('')
   const [receptorEmail, setReceptorEmail] = useState('')
   const [asignandoReceptor, setAsignandoReceptor] = useState(false)
-  const { canUpdate } = usePermissions()
+  // Edición inline
+  const [editando, setEditando] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [guardandoEdit, setGuardandoEdit] = useState(false)
+  const [personal, setPersonal] = useState([])
+  const [sedes, setSedes] = useState([])
+  const { canUpdate, hasInfraestructura } = usePermissions()
 
   useEffect(() => {
     cargarDetalle()
+    // Cargar personal y sedes para el formulario de edición
+    personalAPI.list({ limit: 200 }).then(r => setPersonal(r?.data?.rows || r?.data || [])).catch(() => {})
+    sedesAPI.list({ limit: 100 }).then(r => setSedes(r?.data || [])).catch(() => {})
   }, [id])
+
+  const ESTADOS_BLOQUEADOS = ['completado', 'cancelado']
+  const puedeEditar = hasInfraestructura && remito && !ESTADOS_BLOQUEADOS.includes(remito.estado)
+
+  const abrirEdicion = () => {
+    setEditForm({
+      solicitante_id: remito.solicitante?.id || '',
+      tecnico_asignado_id: remito.tecnicoAsignado?.id || '',
+      sede_origen_id: remito.sedeOrigen?.id || '',
+      sede_destino_id: remito.sedeDestino?.id || '',
+      fecha: remito.fecha ? remito.fecha.slice(0, 10) : '',
+      observaciones: remito.observaciones || ''
+    })
+    setEditando(true)
+  }
+
+  const guardarEdicion = async () => {
+    setGuardandoEdit(true)
+    try {
+      await remitosAPI.update(id, editForm)
+      setEditando(false)
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo guardar', icon: 'error', customClass: { popup: 'rounded-2xl' } })
+    } finally {
+      setGuardandoEdit(false)
+    }
+  }
 
   const cargarDetalle = async () => {
     try {
@@ -484,7 +521,17 @@ function RemitoDetailPage() {
             Volver a Remitos
           </button>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            {/* Botón editar */}
+            {puedeEditar && !editando && (
+              <button
+                onClick={abrirEdicion}
+                className="bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Editar remito
+              </button>
+            )}
             {/* Acciones Globales */}
             {remito && remito.estado !== 'preparado' && remito.estado !== 'completado' && canUpdate('remitos') && (
               <button
@@ -502,6 +549,57 @@ function RemitoDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Formulario de edición inline */}
+        {editando && (
+          <div className="card-base p-6 mb-4 border-l-4 border-l-primary-500">
+            <h2 className="font-bold text-surface-900 mb-4">Editar remito</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <label>
+                <span className="label-base block mb-1">Solicitante (beneficiario)</span>
+                <select value={editForm.solicitante_id} onChange={e => setEditForm(p => ({ ...p, solicitante_id: e.target.value }))} className="input-base">
+                  <option value="">— Seleccionar —</option>
+                  {personal.map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="label-base block mb-1">Técnico asignado</span>
+                <select value={editForm.tecnico_asignado_id} onChange={e => setEditForm(p => ({ ...p, tecnico_asignado_id: e.target.value }))} className="input-base">
+                  <option value="">— Sin técnico —</option>
+                  {personal.map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="label-base block mb-1">Sede origen</span>
+                <select value={editForm.sede_origen_id} onChange={e => setEditForm(p => ({ ...p, sede_origen_id: e.target.value }))} className="input-base">
+                  <option value="">— Seleccionar —</option>
+                  {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre_sede}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="label-base block mb-1">Sede destino</span>
+                <select value={editForm.sede_destino_id} onChange={e => setEditForm(p => ({ ...p, sede_destino_id: e.target.value }))} className="input-base">
+                  <option value="">— Seleccionar —</option>
+                  {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre_sede}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="label-base block mb-1">Fecha</span>
+                <input type="date" value={editForm.fecha} onChange={e => setEditForm(p => ({ ...p, fecha: e.target.value }))} className="input-base" />
+              </label>
+              <label>
+                <span className="label-base block mb-1">Observaciones</span>
+                <input value={editForm.observaciones} onChange={e => setEditForm(p => ({ ...p, observaciones: e.target.value }))} className="input-base" placeholder="Observaciones opcionales" />
+              </label>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={guardarEdicion} disabled={guardandoEdit} className="btn-primary">
+                {guardandoEdit ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+              <button onClick={() => setEditando(false)} className="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        )}
 
         {/* Header del Remito */}
         <div className="card-base p-6 md:p-8 bg-white flex flex-col md:flex-row md:items-start justify-between gap-6">
