@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { inventarioAPI, tipoArticuloAPI, sedesAPI } from '../services/api'
+import { inventarioAPI, tipoArticuloAPI, sedesAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
@@ -51,16 +51,12 @@ export default function CreateArticulo() {
   const [loading, setLoading] = useState(false)
   const [tiposArticulo, setTiposArticulo] = useState([])
   const [sedes, setSedes] = useState([])
+  const [categorias, setCategorias] = useState([])
+  const [categoriaId, setCategoriaId] = useState('')
 
   // Watch tipo_articulo_id para mostrar campos condicionales
   const tipoSeleccionadoId = useForm().watch('tipo_articulo_id', undefined)
   const [mostrarHardware, setMostrarHardware] = useState(false)
-
-  // Efecto para actualizar mostrarHardware cuando cambia el tipo
-  useEffect(() => {
-    // Usamos watch desde props o contexto si fuera necesario, pero aquí lo hacemos manual
-    // En realidad useForm devuelve watch, lo usaremos abajo extraido del hook
-  }, [])
 
   const {
     register,
@@ -105,6 +101,19 @@ export default function CreateArticulo() {
   useEffect(() => {
     cargarDatosIniciales()
   }, [])
+
+  // Cargar categorías cuando el tipo seleccionado es notebook o celular
+  const tipoActual = watch ? watch('tipo_articulo_id') : undefined
+  useEffect(() => {
+    if (!tipoActual) { setCategorias([]); setCategoriaId(''); return }
+    const tipoNombre = tiposArticulo.find(t => t.id === tipoActual)?.nombre?.toLowerCase() || ''
+    const esNbCel = tipoNombre.includes('notebook') || tipoNombre.includes('celular')
+    if (!esNbCel) { setCategorias([]); setCategoriaId(''); return }
+    const tipo = tipoNombre.includes('celular') ? 'celular' : 'notebook'
+    categoriaEquiposAsignacionAPI.list({ tipo, activo: true })
+      .then(r => setCategorias(r?.data || []))
+      .catch(() => setCategorias([]))
+  }, [tipoActual, tiposArticulo])
 
   const cargarDatosIniciales = async () => {
     try {
@@ -178,6 +187,9 @@ export default function CreateArticulo() {
 
       // Estado inicial siempre disponible
       dataToSend.estado = 'disponible'
+
+      // Categoría (solo para notebook/celular)
+      if (categoriaId) dataToSend.categoria_id = categoriaId
 
       await inventarioAPI.create(dataToSend)
 
@@ -283,6 +295,26 @@ export default function CreateArticulo() {
                     </p>
                   )}
                 </div>
+
+                {/* Categoría — solo para notebook/celular */}
+                {categorias.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-semibold text-surface-700">
+                      Categoría <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={categoriaId}
+                      onChange={e => setCategoriaId(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                    >
+                      <option value="">— Seleccioná la categoría del equipo —</option>
+                      {categorias.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-surface-400">Indica para qué perfil es este equipo (Gerente, Ejecutivo, etc.)</p>
+                  </div>
+                )}
 
                 {/* Sede */}
                 <div className="space-y-1.5">

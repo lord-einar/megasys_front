@@ -58,6 +58,7 @@ import HistorialEquiposPersonalPage from './pages/HistorialEquiposPersonalPage'
 import HistorialEquiposSedePage from './pages/HistorialEquiposSedePage'
 import CatalogoEquiposPage from './pages/CatalogoEquiposPage'
 import LoginLoadingPreview from './pages/LoginLoadingPreview'
+import AlertaStockPage from './pages/AlertaStockPage'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
@@ -79,7 +80,7 @@ function App() {
 
   // Public routes that don't require authentication
   // Check first before authentication check
-  const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar', '/preview/login-loading']
+  const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar', '/preview/login-loading', '/alerta-stock']
   const isFeedbackPath = window.location.pathname.startsWith('/visitas/feedback/')
   if (publicPaths.includes(window.location.pathname) || isFeedbackPath) {
     return <Routes>
@@ -88,6 +89,7 @@ function App() {
       <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
       <Route path="/visitas/feedback/:token" element={<VisitaFeedbackPublico />} />
       <Route path="/preview/login-loading" element={<LoginLoadingPreview />} />
+      <Route path="/alerta-stock" element={<AlertaStockPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   }
@@ -95,6 +97,7 @@ function App() {
   if (!isAuthenticated) {
     return <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/alerta-stock" element={<AlertaStockPage />} />
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
