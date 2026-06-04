@@ -298,6 +298,8 @@ export const remitosAPI = {
     body: JSON.stringify(data)
   }),
   delete: (id) => apiCall(`/remitos/${id}`, { method: 'DELETE' }),
+  agregarDetalle: (id, data) => apiCall(`/remitos/${id}/detalles`, { method: 'POST', body: JSON.stringify(data) }),
+  quitarDetalle: (id, detalleId) => apiCall(`/remitos/${id}/detalles/${detalleId}`, { method: 'DELETE' }),
   getDetalles: (id) => apiCall(`/remitos/${id}/detalles`),
   cambiarEstado: (id, estado) => apiCall(`/remitos/${id}/estado`, {
     method: 'PATCH',

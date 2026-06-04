@@ -33,6 +33,12 @@ function RemitoDetailPage() {
   const [guardandoEdit, setGuardandoEdit] = useState(false)
   const [personal, setPersonal] = useState([])
   const [sedes, setSedes] = useState([])
+  // Gestión de artículos en edición
+  const [articulosDisponibles, setArticulosDisponibles] = useState([])
+  const [articuloSeleccionado, setArticuloSeleccionado] = useState('')
+  const [cargandoArticulos, setCargandoArticulos] = useState(false)
+  const [quitando, setQuitando] = useState(null)
+  const [agregando, setAgregando] = useState(false)
   const { canUpdate, hasInfraestructura } = usePermissions()
 
   useEffect(() => {
@@ -56,7 +62,46 @@ function RemitoDetailPage() {
       fecha: remito.fecha ? remito.fecha.slice(0, 10) : '',
       observaciones: remito.observaciones || ''
     })
+    setArticuloSeleccionado('')
+    // Cargar artículos disponibles solo si el remito está en preparado
+    if (remito.estado === 'preparado') {
+      setCargandoArticulos(true)
+      remitosAPI.getArticulosDisponibles({})
+        .then(r => setArticulosDisponibles(r?.data?.articulos || r?.data || []))
+        .catch(() => setArticulosDisponibles([]))
+        .finally(() => setCargandoArticulos(false))
+    }
     setEditando(true)
+  }
+
+  const handleQuitarDetalle = async (detalleId) => {
+    setQuitando(detalleId)
+    try {
+      await remitosAPI.quitarDetalle(id, detalleId)
+      await cargarDetalle()
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo quitar el artículo', icon: 'error', customClass: { popup: 'rounded-2xl' } })
+    } finally {
+      setQuitando(null)
+    }
+  }
+
+  const handleAgregarDetalle = async () => {
+    if (!articuloSeleccionado) return
+    setAgregando(true)
+    try {
+      await remitosAPI.agregarDetalle(id, { inventario_id: articuloSeleccionado })
+      setArticuloSeleccionado('')
+      await cargarDetalle()
+      // Recargar artículos disponibles
+      remitosAPI.getArticulosDisponibles({})
+        .then(r => setArticulosDisponibles(r?.data?.articulos || r?.data || []))
+        .catch(() => {})
+    } catch (err) {
+      Swal.fire({ title: 'Error', text: err.message || 'No se pudo agregar el artículo', icon: 'error', customClass: { popup: 'rounded-2xl' } })
+    } finally {
+      setAgregando(false)
+    }
   }
 
   const guardarEdicion = async () => {
@@ -596,11 +641,68 @@ function RemitoDetailPage() {
                 <input value={editForm.observaciones} onChange={e => setEditForm(p => ({ ...p, observaciones: e.target.value }))} className="input-base" placeholder="Observaciones opcionales" />
               </label>
             </div>
-            <div className="flex gap-3 mt-4">
+            {/* Gestión de artículos — solo en estado preparado */}
+            {remito.estado === 'preparado' && (
+              <div className="md:col-span-2 mt-2 border-t border-surface-100 pt-4">
+                <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">Artículos del remito</p>
+
+                {/* Lista actual con botón quitar */}
+                {remito.detalles?.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {remito.detalles.map(det => (
+                      <div key={det.id} className="flex items-center justify-between bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 text-sm">
+                        <span className="font-medium text-surface-800">
+                          {det.inventario?.marca} {det.inventario?.modelo}
+                          {det.inventario?.numero_serie ? <span className="text-surface-400 font-mono ml-2">S/N {det.inventario.numero_serie}</span> : null}
+                        </span>
+                        <button
+                          onClick={() => handleQuitarDetalle(det.id)}
+                          disabled={quitando === det.id}
+                          className="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1 rounded hover:bg-rose-50 transition-colors"
+                        >
+                          {quitando === det.id ? '...' : 'Quitar'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-surface-400 mb-4">Sin artículos cargados.</p>
+                )}
+
+                {/* Agregar artículo */}
+                <div className="flex gap-2">
+                  <select
+                    value={articuloSeleccionado}
+                    onChange={e => setArticuloSeleccionado(e.target.value)}
+                    className="input-base flex-1"
+                    disabled={cargandoArticulos}
+                  >
+                    <option value="">{cargandoArticulos ? 'Cargando...' : '— Agregar artículo disponible —'}</option>
+                    {articulosDisponibles
+                      .filter(a => !remito.detalles?.some(d => d.inventario_id === a.id))
+                      .map(a => (
+                        <option key={a.id} value={a.id}>
+                          {a.marca} {a.modelo}{a.numero_serie ? ` · S/N ${a.numero_serie}` : ''}
+                          {a.sedePrincipal?.nombre_sede ? ` · ${a.sedePrincipal.nombre_sede}` : ''}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    onClick={handleAgregarDetalle}
+                    disabled={!articuloSeleccionado || agregando}
+                    className="btn-secondary whitespace-nowrap"
+                  >
+                    {agregando ? 'Agregando...' : '+ Agregar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="md:col-span-2 flex gap-3 mt-2 border-t border-surface-100 pt-4">
               <button onClick={guardarEdicion} disabled={guardandoEdit} className="btn-primary">
-                {guardandoEdit ? 'Guardando...' : 'Guardar cambios'}
+                {guardandoEdit ? 'Guardando...' : 'Guardar datos'}
               </button>
-              <button onClick={() => setEditando(false)} className="btn-secondary">Cancelar</button>
+              <button onClick={() => setEditando(false)} className="btn-secondary">Cerrar</button>
             </div>
           </div>
         )}
