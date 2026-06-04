@@ -8,13 +8,14 @@ import { ArrowLeft, User as UserIcon } from 'lucide-react'
 export default function HistorialEquiposPersonalPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { canViewSolicitudesCompra } = usePermissions()
+  const { canViewSolicitudesCompra, canViewSolicitudesAsignacion } = usePermissions()
+  const canView = canViewSolicitudesCompra || canViewSolicitudesAsignacion
   const [personal, setPersonal] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!canViewSolicitudesCompra) return
+    if (!canView) return
     cargar()
   }, [id])
 
@@ -30,7 +31,7 @@ export default function HistorialEquiposPersonalPage() {
     }
   }
 
-  if (!canViewSolicitudesCompra) {
+  if (!canView) {
     return <div className="p-8 text-center"><p className="text-surface-500">No tenés permisos para ver esta sección.</p></div>
   }
 

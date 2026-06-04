@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { solicitudesCompraAPI } from '../services/api'
+import { solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { Laptop, Smartphone, Search, ArrowLeft, User as UserIcon, Building2 } from 'lucide-react'
+import { Laptop, Smartphone, Search, ArrowLeft, User as UserIcon, Building2, History } from 'lucide-react'
 
 const TIPO_LABELS = {
   notebook: 'Notebooks',
@@ -20,17 +20,29 @@ const ESTADO_LABELS = {
 
 export default function StockEquiposPage() {
   const navigate = useNavigate()
-  const { canViewSolicitudesCompra, hasLegacyAccess } = usePermissions()
+  const { canViewSolicitudesCompra, canViewSolicitudesAsignacion, hasLegacyAccess } = usePermissions()
   const [tipo, setTipo] = useState('notebook')
   const [vista, setVista] = useState('todos') // todos | disponibles | entregados
   const [search, setSearch] = useState('')
+  const [categoriaFiltro, setCategoriaFiltro] = useState('') // filtro por categoría
   const [data, setData] = useState({ items: [], resumen: { total: 0, disponibles: 0, entregados: 0, por_tipo: {} } })
+  const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const canView = canViewSolicitudesCompra || canViewSolicitudesAsignacion
+
   useEffect(() => {
-    if (!canViewSolicitudesCompra) return
+    if (!canView) return
     cargarStock()
+    setCategoriaFiltro('')
+  }, [tipo])
+
+  useEffect(() => {
+    // Cargar categorías del tipo seleccionado
+    categoriaEquiposAsignacionAPI.list({ tipo, activo: true })
+      .then(r => setCategorias(r?.data || []))
+      .catch(() => setCategorias([]))
   }, [tipo])
 
   const cargarStock = async () => {
@@ -48,24 +60,23 @@ export default function StockEquiposPage() {
     }
   }
 
-  if (!canViewSolicitudesCompra) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-surface-500">No tenés permisos para ver esta sección.</p>
-      </div>
-    )
+  if (!canView) {
+    return <div className="p-8 text-center"><p className="text-surface-500">No tenés permisos para ver esta sección.</p></div>
   }
 
   const esEntregado = (item) => item.titular_tipo === 'persona' || item.titular_tipo === 'sede'
+
   const itemsFiltrados = data.items.filter(item => {
     if (vista === 'disponibles' && esEntregado(item)) return false
     if (vista === 'entregados' && !esEntregado(item)) return false
+    if (categoriaFiltro && item.categoria?.id !== categoriaFiltro) return false
     if (search) {
       const q = search.toLowerCase()
       const haystack = [
         item.marca, item.modelo, item.numero_serie, item.service_tag,
         item.titular_personal?.nombre, item.titular_personal?.apellido,
-        item.titular_personal?.email, item.sede?.nombre_sede
+        item.titular_personal?.email, item.sede?.nombre_sede,
+        item.categoria?.nombre
       ].filter(Boolean).join(' ').toLowerCase()
       if (!haystack.includes(q)) return false
     }
@@ -73,6 +84,20 @@ export default function StockEquiposPage() {
   })
 
   const resumenTipo = data.resumen.por_tipo[tipo.toLowerCase()] || data.resumen.por_tipo[TIPO_LABELS[tipo]?.toLowerCase()] || data.resumen
+
+  // Resumen por categoría (solo disponibles)
+  const disponiblesPorCategoria = useMemo(() => {
+    const map = {}
+    data.items.forEach(item => {
+      if (item.estado === 'disponible') {
+        const key = item.categoria?.id || '__sin_categoria__'
+        const nombre = item.categoria?.nombre || 'Sin categoría'
+        if (!map[key]) map[key] = { nombre, count: 0 }
+        map[key].count++
+      }
+    })
+    return Object.values(map).sort((a, b) => b.count - a.count)
+  }, [data.items])
 
   return (
     <div className="page-shell">
@@ -104,12 +129,44 @@ export default function StockEquiposPage() {
         </div>
       )}
 
-      {/* Resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <SummaryCard label="Total" value={resumenTipo.total || 0} tone="primary" onClick={() => setVista('todos')} active={vista === 'todos'} />
-        <SummaryCard label="Disponibles" value={resumenTipo.disponibles || 0} tone="emerald" onClick={() => setVista('disponibles')} active={vista === 'disponibles'} />
-        <SummaryCard label="Entregados" value={resumenTipo.entregados || 0} tone="amber" onClick={() => setVista('entregados')} active={vista === 'entregados'} />
+      {/* Resumen totales */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <SummaryCard label="Total" value={resumenTipo.total || 0} tone="primary" onClick={() => { setVista('todos'); setCategoriaFiltro('') }} active={vista === 'todos' && !categoriaFiltro} />
+        <SummaryCard label="Disponibles" value={resumenTipo.disponibles || 0} tone="emerald" onClick={() => { setVista('disponibles'); setCategoriaFiltro('') }} active={vista === 'disponibles' && !categoriaFiltro} />
+        <SummaryCard label="Entregados" value={resumenTipo.entregados || 0} tone="amber" onClick={() => { setVista('entregados'); setCategoriaFiltro('') }} active={vista === 'entregados' && !categoriaFiltro} />
       </div>
+
+      {/* Disponibles por categoría */}
+      {disponiblesPorCategoria.length > 0 && (
+        <div className="card-base p-5 mb-4">
+          <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">Disponibles por categoría</p>
+          <div className="flex flex-wrap gap-2">
+            {disponiblesPorCategoria.map(cat => {
+              const catId = categorias.find(c => c.nombre === cat.nombre)?.id || ''
+              const activa = categoriaFiltro === catId
+              return (
+                <button
+                  key={cat.nombre}
+                  onClick={() => { setCategoriaFiltro(activa ? '' : catId); setVista('disponibles') }}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                    activa
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span className="font-bold">{cat.count}</span>
+                  <span>{cat.nombre}</span>
+                </button>
+              )
+            })}
+            {categoriaFiltro && (
+              <button onClick={() => setCategoriaFiltro('')} className="px-3 py-1.5 text-xs text-surface-500 hover:text-surface-700 underline">
+                ver todas
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Buscador */}
       <div className="card-base p-4 mb-4 flex items-center gap-3">
@@ -159,8 +216,9 @@ export default function StockEquiposPage() {
                   <FilaEquipo
                     key={item.id}
                     item={item}
-                    onClickPersonal={(pid) => navigate(hasLegacyAccess ? `/personal/${pid}` : `/solicitudes-compra/historial-equipos/personal/${pid}`)}
-                    onClickSede={(sid) => navigate(hasLegacyAccess ? `/sedes/${sid}` : `/solicitudes-compra/historial-equipos/sede/${sid}`)}
+                    onClickPersonal={(pid) => navigate(hasLegacyAccess ? `/personal/${pid}` : `/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
+                    onClickSede={(sid) => navigate(hasLegacyAccess ? `/sedes/${sid}` : `/solicitudes-asignacion/historial-equipos/sede/${sid}`)}
+                    onHistorial={(pid) => navigate(`/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
                   />
                 ))}
               </tbody>
@@ -205,7 +263,7 @@ function SummaryCard({ label, value, tone, onClick, active }) {
   )
 }
 
-function FilaEquipo({ item, onClickPersonal, onClickSede }) {
+function FilaEquipo({ item, onClickPersonal, onClickSede, onHistorial }) {
   const estado = ESTADO_LABELS[item.estado] || { label: item.estado, cls: 'bg-surface-50 text-surface-600 border-surface-200' }
   return (
     <tr className="hover:bg-surface-50/60 transition-colors">
@@ -225,10 +283,19 @@ function FilaEquipo({ item, onClickPersonal, onClickSede }) {
       </td>
       <td className="px-4 py-3">
         {item.titular_personal ? (
-          <button onClick={() => onClickPersonal(item.titular_personal.id)} className="flex items-center gap-2 text-sm text-primary-700 hover:text-primary-900 hover:underline">
-            <UserIcon className="w-3.5 h-3.5" />
-            {item.titular_personal.apellido}, {item.titular_personal.nombre}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => onClickPersonal(item.titular_personal.id)} className="flex items-center gap-1.5 text-sm text-primary-700 hover:text-primary-900 hover:underline">
+              <UserIcon className="w-3.5 h-3.5" />
+              {item.titular_personal.apellido}, {item.titular_personal.nombre}
+            </button>
+            <button
+              onClick={() => onHistorial(item.titular_personal.id)}
+              title="Ver historial de equipos"
+              className="text-surface-400 hover:text-primary-600 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+            </button>
+          </div>
         ) : item.titular_tipo === 'sede' && item.sede ? (
           <span className="inline-flex items-center gap-1.5 text-sm text-surface-700">
             <Building2 className="w-3.5 h-3.5 text-surface-400" />

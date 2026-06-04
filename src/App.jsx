@@ -127,6 +127,8 @@ function App() {
                   <Route path="/catalogo-equipos" element={<Navigate to="/solicitudes-asignacion/dashboard" replace />} />
                   {/* Stock accesible desde asignación */}
                   <Route path="/solicitudes-compra/stock" element={canViewSolicitudesAsignacion ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion/historial-equipos/personal/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposPersonalPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-asignacion/historial-equipos/sede/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposSedePage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/dashboard" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionDashboard /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/nueva" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionFormPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/:id" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionDetailPage /> : <Navigate to="/dashboard" replace />} />
