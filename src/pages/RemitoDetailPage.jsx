@@ -641,20 +641,24 @@ function RemitoDetailPage() {
                 <input value={editForm.observaciones} onChange={e => setEditForm(p => ({ ...p, observaciones: e.target.value }))} className="input-base" placeholder="Observaciones opcionales" />
               </label>
             </div>
-            {/* Gestión de artículos — solo en estado preparado */}
-            {remito.estado === 'preparado' && (
-              <div className="md:col-span-2 mt-2 border-t border-surface-100 pt-4">
-                <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">Artículos del remito</p>
+            {/* Gestión de artículos — siempre visible, editable solo en preparado */}
+            <div className="md:col-span-2 mt-2 border-t border-surface-100 pt-4">
+              <p className="text-xs font-bold text-surface-400 uppercase tracking-wider mb-3">
+                Artículos del remito
+              </p>
 
-                {/* Lista actual con botón quitar */}
-                {remito.detalles?.length > 0 ? (
-                  <div className="space-y-2 mb-4">
-                    {remito.detalles.map(det => (
-                      <div key={det.id} className="flex items-center justify-between bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 text-sm">
-                        <span className="font-medium text-surface-800">
-                          {det.inventario?.marca} {det.inventario?.modelo}
-                          {det.inventario?.numero_serie ? <span className="text-surface-400 font-mono ml-2">S/N {det.inventario.numero_serie}</span> : null}
-                        </span>
+              {/* Lista actual */}
+              {remito.detalles?.length > 0 ? (
+                <div className="space-y-2 mb-4">
+                  {remito.detalles.map(det => (
+                    <div key={det.id} className="flex items-center justify-between bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 text-sm">
+                      <span className="font-medium text-surface-800">
+                        {det.inventario?.marca} {det.inventario?.modelo}
+                        {det.inventario?.numero_serie
+                          ? <span className="text-surface-400 font-mono ml-2">S/N {det.inventario.numero_serie}</span>
+                          : null}
+                      </span>
+                      {remito.estado === 'preparado' && (
                         <button
                           onClick={() => handleQuitarDetalle(det.id)}
                           disabled={quitando === det.id}
@@ -662,14 +666,16 @@ function RemitoDetailPage() {
                         >
                           {quitando === det.id ? '...' : 'Quitar'}
                         </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-surface-400 mb-4">Sin artículos cargados.</p>
-                )}
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-surface-400 mb-4">Sin artículos cargados.</p>
+              )}
 
-                {/* Agregar artículo */}
+              {/* Agregar — solo en preparado */}
+              {remito.estado === 'preparado' ? (
                 <div className="flex gap-2">
                   <select
                     value={articuloSeleccionado}
@@ -682,7 +688,8 @@ function RemitoDetailPage() {
                       .filter(a => !remito.detalles?.some(d => d.inventario_id === a.id))
                       .map(a => (
                         <option key={a.id} value={a.id}>
-                          {a.marca} {a.modelo}{a.numero_serie ? ` · S/N ${a.numero_serie}` : ''}
+                          {a.marca} {a.modelo}
+                          {a.numero_serie ? ` · S/N ${a.numero_serie}` : ''}
                           {a.sedePrincipal?.nombre_sede ? ` · ${a.sedePrincipal.nombre_sede}` : ''}
                         </option>
                       ))}
@@ -695,8 +702,12 @@ function RemitoDetailPage() {
                     {agregando ? 'Agregando...' : '+ Agregar'}
                   </button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Los artículos solo se pueden agregar o quitar cuando el remito está en estado <strong>Preparado</strong>. Estado actual: <strong>{remito.estado}</strong>
+                </p>
+              )}
+            </div>
 
             <div className="md:col-span-2 flex gap-3 mt-2 border-t border-surface-100 pt-4">
               <button onClick={guardarEdicion} disabled={guardandoEdit} className="btn-primary">
