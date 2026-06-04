@@ -37,10 +37,12 @@ function RemitoDetailPage() {
 
   useEffect(() => {
     cargarDetalle()
-    // Cargar personal y sedes para el formulario de edición
-    personalAPI.list({ limit: 200 }).then(r => setPersonal(r?.data?.rows || r?.data || [])).catch(() => {})
+    personalAPI.list({ limit: 500 }).then(r => setPersonal(r?.data?.rows || r?.data || [])).catch(() => {})
     sedesAPI.list({ limit: 100 }).then(r => setSedes(r?.data || [])).catch(() => {})
   }, [id])
+
+  // Solo muestran como técnicos quienes tienen rol soporte o helpdesk
+  const ROLES_TECNICO = ['support', 'helpdesk', 'super_admin']
 
   const ESTADOS_BLOQUEADOS = ['completado', 'cancelado']
   const puedeEditar = hasInfraestructura && remito && !ESTADOS_BLOQUEADOS.includes(remito.estado)
@@ -566,7 +568,9 @@ function RemitoDetailPage() {
                 <span className="label-base block mb-1">Técnico asignado</span>
                 <select value={editForm.tecnico_asignado_id} onChange={e => setEditForm(p => ({ ...p, tecnico_asignado_id: e.target.value }))} className="input-base">
                   <option value="">— Sin técnico —</option>
-                  {personal.map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
+                  {personal
+                    .filter(p => ROLES_TECNICO.includes(p.privilegio_app))
+                    .map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
                 </select>
               </label>
               <label>

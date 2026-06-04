@@ -371,7 +371,7 @@ function CreateRemitoPage() {
                     >
                       <option value="">Seleccionar técnico...</option>
                       {personal.filter(p =>
-                        p.rol?.nombre === 'Sistemas' || p.rol?.nombre === 'Tecnico sede'
+                        ['support', 'helpdesk', 'super_admin'].includes(p.privilegio_app)
                       ).map(p => (
                         <option key={p.id} value={p.id}>
                           {p.apellido}, {p.nombre}
