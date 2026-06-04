@@ -148,11 +148,21 @@ export default function SolicitudAsignacionDetailPage() {
               <InfoItem label="Tipo de equipo" value={solicitud.tipo_equipo || '-'} />
               <InfoItem label="Motivo" value={(solicitud.motivo || '').replaceAll('_', ' ')} />
 
-              {solicitud.inventario && (
-                <InfoItem
-                  label="Equipo asignado"
-                  value={`${solicitud.inventario.marca} ${solicitud.inventario.modelo}${solicitud.inventario.numero_serie ? ` (S/N: ${solicitud.inventario.numero_serie})` : ''}`}
-                />
+              {solicitud.inventarioAsignado && (
+                <div className="md:col-span-2 rounded-xl bg-sky-50 border border-sky-100 px-4 py-3">
+                  <dt className="text-xs font-bold text-sky-600 uppercase tracking-wider mb-2">Equipo asignado</dt>
+                  <dd className="space-y-1">
+                    <p className="font-semibold text-surface-900">
+                      {solicitud.inventarioAsignado.marca} {solicitud.inventarioAsignado.modelo}
+                    </p>
+                    {solicitud.inventarioAsignado.numero_serie && (
+                      <p className="text-sm text-surface-500 font-mono">S/N: {solicitud.inventarioAsignado.numero_serie}</p>
+                    )}
+                    {solicitud.inventarioAsignado.sedePrincipal && (
+                      <p className="text-sm text-surface-500">Sede: {solicitud.inventarioAsignado.sedePrincipal.nombre_sede}</p>
+                    )}
+                  </dd>
+                </div>
               )}
 
               {solicitud.categoria && (
