@@ -8,6 +8,7 @@ import {
   FileText,
   Smartphone,
   ClipboardCheck,
+  PackageCheck,
   CalendarDays,
   LifeBuoy,
   Truck,
@@ -21,6 +22,7 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
   const {
     hasLegacyAccess,
     canViewSolicitudesCompra,
+    canViewSolicitudesAsignacion,
     hasInfraestructura
   } = usePermissions()
   const [expandedMenu, setExpandedMenu] = useState(null)
@@ -120,6 +122,17 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
         { label: 'Listar solicitudes', href: '/solicitudes-compra' },
         { label: 'Nueva solicitud', href: '/solicitudes-compra/nueva' },
         ...(hasInfraestructura ? [{ label: 'Catálogo de equipos', href: '/catalogo-equipos' }] : [])
+      ],
+    },
+    {
+      label: 'Asignación de equipos',
+      visible: canViewSolicitudesAsignacion,
+      icon: <PackageCheck className="w-5 h-5" strokeWidth={2} />,
+      submenu: [
+        { label: 'Dashboard', href: '/solicitudes-asignacion/dashboard' },
+        { label: 'Listar solicitudes', href: '/solicitudes-asignacion' },
+        { label: 'Nueva solicitud', href: '/solicitudes-asignacion/nueva' },
+        ...(hasInfraestructura ? [{ label: 'Categorías de equipo', href: '/categoria-equipos-asignacion' }] : [])
       ],
     },
     {
