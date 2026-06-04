@@ -4,7 +4,7 @@ import { solicitudesAsignacionAPI } from '../services/api'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import { usePermissions } from '../hooks/usePermissions'
-import { Plus, Laptop } from 'lucide-react'
+import { Plus, Laptop, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
 
 const ESTADOS_TARJETA = [
   'pendiente_infra',
@@ -113,6 +113,9 @@ export default function SolicitudesAsignacionDashboard() {
         </div>
       </div>
 
+      {/* Guía del flujo */}
+      <GuiaFlujo navigate={navigate} hasInfraestructura={hasInfraestructura} />
+
       {/* Pendientes de acción */}
       <div className="card-base overflow-hidden">
         <div className="px-6 py-4 border-b border-surface-200 flex items-center justify-between">
@@ -166,6 +169,280 @@ export default function SolicitudesAsignacionDashboard() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guía del flujo de asignación
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PASOS = [
+  {
+    num: 1,
+    titulo: 'Crear la solicitud',
+    quien: 'RRHH o Infraestructura',
+    color: 'sky',
+    icon: 'M12 4v16m8-8H4',
+    descripcion: 'Cualquier miembro de RRHH o Infraestructura puede iniciar una solicitud de asignación de equipo.',
+    detalle: [
+      'Ingresá a Asignación de equipos → Nueva solicitud',
+      'Seleccioná el beneficiario (la persona que recibirá el equipo)',
+      'Elegí el tipo de equipo: Notebook o Celular',
+      'Indicá el motivo: nuevo ingreso, nuevo puesto, reposición por robo/rotura/pérdida, cambio de equipo u otro',
+      'Para reposiciones por robo: adjuntá la denuncia policial',
+      'Para reposiciones por rotura: adjuntá foto del equipo dañado',
+      'Agregá una observación con el contexto técnico o administrativo',
+      'Enviá la solicitud → queda en estado "En revisión Infra"',
+    ],
+    tip: 'El número de solicitud SA-XXXX se genera automáticamente y queda registrado en el historial del beneficiario.',
+    estado: 'pendiente_infra'
+  },
+  {
+    num: 2,
+    titulo: 'Infra asigna el equipo',
+    quien: 'Infraestructura',
+    color: 'violet',
+    icon: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
+    descripcion: 'Infraestructura revisa la solicitud y selecciona un equipo disponible del depósito según la categoría.',
+    detalle: [
+      'Ingresá al detalle de la solicitud',
+      'En la sección "Asignar equipo", seleccioná primero la categoría del equipo (ej: Gerente, Ejecutivo)',
+      'Al elegir la categoría, se cargan automáticamente los equipos disponibles de esa categoría en el depósito',
+      'Seleccioná el equipo específico (marca, modelo, número de serie)',
+      'Si es una reposición, indicá qué hacer con el equipo anterior (mantenimiento o baja)',
+      'Confirmá la asignación → la solicitud pasa a "Pendiente RRHH"',
+    ],
+    tip: 'Solo aparecen equipos del depósito (stock nuevo). Los equipos que ya fueron asignados previamente no se muestran.',
+    estado: 'pendiente_rrhh'
+  },
+  {
+    num: 3,
+    titulo: 'RRHH aprueba',
+    quien: 'Recursos Humanos',
+    color: 'indigo',
+    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+    descripcion: 'RRHH revisa y aprueba la solicitud. Una vez aprobada, Compras e Infraestructura reciben una notificación por mail.',
+    detalle: [
+      'RRHH recibe una notificación de la solicitud pendiente',
+      'Ingresá al detalle de la solicitud y revisá los datos: beneficiario, equipo asignado, motivo',
+      'Si todo está correcto, hacé click en "Aprobar"',
+      'Podés agregar una observación opcional (ej: "aprobado en línea con incorporación planificada")',
+      'Al aprobar, Compras e Infra reciben un mail de notificación automático',
+      'La solicitud pasa a estado "Aprobada"',
+    ],
+    tip: 'Si algo no está bien, RRHH puede rechazar la solicitud. Infra también puede rechazarla antes de que llegue a RRHH.',
+    estado: 'aprobada'
+  },
+  {
+    num: 4,
+    titulo: 'Infra genera el remito',
+    quien: 'Infraestructura',
+    color: 'teal',
+    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    descripcion: 'Con la solicitud aprobada, Infra prepara el equipo y genera el remito de entrega asignando un técnico.',
+    detalle: [
+      'Ingresá al detalle de la solicitud aprobada',
+      'Seleccioná el técnico de soporte que realizará la entrega física',
+      'Hacé click en "Generar remito" → se crea el remito automáticamente',
+      'El remito incluye: beneficiario como solicitante, técnico asignado, sede origen y destino',
+      'El número de remito REM-XXXX queda vinculado a la solicitud',
+      'Podés ver el remito completo haciendo click en "Ver remito" desde el detalle de la solicitud',
+    ],
+    tip: 'El remito queda en estado "Preparado". Desde el módulo de Remitos podés avanzar el estado a En tránsito → Entregado → Completado.',
+    estado: 'remito_generado'
+  },
+  {
+    num: 5,
+    titulo: 'Finalizar la solicitud',
+    quien: 'Infraestructura o RRHH',
+    color: 'emerald',
+    icon: 'M5 13l4 4L19 7',
+    descripcion: 'Una vez entregado el equipo, se cierra la solicitud formalmente. Queda registrada en el historial del beneficiario.',
+    detalle: [
+      'Una vez que el equipo fue entregado físicamente al beneficiario, ingresá al detalle de la solicitud',
+      'Hacé click en "Finalizar" y podés agregar una observación de cierre',
+      'La solicitud pasa a estado "Finalizada" — estado terminal',
+      'El equipo queda registrado como "En uso" en el inventario a nombre del beneficiario',
+      'El historial del beneficiario queda actualizado: desde Stock de equipos podés ver quién tiene qué equipo y desde cuándo',
+      'Si el beneficiario tiene más de 3 equipos del mismo tipo en su historial, el sistema genera una alerta',
+    ],
+    tip: 'Podés acceder al historial de equipos de cualquier persona desde Stock de equipos → ícono de reloj junto al nombre.',
+    estado: 'finalizada'
+  }
+]
+
+const COLOR_MAP = {
+  sky:     { bg: 'bg-sky-50',     border: 'border-sky-200',    text: 'text-sky-700',     num: 'bg-sky-600',     badge: 'bg-sky-100 text-sky-700 border-sky-200'     },
+  violet:  { bg: 'bg-violet-50',  border: 'border-violet-200', text: 'text-violet-700',  num: 'bg-violet-600',  badge: 'bg-violet-100 text-violet-700 border-violet-200' },
+  indigo:  { bg: 'bg-indigo-50',  border: 'border-indigo-200', text: 'text-indigo-700',  num: 'bg-indigo-600',  badge: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  teal:    { bg: 'bg-teal-50',    border: 'border-teal-200',   text: 'text-teal-700',    num: 'bg-teal-600',    badge: 'bg-teal-100 text-teal-700 border-teal-200'   },
+  emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200',text: 'text-emerald-700', num: 'bg-emerald-600', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+}
+
+function GuiaFlujo({ navigate, hasInfraestructura }) {
+  const [abierto, setAbierto] = useState(false)
+  const [pasoActivo, setPasoActivo] = useState(null)
+
+  return (
+    <div className="card-base overflow-hidden mb-8">
+      {/* Header colapsable */}
+      <button
+        onClick={() => setAbierto(v => !v)}
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-surface-50/60 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-primary-600" />
+          </div>
+          <div className="text-left">
+            <p className="font-bold text-surface-900">¿Cómo funciona la asignación de equipos?</p>
+            <p className="text-xs text-surface-500 mt-0.5">Guía paso a paso del flujo completo</p>
+          </div>
+        </div>
+        {abierto ? <ChevronUp className="w-5 h-5 text-surface-400" /> : <ChevronDown className="w-5 h-5 text-surface-400" />}
+      </button>
+
+      {abierto && (
+        <div className="border-t border-surface-200 p-6">
+          {/* Intro */}
+          <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 mb-6">
+            <p className="text-sm text-primary-900 leading-relaxed">
+              El módulo de <strong>Asignación de equipos</strong> permite gestionar la entrega de notebooks y celulares del stock a los colaboradores de la empresa.
+              El proceso involucra <strong>RRHH</strong>, <strong>Infraestructura</strong> y opcionalmente <strong>Compras</strong>, garantizando trazabilidad y control en cada etapa.
+            </p>
+          </div>
+
+          {/* Línea de tiempo visual */}
+          <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-2">
+            {PASOS.map((paso, idx) => {
+              const c = COLOR_MAP[paso.color]
+              return (
+                <div key={paso.num} className="flex items-center shrink-0">
+                  <button
+                    onClick={() => setPasoActivo(pasoActivo === paso.num ? null : paso.num)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
+                      pasoActivo === paso.num ? `${c.badge} border-current shadow-sm` : 'bg-white border-surface-200 text-surface-600 hover:border-surface-300'
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full ${pasoActivo === paso.num ? c.num : 'bg-surface-300'} text-white text-xs flex items-center justify-center font-extrabold shrink-0`}>
+                      {paso.num}
+                    </span>
+                    <span className="whitespace-nowrap">{paso.titulo}</span>
+                  </button>
+                  {idx < PASOS.length - 1 && (
+                    <div className="w-6 h-px bg-surface-300 mx-1 shrink-0" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Detalle del paso activo */}
+          {pasoActivo ? (
+            (() => {
+              const paso = PASOS.find(p => p.num === pasoActivo)
+              const c = COLOR_MAP[paso.color]
+              return (
+                <div className={`${c.bg} border ${c.border} rounded-xl p-5 animate-fade-in`}>
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-10 h-10 rounded-xl ${c.num} flex items-center justify-center shrink-0`}>
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={paso.icon} />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className={`font-bold text-surface-900`}>Paso {paso.num}: {paso.titulo}</h3>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${c.badge}`}>
+                          {paso.quien}
+                        </span>
+                        <StatusBadgeAsignacion estado={paso.estado} />
+                      </div>
+                      <p className={`text-sm ${c.text} font-medium`}>{paso.descripcion}</p>
+                    </div>
+                  </div>
+
+                  <ol className="space-y-2 mb-4 ml-2">
+                    {paso.detalle.map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-surface-800">
+                        <span className={`w-5 h-5 rounded-full ${c.num} text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold`}>
+                          {i + 1}
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+
+                  <div className="flex items-start gap-2 bg-white/70 border border-white rounded-lg px-4 py-3">
+                    <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <p className="text-xs text-surface-600"><strong className="text-amber-700">Tip:</strong> {paso.tip}</p>
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    {pasoActivo > 1 && (
+                      <button onClick={() => setPasoActivo(p => p - 1)} className="btn-secondary text-xs">
+                        ← Paso anterior
+                      </button>
+                    )}
+                    {pasoActivo < PASOS.length && (
+                      <button onClick={() => setPasoActivo(p => p + 1)} className={`text-xs font-bold px-4 py-2 rounded-xl ${c.num} text-white hover:opacity-90 transition-opacity`}>
+                        Siguiente paso →
+                      </button>
+                    )}
+                    {pasoActivo === 1 && (
+                      <button onClick={() => navigate('/solicitudes-asignacion/nueva')} className="btn-accent text-xs ml-auto">
+                        Crear solicitud ahora →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })()
+          ) : (
+            /* Vista general cuando no hay paso activo */
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {PASOS.map(paso => {
+                const c = COLOR_MAP[paso.color]
+                return (
+                  <button
+                    key={paso.num}
+                    onClick={() => setPasoActivo(paso.num)}
+                    className={`${c.bg} border ${c.border} rounded-xl p-4 text-left hover:shadow-sm transition-all hover:-translate-y-0.5`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${c.num} flex items-center justify-center mb-3`}>
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={paso.icon} />
+                      </svg>
+                    </div>
+                    <p className={`text-xs font-bold ${c.text} mb-1`}>Paso {paso.num}</p>
+                    <p className="text-sm font-bold text-surface-900 leading-tight">{paso.titulo}</p>
+                    <p className="text-xs text-surface-500 mt-1">{paso.quien}</p>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-5 pt-4 border-t border-surface-100 flex items-center justify-between flex-wrap gap-3">
+            <p className="text-xs text-surface-400">
+              El sistema envía notificaciones por mail en cada transición de estado.
+              El historial completo de cada solicitud queda registrado para auditoría.
+            </p>
+            {hasInfraestructura && (
+              <button
+                onClick={() => navigate('/categoria-equipos-asignacion')}
+                className="text-xs text-primary-700 hover:underline font-medium"
+              >
+                Configurar categorías de equipo →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
