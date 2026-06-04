@@ -7,7 +7,6 @@ import {
   Package,
   FileText,
   Smartphone,
-  ClipboardCheck,
   PackageCheck,
   CalendarDays,
   LifeBuoy,
@@ -21,7 +20,6 @@ import { usePermissions } from '../hooks/usePermissions'
 function Sidebar({ isOpen, onNavigate, onClose }) {
   const {
     hasLegacyAccess,
-    canViewSolicitudesCompra,
     canViewSolicitudesAsignacion,
     hasInfraestructura
   } = usePermissions()
@@ -113,26 +111,15 @@ function Sidebar({ isOpen, onNavigate, onClose }) {
       href: '/celulares',
     },
     {
-      label: 'Solicitudes de compra',
-      visible: canViewSolicitudesCompra,
-      icon: <ClipboardCheck className="w-5 h-5" strokeWidth={2} />,
-      submenu: [
-        { label: 'Dashboard', href: '/solicitudes-compra/dashboard' },
-        { label: 'Stock notebooks y celulares', href: '/solicitudes-compra/stock' },
-        { label: 'Listar solicitudes', href: '/solicitudes-compra' },
-        { label: 'Nueva solicitud', href: '/solicitudes-compra/nueva' },
-        ...(hasInfraestructura ? [{ label: 'Catálogo de equipos', href: '/catalogo-equipos' }] : [])
-      ],
-    },
-    {
       label: 'Asignación de equipos',
       visible: canViewSolicitudesAsignacion,
       icon: <PackageCheck className="w-5 h-5" strokeWidth={2} />,
       submenu: [
         { label: 'Dashboard', href: '/solicitudes-asignacion/dashboard' },
+        { label: 'Stock de equipos', href: '/solicitudes-compra/stock' },
         { label: 'Listar solicitudes', href: '/solicitudes-asignacion' },
         { label: 'Nueva solicitud', href: '/solicitudes-asignacion/nueva' },
-        ...(hasInfraestructura ? [{ label: 'Categorías de equipo', href: '/categoria-equipos-asignacion' }] : [])
+        ...(hasInfraestructura ? [{ label: 'Categorías', href: '/categoria-equipos-asignacion' }] : [])
       ],
     },
     {

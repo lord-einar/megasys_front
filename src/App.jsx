@@ -48,10 +48,6 @@ import TiposServicioPage from './pages/TiposServicioPage'
 import TipoServicioFormPage from './pages/TipoServicioFormPage'
 import TiposArticuloPage from './pages/TiposArticuloPage'
 import CasosSoportePage from './pages/CasosSoportePage'
-import SolicitudesCompraDashboard from './pages/SolicitudesCompraDashboard'
-import SolicitudesCompraListPage from './pages/SolicitudesCompraListPage'
-import SolicitudCompraFormPage from './pages/SolicitudCompraFormPage'
-import SolicitudCompraDetailPage from './pages/SolicitudCompraDetailPage'
 import StockEquiposPage from './pages/StockEquiposPage'
 import SolicitudesAsignacionDashboard from './pages/SolicitudesAsignacionDashboard'
 import SolicitudesAsignacionListPage from './pages/SolicitudesAsignacionListPage'
@@ -68,7 +64,7 @@ import { usePermissions } from './hooks/usePermissions'
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const { isAuthenticated, loading } = useAuth()
-  const { hasLegacyAccess, canViewSolicitudesCompra, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
+  const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
 
   if (loading) {
     return (
@@ -126,14 +122,11 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-asignacion/dashboard'} replace />} />
                   <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/dashboard" element={canViewSolicitudesCompra ? <SolicitudesCompraDashboard /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/stock" element={canViewSolicitudesCompra ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/historial-equipos/personal/:id" element={canViewSolicitudesCompra ? <HistorialEquiposPersonalPage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/historial-equipos/sede/:id" element={canViewSolicitudesCompra ? <HistorialEquiposSedePage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/nueva" element={canViewSolicitudesCompra ? <SolicitudCompraFormPage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra/:id" element={canViewSolicitudesCompra ? <SolicitudCompraDetailPage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/solicitudes-compra" element={canViewSolicitudesCompra ? <SolicitudesCompraListPage /> : <Navigate to="/dashboard" replace />} />
-                  <Route path="/catalogo-equipos" element={hasInfraestructura ? <CatalogoEquiposPage /> : <Navigate to="/solicitudes-compra/dashboard" replace />} />
+                  {/* Rutas de solicitudes de compra — redirigen al nuevo módulo */}
+                  <Route path="/solicitudes-compra/*" element={<Navigate to="/solicitudes-asignacion/dashboard" replace />} />
+                  <Route path="/catalogo-equipos" element={<Navigate to="/solicitudes-asignacion/dashboard" replace />} />
+                  {/* Stock accesible desde asignación */}
+                  <Route path="/solicitudes-compra/stock" element={canViewSolicitudesAsignacion ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/dashboard" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionDashboard /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/nueva" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionFormPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/:id" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionDetailPage /> : <Navigate to="/dashboard" replace />} />
