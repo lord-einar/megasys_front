@@ -31,6 +31,10 @@ export default function SolicitudAsignacionDetailPage() {
   // Sección cierre
   const [cierreObs, setCierreObs] = useState('')
 
+  // Generar remito
+  const [tecnicoId, setTecnicoId] = useState('')
+  const [soporte, setSoporte] = useState([])
+
   // Rechazo y cancelación
   const [rechazo, setRechazo] = useState('')
   const [cancelacion, setCancelacion] = useState('')
@@ -49,6 +53,17 @@ export default function SolicitudAsignacionDetailPage() {
   }
 
   useEffect(() => { cargar() }, [id])
+
+  // Cargar técnicos de soporte cuando la solicitud entra en aprobada
+  useEffect(() => {
+    if (!solicitud || solicitud.estado !== 'aprobada') return
+    solicitudesAsignacionAPI.lookupSoporte()
+      .then(res => {
+        const data = Array.isArray(res?.data) ? res.data : (res?.data?.data || [])
+        setSoporte(data)
+      })
+      .catch(() => setSoporte([]))
+  }, [solicitud?.id, solicitud?.estado])
 
   // Cargar categorías cuando la solicitud entra en pendiente_infra
   useEffect(() => {
@@ -388,11 +403,35 @@ export default function SolicitudAsignacionDetailPage() {
             <section className="card-base p-6 border-l-4 border-l-teal-500">
               <h2 className="font-bold text-surface-900 mb-2">Generar remito de entrega</h2>
               <p className="text-sm text-surface-500 mb-4">
-                El equipo está asignado y listo. Al generar el remito, se registra la entrega formal.
+                El equipo está listo. Seleccioná el técnico que realizará la entrega y generá el remito.
               </p>
+              <div className="mb-4">
+                <label className="label-base block mb-1">
+                  Técnico asignado <span className="text-rose-500">*</span>
+                </label>
+                {soporte.length === 0 ? (
+                  <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    No hay técnicos de soporte disponibles. Verificá los perfiles de personal.
+                  </p>
+                ) : (
+                  <select
+                    value={tecnicoId}
+                    onChange={e => setTecnicoId(e.target.value)}
+                    className="input-base max-w-sm"
+                  >
+                    <option value="">— Seleccionar técnico —</option>
+                    {soporte.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.apellido}, {t.nombre}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <button
                 className="btn-primary"
-                onClick={() => ejecutar(() => solicitudesAsignacionAPI.generarRemito(id))}
+                disabled={!tecnicoId}
+                onClick={() => ejecutar(() => solicitudesAsignacionAPI.generarRemito(id, { tecnico_id: tecnicoId }))}
               >
                 Generar remito
               </button>

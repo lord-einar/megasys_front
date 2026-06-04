@@ -802,7 +802,8 @@ export const solicitudesAsignacionAPI = {
   crear: (data) => apiCall('/solicitudes-asignacion', { method: 'POST', body: JSON.stringify(data) }),
   asignarEquipo: (id, data) => apiCall(`/solicitudes-asignacion/${id}/asignar-equipo`, { method: 'POST', body: JSON.stringify(data) }),
   aprobarRrhh: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/aprobar-rrhh`, { method: 'POST', body: JSON.stringify(data) }),
-  generarRemito: (id) => apiCall(`/solicitudes-asignacion/${id}/generar-remito`, { method: 'POST', body: JSON.stringify({}) }),
+  generarRemito: (id, body = {}) => apiCall(`/solicitudes-asignacion/${id}/generar-remito`, { method: 'POST', body: JSON.stringify(body) }),
+  lookupSoporte: () => apiCall('/solicitudes-asignacion/lookups/soporte'),
   finalizar: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/finalizar`, { method: 'POST', body: JSON.stringify(data) }),
   subirAdjunto: (id, { tipo, archivo }) => {
     const formData = new FormData()
