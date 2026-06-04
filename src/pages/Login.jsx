@@ -14,7 +14,7 @@ export default function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [devUsers, setDevUsers] = useState([]);
   const hasProcessedRef = useRef(false);
-  const showDevLogin = import.meta.env.DEV;
+  const showDevLogin = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEV_LOGIN === 'true';
 
   // Handle Azure AD callback
   useEffect(() => {
