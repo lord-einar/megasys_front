@@ -49,6 +49,7 @@ import TipoServicioFormPage from './pages/TipoServicioFormPage'
 import TiposArticuloPage from './pages/TiposArticuloPage'
 import CasosSoportePage from './pages/CasosSoportePage'
 import StockEquiposPage from './pages/StockEquiposPage'
+import IngresoCelularesPage from './pages/IngresoCelularesPage'
 import SolicitudesAsignacionDashboard from './pages/SolicitudesAsignacionDashboard'
 import SolicitudesAsignacionListPage from './pages/SolicitudesAsignacionListPage'
 import SolicitudAsignacionFormPage from './pages/SolicitudAsignacionFormPage'
@@ -130,6 +131,7 @@ function App() {
                   <Route path="/catalogo-equipos" element={<Navigate to="/solicitudes-asignacion/dashboard" replace />} />
                   {/* Stock accesible desde asignación */}
                   <Route path="/solicitudes-compra/stock" element={canViewSolicitudesAsignacion ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/ingreso-celular" element={canViewSolicitudesAsignacion ? <IngresoCelularesPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/historial-equipos/personal/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposPersonalPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/historial-equipos/sede/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposSedePage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/dashboard" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionDashboard /> : <Navigate to="/dashboard" replace />} />

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { Laptop, Smartphone, Search, ArrowLeft, User as UserIcon, Building2, History } from 'lucide-react'
+import { Laptop, Smartphone, Search, ArrowLeft, User as UserIcon, Building2, History, Plus } from 'lucide-react'
 
 const TIPO_LABELS = {
   notebook: 'Notebooks',
@@ -20,7 +20,7 @@ const ESTADO_LABELS = {
 
 export default function StockEquiposPage() {
   const navigate = useNavigate()
-  const { canViewSolicitudesCompra, canViewSolicitudesAsignacion, hasLegacyAccess } = usePermissions()
+  const { canViewSolicitudesCompra, canViewSolicitudesAsignacion, hasLegacyAccess, hasCompras, hasInfraestructura } = usePermissions()
   const [tipo, setTipo] = useState('notebook')
   const [vista, setVista] = useState('todos') // todos | disponibles | entregados
   const [search, setSearch] = useState('')
@@ -115,6 +115,15 @@ export default function StockEquiposPage() {
             <p className="page-description">Notebooks y celulares: disponibles y entregados</p>
           </div>
         </div>
+        {(hasCompras || hasInfraestructura) && tipo === 'celular' && (
+          <button
+            onClick={() => navigate('/solicitudes-compra/ingreso-celular')}
+            className="btn-accent flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Ingresar celular
+          </button>
+        )}
       </div>
 
       {/* Tabs por tipo */}
@@ -204,6 +213,9 @@ export default function StockEquiposPage() {
                 <tr>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Equipo</th>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Serie / Tag</th>
+                  {tipo === 'celular' && (
+                    <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">IMEI</th>
+                  )}
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Estado</th>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Titular</th>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Sede</th>
@@ -216,6 +228,7 @@ export default function StockEquiposPage() {
                   <FilaEquipo
                     key={item.id}
                     item={item}
+                    mostrarImei={tipo === 'celular'}
                     onClickPersonal={(pid) => navigate(hasLegacyAccess ? `/personal/${pid}` : `/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
                     onClickSede={(sid) => navigate(hasLegacyAccess ? `/sedes/${sid}` : `/solicitudes-asignacion/historial-equipos/sede/${sid}`)}
                     onHistorial={(pid) => navigate(`/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
@@ -263,7 +276,7 @@ function SummaryCard({ label, value, tone, onClick, active }) {
   )
 }
 
-function FilaEquipo({ item, onClickPersonal, onClickSede, onHistorial }) {
+function FilaEquipo({ item, mostrarImei, onClickPersonal, onClickSede, onHistorial }) {
   const estado = ESTADO_LABELS[item.estado] || { label: item.estado, cls: 'bg-surface-50 text-surface-600 border-surface-200' }
   return (
     <tr className="hover:bg-surface-50/60 transition-colors">
@@ -276,6 +289,14 @@ function FilaEquipo({ item, onClickPersonal, onClickSede, onHistorial }) {
         {item.service_tag && <p className="font-mono text-xs text-surface-500">TAG: {item.service_tag}</p>}
         {!item.numero_serie && !item.service_tag && <span className="text-surface-400 italic">—</span>}
       </td>
+      {mostrarImei && (
+        <td className="px-4 py-3 text-sm text-surface-700">
+          {item.imei
+            ? <p className="font-mono">{item.imei}</p>
+            : <span className="text-surface-400 italic">—</span>
+          }
+        </td>
+      )}
       <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${estado.cls}`}>
           {estado.label}
