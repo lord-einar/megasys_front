@@ -231,7 +231,7 @@ export default function PersonalDetailPage() {
                     </div>
                   </div>
 
-                  {isSuperAdmin && (
+                  {isSuperAdmin && ENTRA_GRUPOS[personal.privilegio_app] && (
                     <div className="md:col-span-2 pt-6 border-t border-surface-100 mt-2">
                       <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide flex items-center gap-2 mb-4">
                         <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -239,7 +239,22 @@ export default function PersonalDetailPage() {
                         </svg>
                         Acceso en Portal IT
                       </h3>
-                      <EntraIdBadge privilegio={personal.privilegio_app} />
+                      <div className="flex flex-wrap items-center gap-4">
+                        <EntraIdBadge privilegio={personal.privilegio_app} />
+                        {personal.ultimo_acceso ? (
+                          <span className="text-xs text-surface-500 font-medium">
+                            Último acceso:{' '}
+                            <span className="text-surface-700 font-semibold">
+                              {new Date(personal.ultimo_acceso).toLocaleString('es-AR', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                              })}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-surface-400 italic">Sin accesos registrados</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
