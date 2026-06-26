@@ -231,6 +231,18 @@ export default function PersonalDetailPage() {
                     </div>
                   </div>
 
+                  {isSuperAdmin && (
+                    <div className="md:col-span-2 pt-6 border-t border-surface-100 mt-2">
+                      <h3 className="text-sm font-bold text-surface-900 border-b border-surface-100 pb-3 uppercase tracking-wide flex items-center gap-2 mb-4">
+                        <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Acceso en Portal IT
+                      </h3>
+                      <EntraIdBadge privilegio={personal.privilegio_app} />
+                    </div>
+                  )}
+
                   <div className="md:col-span-2 pt-6 border-t border-surface-100 mt-2">
                     <div className="flex items-center gap-6 text-xs text-surface-400">
                       <span>Registrado: <span className="font-medium text-surface-600">{formatDate(personal.created_at)}</span></span>
@@ -501,6 +513,44 @@ function AsignacionCard({ asignacion, isSuperAdmin, editandoFechaId, nuevaFecha,
           <p className="text-surface-700 text-sm">{asignacion.motivo}</p>
         </div>
       )}
+    </div>
+  )
+}
+
+const ENTRA_GRUPOS = {
+  super_admin: { label: 'Infraestructura', color: 'bg-primary-50 text-primary-700 border-primary-200' },
+  helpdesk:    { label: 'Mesa de Ayuda',   color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  support:     { label: 'Soporte',         color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  rrhh:        { label: 'RRHH',            color: 'bg-violet-50 text-violet-700 border-violet-200' },
+  compras:     { label: 'Compras',         color: 'bg-orange-50 text-orange-700 border-orange-200' },
+}
+
+function EntraIdBadge({ privilegio }) {
+  const grupo = ENTRA_GRUPOS[privilegio]
+
+  if (!grupo) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border bg-surface-50 text-surface-500 border-surface-200">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+          </svg>
+          Sin grupo asignado
+        </span>
+        <span className="text-xs text-surface-400">No tiene acceso al portal</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold border ${grupo.color}`}>
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        {grupo.label}
+      </span>
+      <span className="text-xs text-surface-400 font-medium">Grupo Entra ID</span>
     </div>
   )
 }
