@@ -39,6 +39,10 @@ export default function SolicitudAsignacionDetailPage() {
   const [rechazo, setRechazo] = useState('')
   const [cancelacion, setCancelacion] = useState('')
 
+  // Reenviar aviso
+  const [reenviando, setReenviando] = useState(false)
+  const [avisoEnviado, setAvisoEnviado] = useState(false)
+
   const cargar = async () => {
     setLoading(true)
     setError(null)
@@ -132,7 +136,30 @@ export default function SolicitudAsignacionDetailPage() {
             {solicitud.tipo_equipo} · {(solicitud.motivo || '').replaceAll('_', ' ')}
           </p>
         </div>
-        <StatusBadgeAsignacion estado={solicitud.estado} />
+        <div className="flex flex-col items-end gap-3">
+          <StatusBadgeAsignacion estado={solicitud.estado} />
+          {!esTerminal && (hasInfraestructura || hasRRHH) && (
+            <button
+              onClick={async () => {
+                setReenviando(true)
+                setAvisoEnviado(false)
+                try {
+                  await solicitudesAsignacionAPI.reenviarAviso(id)
+                  setAvisoEnviado(true)
+                  setTimeout(() => setAvisoEnviado(false), 4000)
+                } catch (err) {
+                  setError(err.message || 'Error al reenviar el aviso')
+                } finally {
+                  setReenviando(false)
+                }
+              }}
+              disabled={reenviando}
+              className="text-xs font-medium text-surface-500 hover:text-primary-600 border border-surface-200 hover:border-primary-300 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+            >
+              {reenviando ? 'Enviando...' : avisoEnviado ? '✓ Aviso enviado' : 'Reenviar aviso'}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

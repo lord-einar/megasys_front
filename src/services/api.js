@@ -814,7 +814,8 @@ export const solicitudesAsignacionAPI = {
     return apiUpload(`/solicitudes-asignacion/${id}/adjuntos`, formData)
   },
   rechazar: (id, data) => apiCall(`/solicitudes-asignacion/${id}/rechazar`, { method: 'POST', body: JSON.stringify(data) }),
-  cancelar: (id, data) => apiCall(`/solicitudes-asignacion/${id}/cancelar`, { method: 'POST', body: JSON.stringify(data) })
+  cancelar: (id, data) => apiCall(`/solicitudes-asignacion/${id}/cancelar`, { method: 'POST', body: JSON.stringify(data) }),
+  reenviarAviso: (id) => apiCall(`/solicitudes-asignacion/${id}/reenviar-aviso`, { method: 'POST' })
 }
 
 export default apiCall
