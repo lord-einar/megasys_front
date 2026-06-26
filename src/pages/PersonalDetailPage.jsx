@@ -536,7 +536,7 @@ const ENTRA_GRUPOS = {
   super_admin: { label: 'Infraestructura', color: 'bg-primary-50 text-primary-700 border-primary-200' },
   helpdesk:    { label: 'Mesa de Ayuda',   color: 'bg-amber-50 text-amber-700 border-amber-200' },
   support:     { label: 'Soporte',         color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  rrhh:        { label: 'Administración de personal', color: 'bg-violet-50 text-violet-700 border-violet-200' },
+  rrhh:        { label: 'RRHH Acceso PortalIT', color: 'bg-violet-50 text-violet-700 border-violet-200' },
   compras:     { label: 'Compras',         color: 'bg-orange-50 text-orange-700 border-orange-200' },
 }
 
