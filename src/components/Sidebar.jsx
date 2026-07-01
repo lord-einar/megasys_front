@@ -20,6 +20,7 @@ import { usePermissions } from '../hooks/usePermissions'
 function Sidebar({ isOpen, onNavigate, onClose }) {
   const {
     hasLegacyAccess,
+    canViewSolicitudesCompra,
     canViewSolicitudesAsignacion,
     hasInfraestructura
   } = usePermissions()
