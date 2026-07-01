@@ -69,6 +69,14 @@ const PERMISSIONS = {
     create: ['super_admin'],
     update: ['super_admin'],
     delete: ['super_admin']
+  },
+  solicitudes_asignacion: {
+    read: ['super_admin', 'rrhh', 'compras'],
+    create: ['super_admin', 'rrhh', 'compras'],
+    update: ['super_admin', 'rrhh', 'compras'],
+    cancelar: ['super_admin', 'rrhh', 'compras'],
+    rechazar: ['super_admin', 'rrhh'],
+    dashboard: ['super_admin', 'rrhh', 'compras']
   }
 };
 
@@ -139,8 +147,9 @@ export const usePermissions = () => {
   const hasMesaAyuda = !!ga.hasMesaAyuda;
   const hasSoporte = !!ga.hasSoporte;
 
-  // Atajos de visibilidad para el módulo de Solicitudes de Compra
+  // Atajos de visibilidad para módulos de solicitudes
   const canViewSolicitudesCompra = hasInfraestructura || hasRRHH || hasCompras;
+  const canViewSolicitudesAsignacion = hasInfraestructura || hasRRHH || hasCompras;
 
   // Acceso a módulos legacy (todos menos Solicitudes de Compra y catálogo).
   // Los miembros que solo están en RRHH o Compras quedan bloqueados por backend.
@@ -165,6 +174,7 @@ export const usePermissions = () => {
     hasMesaAyuda,
     hasSoporte,
     canViewSolicitudesCompra,
+    canViewSolicitudesAsignacion,
     hasLegacyAccess
   };
 };
