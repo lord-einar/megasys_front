@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { inventarioAPI, tipoArticuloAPI, sedesAPI, categoriaEquiposAsignacionAPI } from '../services/api'
+import { inventarioAPI, tipoArticuloAPI, solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import Swal from 'sweetalert2'
 import LoadingOverlay from '../components/LoadingOverlay'
@@ -59,8 +59,8 @@ export default function IngresoCelularesPage() {
       })
       .catch(() => {})
 
-    // Cargar sedes
-    sedesAPI.list({ limit: 200, activo: true })
+    // Cargar sedes (lookup accesible para Compras, RRHH e Infraestructura)
+    solicitudesCompraAPI.lookupSedes({ limit: 200 })
       .then(res => setSedes(res?.data || []))
       .catch(() => setSedes([]))
 

@@ -21,7 +21,7 @@ const PERMISSIONS = {
   },
   inventario: {
     read: ['super_admin', 'helpdesk', 'support'],
-    create: ['super_admin', 'support'],
+    create: ['super_admin', 'support', 'compras'],
     update: ['super_admin', 'support'],
     delete: ['super_admin', 'support']
   },
