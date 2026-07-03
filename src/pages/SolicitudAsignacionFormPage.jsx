@@ -29,6 +29,10 @@ export default function SolicitudAsignacionFormPage() {
     setError(null)
 
     try {
+      if (!form.beneficiario_personal_id) {
+        throw new Error('Seleccioná un beneficiario de la lista desplegable antes de crear la solicitud (el nombre escrito no coincide con ninguna persona registrada)')
+      }
+
       if (form.motivo === 'reposicion_rotura' && !adjuntos.rotura) {
         throw new Error('Para reposición por rotura debe cargarse una foto/evidencia del equipo dañado')
       }

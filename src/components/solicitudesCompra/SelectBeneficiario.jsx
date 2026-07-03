@@ -52,6 +52,11 @@ export default function SelectBeneficiario({ value, onChange, disabled }) {
           disabled={disabled || loading}
         />
       </div>
+      {!loading && filtro && filtered.length === 0 && (
+        <p className="text-xs text-rose-500">
+          No se encontró ninguna persona que coincida con "{filtro}". Verificá el nombre o seleccioná de la lista completa.
+        </p>
+      )}
       <select
         value={value || ''}
         onChange={(e) => {

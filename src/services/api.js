@@ -38,7 +38,13 @@ const apiCall = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-      throw new Error(data?.message || `Error HTTP ${response.status}`)
+      // Cuando el 400 viene de express-validator, `errors` trae el detalle
+      // por campo (ej: "beneficiario_personal_id debe ser un UUID válido").
+      // Sin esto, el usuario solo ve el mensaje genérico "Errores de validación".
+      const detalle = Array.isArray(data?.errors)
+        ? data.errors.map(e => e.message).filter(Boolean).join(' | ')
+        : null
+      throw new Error(detalle || data?.message || `Error HTTP ${response.status}`)
     }
 
     return data || { success: response.ok }
