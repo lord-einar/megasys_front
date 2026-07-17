@@ -67,7 +67,7 @@ export default function SolicitudAsignacionFormPage() {
         <div>
           <p className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-1">Solicitudes de asignación</p>
           <h1 className="text-2xl font-bold text-surface-900">Nueva solicitud</h1>
-          <p className="text-surface-500 mt-1 font-medium">Asignación de stock existente de celulares y notebooks</p>
+          <p className="text-surface-500 mt-1 font-medium">Asignación de stock existente de celulares, notebooks y PC de escritorio</p>
         </div>
         <button type="button" onClick={() => navigate('/solicitudes-asignacion')} className="btn-secondary">
           Volver al listado
@@ -96,6 +96,7 @@ export default function SolicitudAsignacionFormPage() {
               >
                 <option value="celular">Celular</option>
                 <option value="notebook">Notebook</option>
+                <option value="pc_escritorio">PC de escritorio</option>
               </select>
             </label>
             <label>

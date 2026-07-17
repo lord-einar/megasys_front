@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -7,7 +7,45 @@ import { inventarioAPI, tipoArticuloAPI, solicitudesCompraAPI, categoriaEquiposA
 import { usePermissions } from '../hooks/usePermissions'
 import Swal from 'sweetalert2'
 import LoadingOverlay from '../components/LoadingOverlay'
-import { ArrowLeft, Smartphone } from 'lucide-react'
+import { ArrowLeft, Smartphone, Laptop, Monitor } from 'lucide-react'
+
+// Configuración por tipo de equipo. La clave coincide con el param de la ruta
+// (/solicitudes-compra/ingreso/:tipo) y con el tipo_equipo lógico del backend.
+const TIPO_CONFIG = {
+  celular: {
+    tipoArticuloNombre: 'Celular',
+    categoriaTipo: 'celular',
+    singular: 'celular',
+    titulo: 'Ingresar celular nuevo',
+    descripcion: 'Registrá un celular recién recibido en el stock de equipos',
+    icon: Smartphone,
+    mostrarImei: true,
+    placeholderMarca: 'ej: Samsung',
+    placeholderModelo: 'ej: Galaxy A55'
+  },
+  notebook: {
+    tipoArticuloNombre: 'Notebook',
+    categoriaTipo: 'notebook',
+    singular: 'notebook',
+    titulo: 'Ingresar notebook nueva',
+    descripcion: 'Registrá una notebook recién recibida en el stock de equipos',
+    icon: Laptop,
+    mostrarImei: false,
+    placeholderMarca: 'ej: Dell',
+    placeholderModelo: 'ej: Latitude 5440'
+  },
+  pc_escritorio: {
+    tipoArticuloNombre: 'PC',
+    categoriaTipo: 'pc',
+    singular: 'PC de escritorio',
+    titulo: 'Ingresar PC de escritorio nueva',
+    descripcion: 'Registrá una PC de escritorio recién recibida en el stock de equipos',
+    icon: Monitor,
+    mostrarImei: false,
+    placeholderMarca: 'ej: HP',
+    placeholderModelo: 'ej: ProDesk 400 G7'
+  }
+}
 
 const schema = yup.object().shape({
   marca: yup.string().required('La marca es requerida').min(2, 'Mínimo 2 caracteres'),
@@ -30,6 +68,12 @@ const schema = yup.object().shape({
 
 export default function IngresoCelularesPage() {
   const navigate = useNavigate()
+  const { tipo: tipoParam } = useParams()
+  // La ruta legacy /solicitudes-compra/ingreso-celular no pasa param -> celular.
+  const tipo = TIPO_CONFIG[tipoParam] ? tipoParam : 'celular'
+  const config = TIPO_CONFIG[tipo]
+  const Icon = config.icon
+
   const { hasCompras, hasInfraestructura } = usePermissions()
   const canAccess = hasCompras || hasInfraestructura
 
@@ -50,12 +94,14 @@ export default function IngresoCelularesPage() {
   useEffect(() => {
     if (!canAccess) return
 
-    // Buscar el tipo "celular" automáticamente
+    // Buscar el TipoArticulo correspondiente (match exacto por nombre)
     tipoArticuloAPI.list({ limit: 100 })
       .then(res => {
         const tipos = res?.data || []
-        const celular = tipos.find(t => t.nombre?.toLowerCase().includes('celular'))
-        if (celular) setTipoArticuloId(celular.id)
+        const nombre = config.tipoArticuloNombre.toLowerCase()
+        const encontrado = tipos.find(t => t.nombre?.toLowerCase() === nombre)
+          || tipos.find(t => t.nombre?.toLowerCase().includes(nombre))
+        if (encontrado) setTipoArticuloId(encontrado.id)
       })
       .catch(() => {})
 
@@ -64,11 +110,11 @@ export default function IngresoCelularesPage() {
       .then(res => setSedes(res?.data || []))
       .catch(() => setSedes([]))
 
-    // Cargar categorías de celulares
-    categoriaEquiposAsignacionAPI.list({ tipo: 'celular', activo: true })
+    // Cargar categorías del tipo
+    categoriaEquiposAsignacionAPI.list({ tipo: config.categoriaTipo, activo: true })
       .then(res => setCategorias(res?.data || []))
       .catch(() => setCategorias([]))
-  }, [canAccess])
+  }, [canAccess, tipo])
 
   if (!canAccess) {
     return (
@@ -80,7 +126,7 @@ export default function IngresoCelularesPage() {
 
   const onSubmit = async (data) => {
     if (!tipoArticuloId) {
-      Swal.fire('Error', 'No se encontró el tipo de artículo "Celular". Contactá a Infraestructura.', 'error')
+      Swal.fire('Error', `No se encontró el tipo de artículo "${config.tipoArticuloNombre}". Contactá a Infraestructura.`, 'error')
       return
     }
 
@@ -89,7 +135,7 @@ export default function IngresoCelularesPage() {
       marca: data.marca,
       modelo: data.modelo,
       numero_serie: data.numero_serie || null,
-      imei: data.imei || null,
+      imei: config.mostrarImei ? (data.imei || null) : null,
       fecha_adquisicion: data.fecha_adquisicion || null,
       valor_adquisicion: data.valor_adquisicion || null,
       observaciones: data.observaciones || null,
@@ -103,7 +149,7 @@ export default function IngresoCelularesPage() {
       await inventarioAPI.create(payload)
       await Swal.fire({
         icon: 'success',
-        title: 'Celular ingresado',
+        title: 'Equipo ingresado',
         text: `${data.marca} ${data.modelo} fue agregado al stock correctamente.`,
         confirmButtonText: 'Ingresar otro',
         showCancelButton: true,
@@ -118,7 +164,7 @@ export default function IngresoCelularesPage() {
         }
       })
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Error al guardar el celular'
+      const msg = err?.response?.data?.message || err?.message || 'Error al guardar el equipo'
       Swal.fire('Error', msg, 'error')
     } finally {
       setLoading(false)
@@ -144,10 +190,10 @@ export default function IngresoCelularesPage() {
           </button>
           <div>
             <h1 className="page-title flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-primary-600" />
-              Ingresar celular nuevo
+              <Icon className="w-5 h-5 text-primary-600" />
+              {config.titulo}
             </h1>
-            <p className="page-description">Registrá un celular recién recibido en el stock de equipos</p>
+            <p className="page-description">{config.descripcion}</p>
           </div>
         </div>
       </div>
@@ -161,12 +207,12 @@ export default function IngresoCelularesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Marca <span className="text-rose-500">*</span></label>
-              <input {...register('marca')} placeholder="ej: Samsung" className={inputCls(errors.marca)} />
+              <input {...register('marca')} placeholder={config.placeholderMarca} className={inputCls(errors.marca)} />
               {errors.marca && <p className="text-xs text-rose-500 mt-1">{errors.marca.message}</p>}
             </div>
             <div>
               <label className={labelCls}>Modelo <span className="text-rose-500">*</span></label>
-              <input {...register('modelo')} placeholder="ej: Galaxy A55" className={inputCls(errors.modelo)} />
+              <input {...register('modelo')} placeholder={config.placeholderModelo} className={inputCls(errors.modelo)} />
               {errors.modelo && <p className="text-xs text-rose-500 mt-1">{errors.modelo.message}</p>}
             </div>
           </div>
@@ -177,19 +223,21 @@ export default function IngresoCelularesPage() {
               <input {...register('numero_serie')} placeholder="S/N del equipo" className={inputCls(errors.numero_serie)} />
               {errors.numero_serie && <p className="text-xs text-rose-500 mt-1">{errors.numero_serie.message}</p>}
             </div>
-            <div>
-              <label className={labelCls}>IMEI</label>
-              <input
-                {...register('imei')}
-                placeholder="15 dígitos"
-                maxLength={15}
-                className={inputCls(errors.imei)}
-              />
-              {errors.imei
-                ? <p className="text-xs text-rose-500 mt-1">{errors.imei.message}</p>
-                : <p className="text-xs text-surface-400 mt-1">Número de 15 dígitos del celular</p>
-              }
-            </div>
+            {config.mostrarImei && (
+              <div>
+                <label className={labelCls}>IMEI</label>
+                <input
+                  {...register('imei')}
+                  placeholder="15 dígitos"
+                  maxLength={15}
+                  className={inputCls(errors.imei)}
+                />
+                {errors.imei
+                  ? <p className="text-xs text-rose-500 mt-1">{errors.imei.message}</p>
+                  : <p className="text-xs text-surface-400 mt-1">Número de 15 dígitos del celular</p>
+                }
+              </div>
+            )}
           </div>
         </div>
 
@@ -283,8 +331,8 @@ export default function IngresoCelularesPage() {
             disabled={loading}
             className="btn-accent"
           >
-            <Smartphone className="w-4 h-4" />
-            Registrar celular
+            <Icon className="w-4 h-4" />
+            Registrar {config.singular}
           </button>
         </div>
       </form>

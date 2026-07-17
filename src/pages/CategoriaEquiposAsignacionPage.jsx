@@ -7,6 +7,7 @@ import { Plus, RefreshCw, Pencil, ArrowLeft } from 'lucide-react'
 const TIPO_LABELS = {
   notebook: 'Notebook',
   celular: 'Celular',
+  pc: 'PC de escritorio',
   ambos: 'Ambos'
 }
 
@@ -167,6 +168,7 @@ export default function CategoriaEquiposAsignacionPage() {
                 <option value="ambos">Ambos</option>
                 <option value="notebook">Notebook</option>
                 <option value="celular">Celular</option>
+                <option value="pc">PC de escritorio</option>
               </select>
             </label>
             <label>

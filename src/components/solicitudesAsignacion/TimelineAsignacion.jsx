@@ -2,7 +2,9 @@
 const ACCION_CONFIG = {
   creada:           { label: 'Creada',              color: 'bg-surface-400' },
   editada:          { label: 'Editada',             color: 'bg-surface-400' },
+  solicitud_compra: { label: 'Compra solicitada',   color: 'bg-orange-500'  },
   equipo_asignado:  { label: 'Equipo asignado',     color: 'bg-sky-500'     },
+  aprobada_infra:   { label: 'Aprobada por Infra',  color: 'bg-sky-600'     },
   aprobada_rrhh:    { label: 'Aprobada por RRHH',   color: 'bg-indigo-500'  },
   rechazada:        { label: 'Rechazada',           color: 'bg-rose-500'    },
   cancelada:        { label: 'Cancelada',           color: 'bg-surface-500' },

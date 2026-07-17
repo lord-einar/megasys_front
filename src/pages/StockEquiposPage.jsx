@@ -2,11 +2,18 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { Laptop, Smartphone, Search, ArrowLeft, User as UserIcon, Building2, History, Plus } from 'lucide-react'
+import { Laptop, Smartphone, Monitor, Search, ArrowLeft, User as UserIcon, Building2, History, Plus } from 'lucide-react'
 
 const TIPO_LABELS = {
   notebook: 'Notebooks',
-  celular: 'Celulares'
+  celular: 'Celulares',
+  pc_escritorio: 'PC de escritorio'
+}
+
+const TIPO_SINGULAR = {
+  notebook: 'notebook',
+  celular: 'celular',
+  pc_escritorio: 'PC de escritorio'
 }
 
 const ESTADO_LABELS = {
@@ -112,16 +119,16 @@ export default function StockEquiposPage() {
           </button>
           <div>
             <h1 className="page-title">Stock de equipos</h1>
-            <p className="page-description">Notebooks y celulares: disponibles y entregados</p>
+            <p className="page-description">Notebooks, celulares y PC de escritorio: disponibles y entregados</p>
           </div>
         </div>
-        {(hasCompras || hasInfraestructura) && tipo === 'celular' && (
+        {(hasCompras || hasInfraestructura) && (
           <button
-            onClick={() => navigate('/solicitudes-compra/ingreso-celular')}
+            onClick={() => navigate(`/solicitudes-compra/ingreso/${tipo}`)}
             className="btn-accent flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Ingresar celular
+            Ingresar {TIPO_SINGULAR[tipo]}
           </button>
         )}
       </div>
@@ -130,6 +137,7 @@ export default function StockEquiposPage() {
       <div className="flex gap-2 mb-6">
         <TipoTab active={tipo === 'notebook'} onClick={() => setTipo('notebook')} icon={<Laptop className="w-4 h-4" />} label="Notebooks" />
         <TipoTab active={tipo === 'celular'} onClick={() => setTipo('celular')} icon={<Smartphone className="w-4 h-4" />} label="Celulares" />
+        <TipoTab active={tipo === 'pc_escritorio'} onClick={() => setTipo('pc_escritorio')} icon={<Monitor className="w-4 h-4" />} label="PC de escritorio" />
       </div>
 
       {error && (

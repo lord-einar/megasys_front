@@ -5,6 +5,12 @@ import { useListData } from '../hooks/useListData'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import { FileText, Plus, RefreshCw } from 'lucide-react'
 
+const TIPO_EQUIPO_LABEL = {
+  celular: 'Celular',
+  notebook: 'Notebook',
+  pc_escritorio: 'PC de escritorio'
+}
+
 export default function SolicitudesAsignacionListPage() {
   const navigate = useNavigate()
   const [estado, setEstado] = useState('')
@@ -47,6 +53,7 @@ export default function SolicitudesAsignacionListPage() {
             <option value="">Todos los tipos</option>
             <option value="celular">Celular</option>
             <option value="notebook">Notebook</option>
+            <option value="pc_escritorio">PC de escritorio</option>
           </select>
         </label>
         <label>
@@ -124,10 +131,15 @@ export default function SolicitudesAsignacionListPage() {
                   <span className="text-surface-300 mx-1.5">·</span>
                   <span className="capitalize">{(s.motivo || '').replaceAll('_', ' ')}</span>
                   <span className="text-surface-300 mx-1.5">·</span>
-                  <span className="capitalize">{s.tipo_equipo}</span>
+                  <span>{TIPO_EQUIPO_LABEL[s.tipo_equipo] || s.tipo_equipo}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
+                {s.compra_pendiente && !s.inventario_asignado_id && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-50 text-orange-700 border-orange-200">
+                    Compra pendiente
+                  </span>
+                )}
                 <span className="text-xs text-surface-400">
                   {s.created_at ? new Date(s.created_at).toLocaleDateString('es-AR') : ''}
                 </span>

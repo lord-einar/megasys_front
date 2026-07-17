@@ -808,7 +808,10 @@ export const solicitudesAsignacionAPI = {
     return apiCall(`/solicitudes-asignacion/lookups/inventario-disponible${qs ? `?${qs}` : ''}`)
   },
   crear: (data) => apiCall('/solicitudes-asignacion', { method: 'POST', body: JSON.stringify(data) }),
+  editar: (id, data) => apiCall(`/solicitudes-asignacion/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  solicitarCompra: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/solicitar-compra`, { method: 'POST', body: JSON.stringify(data) }),
   asignarEquipo: (id, data) => apiCall(`/solicitudes-asignacion/${id}/asignar-equipo`, { method: 'POST', body: JSON.stringify(data) }),
+  aprobarInfra: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/aprobar-infra`, { method: 'POST', body: JSON.stringify(data) }),
   aprobarRrhh: (id, data = {}) => apiCall(`/solicitudes-asignacion/${id}/aprobar-rrhh`, { method: 'POST', body: JSON.stringify(data) }),
   generarRemito: (id, body = {}) => apiCall(`/solicitudes-asignacion/${id}/generar-remito`, { method: 'POST', body: JSON.stringify(body) }),
   lookupSoporte: () => apiCall('/solicitudes-asignacion/lookups/soporte'),

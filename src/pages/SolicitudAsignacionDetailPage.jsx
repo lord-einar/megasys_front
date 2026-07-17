@@ -4,7 +4,10 @@ import { solicitudesAsignacionAPI, categoriaEquiposAsignacionAPI } from '../serv
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsignacion'
+import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
 import { usePermissions } from '../hooks/usePermissions'
+
+const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
 
 export default function SolicitudAsignacionDetailPage() {
   const { id } = useParams()
@@ -43,6 +46,11 @@ export default function SolicitudAsignacionDetailPage() {
   const [reenviando, setReenviando] = useState(false)
   const [avisoEnviado, setAvisoEnviado] = useState(false)
 
+  // Edición de la solicitud
+  const [editando, setEditando] = useState(false)
+  const [editForm, setEditForm] = useState(null)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+
   const cargar = async () => {
     setLoading(true)
     setError(null)
@@ -71,7 +79,9 @@ export default function SolicitudAsignacionDetailPage() {
 
   // Cargar categorías cuando la solicitud entra en pendiente_infra
   useEffect(() => {
-    if (!solicitud || !hasInfraestructura || solicitud.estado !== 'pendiente_infra') return
+    if (!solicitud || !hasInfraestructura) return
+    if (solicitud.inventario_asignado_id) return
+    if (solicitud.estado !== 'pendiente_infra' && !solicitud.compra_pendiente) return
     categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
       .then(res => setCategorias(normalizeApiResponse(res, 200).data))
       .catch(() => setCategorias([]))
@@ -79,7 +89,8 @@ export default function SolicitudAsignacionDetailPage() {
 
   // Recargar inventario disponible cada vez que cambia la categoría seleccionada
   useEffect(() => {
-    if (!solicitud || solicitud.estado !== 'pendiente_infra') return
+    if (!solicitud || solicitud.inventario_asignado_id) return
+    if (solicitud.estado !== 'pendiente_infra' && !solicitud.compra_pendiente) return
     if (!asignacion.categoria_id) { setInventarioDisponible([]); return }
     solicitudesAsignacionAPI.lookupInventarioDisponible({
       tipo_equipo: solicitud.tipo_equipo,
@@ -104,6 +115,49 @@ export default function SolicitudAsignacionDetailPage() {
       await cargar()
     } catch (err) {
       setError(err.message || 'Error procesando acción')
+    }
+  }
+
+  const abrirEdicion = () => {
+    setError(null)
+    setEditForm({
+      tipo_equipo: solicitud.tipo_equipo,
+      motivo: solicitud.motivo,
+      observacion_solicitante: solicitud.observacion_solicitante || '',
+      beneficiario_personal_id: solicitud.beneficiario_personal_id || solicitud.beneficiario?.id || '',
+      denuncia_presentada: solicitud.denuncia_presentada === true ? 'true'
+        : solicitud.denuncia_presentada === false ? 'false' : '',
+      comentario_edicion: ''
+    })
+    setEditando(true)
+  }
+
+  const setEdit = (field, value) => setEditForm(prev => ({ ...prev, [field]: value }))
+
+  const guardarEdicion = async () => {
+    setGuardandoEdicion(true)
+    setError(null)
+    try {
+      if (!editForm.beneficiario_personal_id) {
+        throw new Error('Seleccioná un beneficiario de la lista')
+      }
+      const payload = {
+        tipo_equipo: editForm.tipo_equipo,
+        motivo: editForm.motivo,
+        observacion_solicitante: editForm.observacion_solicitante,
+        beneficiario_personal_id: editForm.beneficiario_personal_id,
+        comentario_edicion: editForm.comentario_edicion || null
+      }
+      if (editForm.motivo === 'reposicion_robo') {
+        payload.denuncia_presentada = editForm.denuncia_presentada === 'true'
+      }
+      await solicitudesAsignacionAPI.editar(id, payload)
+      setEditando(false)
+      await cargar()
+    } catch (err) {
+      setError(err.message || 'Error al editar la solicitud')
+    } finally {
+      setGuardandoEdicion(false)
     }
   }
 
@@ -137,7 +191,22 @@ export default function SolicitudAsignacionDetailPage() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <StatusBadgeAsignacion estado={solicitud.estado} />
+          <div className="flex items-center gap-2">
+            <StatusBadgeAsignacion estado={solicitud.estado} />
+            {solicitud.compra_pendiente && !solicitud.inventario_asignado_id && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-50 text-orange-700 border-orange-200">
+                Compra pendiente
+              </span>
+            )}
+          </div>
+          {!esTerminal && (hasInfraestructura || hasRRHH || hasCompras) && !editando && (
+            <button
+              onClick={abrirEdicion}
+              className="text-xs font-medium text-surface-500 hover:text-primary-600 border border-surface-200 hover:border-primary-300 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Editar solicitud
+            </button>
+          )}
           {!esTerminal && (hasInfraestructura || hasRRHH) && (
             <button
               onClick={async () => {
@@ -170,6 +239,98 @@ export default function SolicitudAsignacionDetailPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
+
+          {/* Edición de la solicitud */}
+          {editando && editForm && (
+            <section className="card-base p-6 border-l-4 border-l-primary-500">
+              <h2 className="font-bold text-surface-900 mb-1">Editar solicitud</h2>
+              <p className="text-sm text-surface-500 mb-4">
+                Los cambios quedan registrados en el historial y se avisa por mail a Compras, RRHH e Infraestructura.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-base block mb-1">Tipo de equipo</label>
+                  <select
+                    value={editForm.tipo_equipo}
+                    onChange={e => setEdit('tipo_equipo', e.target.value)}
+                    disabled={!!solicitud.inventario_asignado_id}
+                    className="input-base"
+                  >
+                    <option value="celular">Celular</option>
+                    <option value="notebook">Notebook</option>
+                    <option value="pc_escritorio">PC de escritorio</option>
+                  </select>
+                  {!!solicitud.inventario_asignado_id && (
+                    <p className="text-xs text-surface-400 mt-1">No se puede cambiar el tipo con un equipo ya asignado.</p>
+                  )}
+                </div>
+                <div>
+                  <label className="label-base block mb-1">Motivo</label>
+                  <select
+                    value={editForm.motivo}
+                    onChange={e => setEdit('motivo', e.target.value)}
+                    className="input-base"
+                  >
+                    <option value="nuevo_ingreso">Nuevo ingreso</option>
+                    <option value="nuevo_puesto">Nuevo puesto</option>
+                    <option value="reposicion_robo">Reposición por robo</option>
+                    <option value="reposicion_perdida">Reposición por pérdida</option>
+                    <option value="reposicion_rotura">Reposición por rotura</option>
+                    <option value="cambio_equipo">Cambio de equipo</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="label-base block mb-1">Beneficiario</label>
+                  <SelectBeneficiario
+                    value={editForm.beneficiario_personal_id}
+                    onChange={(pid) => setEdit('beneficiario_personal_id', pid || '')}
+                    disabled={guardandoEdicion}
+                  />
+                </div>
+                {editForm.motivo === 'reposicion_robo' && (
+                  <div>
+                    <label className="label-base block mb-1">Denuncia presentada</label>
+                    <select
+                      value={editForm.denuncia_presentada}
+                      onChange={e => setEdit('denuncia_presentada', e.target.value)}
+                      className="input-base"
+                    >
+                      <option value="">Seleccionar</option>
+                      <option value="true">Sí</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                )}
+                <div className="md:col-span-2">
+                  <label className="label-base block mb-1">Descripción amplia</label>
+                  <textarea
+                    value={editForm.observacion_solicitante}
+                    onChange={e => setEdit('observacion_solicitante', e.target.value)}
+                    rows={4}
+                    className="input-base resize-y"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="label-base block mb-1">Comentario del cambio (opcional)</label>
+                  <input
+                    value={editForm.comentario_edicion}
+                    onChange={e => setEdit('comentario_edicion', e.target.value)}
+                    className="input-base"
+                    placeholder="Por qué se edita la solicitud"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button className="btn-primary" disabled={guardandoEdicion} onClick={guardarEdicion}>
+                  {guardandoEdicion ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+                <button className="btn-secondary" disabled={guardandoEdicion} onClick={() => setEditando(false)}>
+                  Cancelar
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Datos de la solicitud */}
           <section className="card-base p-6">
@@ -294,12 +455,36 @@ export default function SolicitudAsignacionDetailPage() {
             )}
           </section>
 
-          {/* Acción: Asignar equipo (pendiente_infra + Infra) */}
-          {hasInfraestructura && solicitud.estado === 'pendiente_infra' && (
+          {/* Acción: Revisión de Infraestructura (asignar equipo / solicitar compra / aprobar) */}
+          {hasInfraestructura && !esTerminal && solicitud.estado !== 'remito_generado' &&
+            (solicitud.estado === 'pendiente_infra' || (solicitud.compra_pendiente && !solicitud.inventario_asignado_id)) && !editando && (
             <section className="card-base p-6 border-l-4 border-l-sky-500">
-              <h2 className="font-bold text-surface-900 mb-1">Asignar equipo</h2>
+              <h2 className="font-bold text-surface-900 mb-1">
+                {solicitud.estado === 'pendiente_infra' ? 'Revisión de Infraestructura' : 'Asignar equipo'}
+              </h2>
+
+              {solicitud.compra_pendiente && !solicitud.inventario_asignado_id && (
+                <div className="mb-4 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-sm text-orange-700">
+                  Compra del equipo pendiente.{' '}
+                  {solicitud.estado === 'pendiente_infra'
+                    ? 'Podés aprobar por Infra igual; cuando entre el stock se asignará el equipo.'
+                    : 'La aprobación sigue su curso; cuando entre el stock, seleccioná la categoría y el equipo para asignarlo.'}
+                </div>
+              )}
+
+              {solicitud.inventario_asignado_id && (
+                <div className="mb-4 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-sm text-sky-800">
+                  Equipo asignado:{' '}
+                  <strong>{solicitud.inventarioAsignado?.marca} {solicitud.inventarioAsignado?.modelo}</strong>
+                  {solicitud.inventarioAsignado?.numero_serie ? ` · S/N ${solicitud.inventarioAsignado.numero_serie}` : ''}
+                </div>
+              )}
+
+              {!solicitud.inventario_asignado_id && (
+              <>
               <p className="text-sm text-surface-500 mb-4">
                 Seleccioná primero la categoría para ver los equipos disponibles correspondientes.
+                {solicitud.estado === 'pendiente_infra' && !solicitud.compra_pendiente && ' Si no hay stock, podés solicitar la compra.'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -389,7 +574,7 @@ export default function SolicitudAsignacionDetailPage() {
                   />
                 </div>
               </div>
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   className="btn-primary"
                   disabled={!asignacion.inventario_id || !asignacion.categoria_id}
@@ -402,7 +587,37 @@ export default function SolicitudAsignacionDetailPage() {
                 >
                   Asignar equipo
                 </button>
+                {solicitud.estado === 'pendiente_infra' && !solicitud.compra_pendiente && (
+                  <button
+                    className="btn-secondary"
+                    onClick={() => ejecutar(() => solicitudesAsignacionAPI.solicitarCompra(id, {
+                      observacion: asignacion.observacion || null
+                    }))}
+                  >
+                    Solicitar compra
+                  </button>
+                )}
               </div>
+              </>
+              )}
+
+              {solicitud.estado === 'pendiente_infra' && (
+                <div className="mt-6 pt-4 border-t border-surface-100">
+                  {!solicitud.inventario_asignado_id && !solicitud.compra_pendiente && (
+                    <p className="text-sm text-surface-500 mb-3">
+                      Para aprobar por Infraestructura primero asigná un equipo o marcá "Solicitar compra".
+                    </p>
+                  )}
+                  <button
+                    className="btn-primary"
+                    onClick={() => ejecutar(() => solicitudesAsignacionAPI.aprobarInfra(id, {
+                      observacion: asignacion.observacion || null
+                    }))}
+                  >
+                    Aprobado por Infra
+                  </button>
+                </div>
+              )}
             </section>
           )}
 
@@ -420,13 +635,13 @@ export default function SolicitudAsignacionDetailPage() {
                 className="btn-primary"
                 onClick={() => ejecutar(() => solicitudesAsignacionAPI.aprobarRrhh(id, { observacion: rrhhObs }))}
               >
-                Aprobar
+                Aprobado por RRHH
               </button>
             </section>
           )}
 
-          {/* Acción: Generar remito (aprobada + Infra) */}
-          {hasInfraestructura && solicitud.estado === 'aprobada' && (
+          {/* Acción: Generar remito (aprobada + Infra + equipo ya asignado) */}
+          {hasInfraestructura && solicitud.estado === 'aprobada' && solicitud.inventario_asignado_id && (
             <section className="card-base p-6 border-l-4 border-l-teal-500">
               <h2 className="font-bold text-surface-900 mb-2">Generar remito de entrega</h2>
               <p className="text-sm text-surface-500 mb-4">

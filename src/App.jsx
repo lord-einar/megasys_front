@@ -132,6 +132,7 @@ function App() {
                   {/* Stock accesible desde asignación */}
                   <Route path="/solicitudes-compra/stock" element={canViewSolicitudesAsignacion ? <StockEquiposPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-compra/ingreso-celular" element={canViewSolicitudesAsignacion ? <IngresoCelularesPage /> : <Navigate to="/dashboard" replace />} />
+                  <Route path="/solicitudes-compra/ingreso/:tipo" element={canViewSolicitudesAsignacion ? <IngresoCelularesPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/historial-equipos/personal/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposPersonalPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/historial-equipos/sede/:id" element={canViewSolicitudesAsignacion ? <HistorialEquiposSedePage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion/dashboard" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionDashboard /> : <Navigate to="/dashboard" replace />} />
