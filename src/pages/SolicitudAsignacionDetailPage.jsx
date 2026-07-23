@@ -9,6 +9,17 @@ import { usePermissions } from '../hooks/usePermissions'
 
 const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
 
+// Identificador para distinguir equipos en el dropdown: IMEI para celulares,
+// número de serie para notebook/PC.
+function identificadorEquipo(inv, tipoEquipo) {
+  if (tipoEquipo === 'celular') {
+    if (inv.imei) return ` · IMEI ${inv.imei}`
+    if (inv.numero_serie) return ` · S/N ${inv.numero_serie}`
+    return ''
+  }
+  return inv.numero_serie ? ` · S/N ${inv.numero_serie}` : ''
+}
+
 export default function SolicitudAsignacionDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -541,7 +552,7 @@ export default function SolicitudAsignacionDetailPage() {
                       {inventarioDisponible.map(inv => (
                         <option key={inv.id} value={inv.id}>
                           {inv.marca} {inv.modelo}
-                          {inv.numero_serie ? ` · S/N ${inv.numero_serie}` : ''}
+                          {identificadorEquipo(inv, solicitud.tipo_equipo)}
                           {inv.sedePrincipal?.nombre_sede ? ` · ${inv.sedePrincipal.nombre_sede}` : ''}
                         </option>
                       ))}
