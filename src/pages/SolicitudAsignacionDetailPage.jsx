@@ -6,6 +6,7 @@ import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBad
 import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsignacion'
 import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
 import { usePermissions } from '../hooks/usePermissions'
+import { comprasPuedeAsignarEquipo, esCompraPendiente } from '../utils/solicitudAsignacionPolicy'
 
 const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
 
@@ -58,6 +59,12 @@ export default function SolicitudAsignacionDetailPage() {
   const [editando, setEditando] = useState(false)
   const [editForm, setEditForm] = useState(null)
   const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+  const compraPendiente = esCompraPendiente(solicitud)
+  const comprasPuedeAsignar = comprasPuedeAsignarEquipo(solicitud, hasCompras)
+  const infraPuedeGestionarAsignacion = !!solicitud && hasInfraestructura &&
+    !solicitud.inventario_asignado_id &&
+    (solicitud.estado === 'pendiente_infra' || compraPendiente)
+  const puedeGestionarAsignacion = comprasPuedeAsignar || infraPuedeGestionarAsignacion
 
   const cargar = async () => {
     setLoading(true)
@@ -87,18 +94,15 @@ export default function SolicitudAsignacionDetailPage() {
 
   // Cargar categorías cuando Infra revisa o Compras resuelve una compra pendiente
   useEffect(() => {
-    if (!solicitud || (!hasInfraestructura && !hasCompras)) return
-    if (solicitud.inventario_asignado_id) return
-    if (solicitud.estado !== 'pendiente_infra' && !(hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente)) return
+    if (!puedeGestionarAsignacion) return
     categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
       .then(res => setCategorias(normalizeApiResponse(res, 200).data))
       .catch(() => setCategorias([]))
-  }, [solicitud?.id, solicitud?.estado, hasInfraestructura, hasCompras])
+  }, [solicitud?.id, solicitud?.estado, solicitud?.tipo_equipo, puedeGestionarAsignacion])
 
   // Recargar inventario disponible cada vez que cambia la categoría seleccionada
   useEffect(() => {
-    if (!solicitud || solicitud.inventario_asignado_id) return
-    if (solicitud.estado !== 'pendiente_infra' && !(hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente)) return
+    if (!puedeGestionarAsignacion) return
     if (!asignacion.categoria_id) { setInventarioDisponible([]); return }
     solicitudesAsignacionAPI.lookupInventarioDisponible({
       tipo_equipo: solicitud.tipo_equipo,
@@ -114,7 +118,7 @@ export default function SolicitudAsignacionDetailPage() {
         }))
       })
       .catch(() => setInventarioDisponible([]))
-  }, [asignacion.categoria_id, solicitud?.id, hasCompras])
+  }, [asignacion.categoria_id, solicitud?.id, solicitud?.tipo_equipo, puedeGestionarAsignacion])
 
   const ejecutar = async (fn) => {
     try {
@@ -465,19 +469,24 @@ export default function SolicitudAsignacionDetailPage() {
           </section>
 
           {/* Acción: Revisión de Infraestructura (asignar equipo / solicitar compra / aprobar) */}
-          {((hasInfraestructura && !esTerminal && solicitud.estado !== 'remito_generado' &&
-            (solicitud.estado === 'pendiente_infra' || (solicitud.compra_pendiente && !solicitud.inventario_asignado_id))) ||
-            (hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente && !solicitud.inventario_asignado_id)) && !editando && (
+          {puedeGestionarAsignacion && !esTerminal && solicitud.estado !== 'remito_generado' && !editando && (
             <section className="card-base p-6 border-l-4 border-l-sky-500">
               <h2 className="font-bold text-surface-900 mb-1">
-                {hasCompras && !hasInfraestructura && solicitud.estado === 'aprobada' ? 'Asignar equipo comprado' : solicitud.estado === 'pendiente_infra' ? 'Revisión de Infraestructura' : 'Asignar equipo'}
+                {comprasPuedeAsignar && !hasInfraestructura ? 'Asignar celular' : solicitud.estado === 'pendiente_infra' ? 'Revisión de Infraestructura' : 'Asignar equipo'}
               </h2>
 
-              {solicitud.compra_pendiente && !solicitud.inventario_asignado_id && (
+              {comprasPuedeAsignar && !hasInfraestructura && !compraPendiente && (
+                <div className="mb-4 rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-sm text-sky-700">
+                  Podés asignar el celular mientras la solicitud espera aprobación. El borrador se generará
+                  cuando Infraestructura y RRHH hayan aprobado.
+                </div>
+              )}
+
+              {compraPendiente && !solicitud.inventario_asignado_id && (
                 <div className="mb-4 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-sm text-orange-700">
                   Compra del equipo pendiente.{' '}
-                  {hasCompras && !hasInfraestructura && solicitud.estado === 'aprobada'
-                    ? 'Al asignar el equipo se generará un borrador de remito para que Infraestructura lo complete.'
+                  {comprasPuedeAsignar && !hasInfraestructura
+                    ? 'Podés asignar el celular ahora. El borrador se generará cuando Infra y RRHH hayan aprobado la solicitud.'
                     : solicitud.estado === 'pendiente_infra'
                     ? 'Podés aprobar por Infra igual; cuando entre el stock se asignará el equipo.'
                     : 'La aprobación sigue su curso; cuando entre el stock, seleccioná la categoría y el equipo para asignarlo.'}
@@ -496,7 +505,7 @@ export default function SolicitudAsignacionDetailPage() {
               <>
               <p className="text-sm text-surface-500 mb-4">
                 Seleccioná primero la categoría para ver los equipos disponibles correspondientes.
-                {solicitud.estado === 'pendiente_infra' && !solicitud.compra_pendiente && ' Si no hay stock, podés solicitar la compra.'}
+                {solicitud.estado === 'pendiente_infra' && !compraPendiente && ' Si no hay stock, podés solicitar la compra.'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -508,13 +517,15 @@ export default function SolicitudAsignacionDetailPage() {
                   {categorias.length === 0 ? (
                     <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       No hay categorías definidas para {solicitud.tipo_equipo}.{' '}
-                      <button
-                        type="button"
-                        onClick={() => navigate('/categoria-equipos-asignacion')}
-                        className="underline font-medium"
-                      >
-                        Crear categorías
-                      </button>
+                      {hasInfraestructura ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/categoria-equipos-asignacion')}
+                          className="underline font-medium"
+                        >
+                          Crear categorías
+                        </button>
+                      ) : 'Solicitá a Infraestructura que configure una categoría.'}
                     </p>
                   ) : (
                     <select
@@ -598,7 +609,7 @@ export default function SolicitudAsignacionDetailPage() {
                 >
                   Asignar equipo
                 </button>
-                {solicitud.estado === 'pendiente_infra' && !solicitud.compra_pendiente && (
+                {hasInfraestructura && solicitud.estado === 'pendiente_infra' && !compraPendiente && (
                   <button
                     className="btn-secondary"
                     onClick={() => ejecutar(() => solicitudesAsignacionAPI.solicitarCompra(id, {
@@ -612,7 +623,7 @@ export default function SolicitudAsignacionDetailPage() {
               </>
               )}
 
-              {solicitud.estado === 'pendiente_infra' && (
+              {hasInfraestructura && solicitud.estado === 'pendiente_infra' && (
                 <div className="mt-6 pt-4 border-t border-surface-100">
                   {!solicitud.inventario_asignado_id && !solicitud.compra_pendiente && (
                     <p className="text-sm text-surface-500 mb-3">
@@ -629,6 +640,16 @@ export default function SolicitudAsignacionDetailPage() {
                   </button>
                 </div>
               )}
+            </section>
+          )}
+
+          {solicitud.equipo_asignado_por_compras && !solicitud.remito_id && !esTerminal && (
+            <section className="card-base p-6 border-l-4 border-l-orange-500">
+              <h2 className="font-bold text-surface-900 mb-2">Equipo asignado por Compras</h2>
+              <p className="text-sm text-surface-600">
+                El equipo quedó reservado y la solicitud está fija. El borrador de remito se generará automáticamente
+                cuando estén completas las aprobaciones de Infraestructura y RRHH.
+              </p>
             </section>
           )}
 
@@ -652,7 +673,8 @@ export default function SolicitudAsignacionDetailPage() {
           )}
 
           {/* Acción: Generar remito (aprobada + Infra + equipo ya asignado) */}
-          {hasInfraestructura && solicitud.estado === 'aprobada' && solicitud.inventario_asignado_id && (
+          {hasInfraestructura && solicitud.estado === 'aprobada' && solicitud.inventario_asignado_id &&
+            !solicitud.equipo_asignado_por_compras && (
             <section className="card-base p-6 border-l-4 border-l-teal-500">
               <h2 className="font-bold text-surface-900 mb-2">Generar remito de entrega</h2>
               <p className="text-sm text-surface-500 mb-4">
