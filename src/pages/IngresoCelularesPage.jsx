@@ -66,11 +66,21 @@ const schema = yup.object().shape({
   observaciones: yup.string().nullable().notRequired(),
 })
 
+const tipoDesdeArticulo = (nombre) => {
+  const n = (nombre || '').toLowerCase()
+  if (n.includes('cel')) return 'celular'
+  if (n.includes('notebook')) return 'notebook'
+  if (n === 'pc') return 'pc_escritorio'
+  return 'celular'
+}
+
 export default function IngresoCelularesPage() {
   const navigate = useNavigate()
-  const { tipo: tipoParam } = useParams()
-  // La ruta legacy /solicitudes-compra/ingreso-celular no pasa param -> celular.
-  const tipo = TIPO_CONFIG[tipoParam] ? tipoParam : 'celular'
+  const { tipo: tipoParam, id } = useParams()
+  const isEdit = !!id
+  // En alta: el tipo viene por la ruta (/ingreso/:tipo) o celular por defecto.
+  // En edición: se determina desde el equipo cargado.
+  const [tipo, setTipo] = useState(TIPO_CONFIG[tipoParam] ? tipoParam : 'celular')
   const config = TIPO_CONFIG[tipo]
   const Icon = config.icon
 
@@ -116,6 +126,31 @@ export default function IngresoCelularesPage() {
       .catch(() => setCategorias([]))
   }, [canAccess, tipo])
 
+  // Modo edición: cargar el equipo existente y prellenar el formulario.
+  useEffect(() => {
+    if (!canAccess || !id) return
+    setLoading(true)
+    inventarioAPI.getById(id)
+      .then(res => {
+        const item = res?.data || res
+        setTipo(tipoDesdeArticulo(item.tipoArticulo?.nombre))
+        setTipoArticuloId(item.tipo_articulo_id || null)
+        setCategoriaId(item.categoria_id || '')
+        setSedeId(item.sede_id || '')
+        reset({
+          marca: item.marca || '',
+          modelo: item.modelo || '',
+          numero_serie: item.numero_serie || '',
+          imei: item.imei || '',
+          fecha_adquisicion: item.fecha_adquisicion ? item.fecha_adquisicion.split('T')[0] : '',
+          valor_adquisicion: item.valor_adquisicion ?? '',
+          observaciones: item.observaciones || ''
+        })
+      })
+      .catch(err => Swal.fire('Error', err?.response?.data?.message || err?.message || 'No se pudo cargar el equipo', 'error'))
+      .finally(() => setLoading(false))
+  }, [canAccess, id, reset])
+
   if (!canAccess) {
     return (
       <div className="page-shell">
@@ -141,28 +176,37 @@ export default function IngresoCelularesPage() {
       observaciones: data.observaciones || null,
       categoria_id: categoriaId || null,
       sede_id: sedeId || null,
-      estado: 'disponible',
     }
 
     setLoading(true)
     try {
-      await inventarioAPI.create(payload)
-      await Swal.fire({
-        icon: 'success',
-        title: 'Equipo ingresado',
-        text: `${data.marca} ${data.modelo} fue agregado al stock correctamente.`,
-        confirmButtonText: 'Ingresar otro',
-        showCancelButton: true,
-        cancelButtonText: 'Ver stock',
-      }).then(result => {
-        if (result.isConfirmed) {
-          reset()
-          setCategoriaId('')
-          setSedeId('')
-        } else {
-          navigate('/solicitudes-compra/stock')
-        }
-      })
+      if (isEdit) {
+        await inventarioAPI.update(id, payload)
+        await Swal.fire({
+          icon: 'success',
+          title: 'Equipo actualizado',
+          text: `${data.marca} ${data.modelo} se actualizó correctamente.`,
+        })
+        navigate('/solicitudes-compra/stock')
+      } else {
+        await inventarioAPI.create({ ...payload, estado: 'disponible' })
+        await Swal.fire({
+          icon: 'success',
+          title: 'Equipo ingresado',
+          text: `${data.marca} ${data.modelo} fue agregado al stock correctamente.`,
+          confirmButtonText: 'Ingresar otro',
+          showCancelButton: true,
+          cancelButtonText: 'Ver stock',
+        }).then(result => {
+          if (result.isConfirmed) {
+            reset()
+            setCategoriaId('')
+            setSedeId('')
+          } else {
+            navigate('/solicitudes-compra/stock')
+          }
+        })
+      }
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || 'Error al guardar el equipo'
       Swal.fire('Error', msg, 'error')
@@ -191,9 +235,9 @@ export default function IngresoCelularesPage() {
           <div>
             <h1 className="page-title flex items-center gap-2">
               <Icon className="w-5 h-5 text-primary-600" />
-              {config.titulo}
+              {isEdit ? `Editar ${config.singular}` : config.titulo}
             </h1>
-            <p className="page-description">{config.descripcion}</p>
+            <p className="page-description">{isEdit ? 'Modificá los datos del equipo en el stock' : config.descripcion}</p>
           </div>
         </div>
       </div>
@@ -332,7 +376,7 @@ export default function IngresoCelularesPage() {
             className="btn-accent"
           >
             <Icon className="w-4 h-4" />
-            Registrar {config.singular}
+            {isEdit ? 'Guardar cambios' : `Registrar ${config.singular}`}
           </button>
         </div>
       </form>

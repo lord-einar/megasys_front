@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { Laptop, Smartphone, Monitor, Search, ArrowLeft, User as UserIcon, Building2, History, Plus } from 'lucide-react'
+import { Laptop, Smartphone, Monitor, Search, ArrowLeft, User as UserIcon, Building2, History, Plus, Pencil } from 'lucide-react'
 
 const TIPO_LABELS = {
   notebook: 'Notebooks',
@@ -38,6 +38,7 @@ export default function StockEquiposPage() {
   const [error, setError] = useState(null)
 
   const canView = canViewSolicitudesCompra || canViewSolicitudesAsignacion
+  const canEdit = hasCompras || hasInfraestructura
 
   useEffect(() => {
     if (!canView) return
@@ -229,6 +230,9 @@ export default function StockEquiposPage() {
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Sede</th>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Categoría</th>
                   <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider">Motivo / Asignación</th>
+                  {canEdit && (
+                    <th className="px-4 py-3 text-xs font-bold text-surface-400 uppercase tracking-wider text-right">Acciones</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-100">
@@ -240,6 +244,8 @@ export default function StockEquiposPage() {
                     onClickPersonal={(pid) => navigate(hasLegacyAccess ? `/personal/${pid}` : `/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
                     onClickSede={(sid) => navigate(hasLegacyAccess ? `/sedes/${sid}` : `/solicitudes-asignacion/historial-equipos/sede/${sid}`)}
                     onHistorial={(pid) => navigate(`/solicitudes-asignacion/historial-equipos/personal/${pid}`)}
+                    canEdit={canEdit}
+                    onEditar={(iid) => navigate(`/solicitudes-compra/equipo/${iid}/editar`)}
                   />
                 ))}
               </tbody>
@@ -284,7 +290,7 @@ function SummaryCard({ label, value, tone, onClick, active }) {
   )
 }
 
-function FilaEquipo({ item, mostrarImei, onClickPersonal, onClickSede, onHistorial }) {
+function FilaEquipo({ item, mostrarImei, onClickPersonal, onClickSede, onHistorial, canEdit, onEditar }) {
   const estado = ESTADO_LABELS[item.estado] || { label: item.estado, cls: 'bg-surface-50 text-surface-600 border-surface-200' }
   return (
     <tr className="hover:bg-surface-50/60 transition-colors">
@@ -361,6 +367,18 @@ function FilaEquipo({ item, mostrarImei, onClickPersonal, onClickSede, onHistori
           <span className="text-surface-400 italic">—</span>
         )}
       </td>
+      {canEdit && (
+        <td className="px-4 py-3 text-right">
+          <button
+            onClick={() => onEditar(item.id)}
+            title="Editar equipo"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-surface-500 hover:text-primary-600 border border-surface-200 hover:border-primary-300 rounded-lg px-2.5 py-1.5 transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Editar
+          </button>
+        </td>
+      )}
     </tr>
   )
 }

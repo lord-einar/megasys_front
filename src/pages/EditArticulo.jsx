@@ -24,6 +24,11 @@ const articuloSchema = yup.object().shape({
     .min(2, 'El modelo debe tener al menos 2 caracteres'),
   numero_serie: yup.string().nullable().notRequired(),
   service_tag: yup.string().nullable().notRequired(),
+  imei: yup
+    .string()
+    .nullable()
+    .notRequired()
+    .matches(/^\d{15}$/, { message: 'El IMEI debe tener exactamente 15 dígitos', excludeEmptyString: true }),
   sede_id: yup.string().required('La sede es requerida'),
   fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
   observaciones: yup.string().nullable().notRequired(),
@@ -71,6 +76,7 @@ export default function EditArticulo() {
       modelo: '',
       numero_serie: '',
       service_tag: '',
+      imei: '',
       sede_id: '',
       fecha_adquisicion: null,
       valor_adquisicion: '',
@@ -153,6 +159,7 @@ export default function EditArticulo() {
           modelo: item.modelo || '',
           numero_serie: item.numero_serie || '',
           service_tag: item.service_tag || '',
+          imei: item.imei || '',
           sede_id: item.sede_id || '',
           // Handle date correctly for input type="date"
           fecha_adquisicion: item.fecha_adquisicion ? item.fecha_adquisicion.split('T')[0] : null,
@@ -201,6 +208,8 @@ export default function EditArticulo() {
       // Limpiar campos vacíos
       if (!dataToSend.numero_serie?.trim()) delete dataToSend.numero_serie
       if (!dataToSend.service_tag?.trim()) delete dataToSend.service_tag
+      // IMEI: enviar null si se vació (para poder limpiarlo), string si tiene valor
+      if (!dataToSend.imei?.trim()) dataToSend.imei = null
       if (!dataToSend.fecha_adquisicion) delete dataToSend.fecha_adquisicion
       if (!dataToSend.observaciones?.trim()) delete dataToSend.observaciones
       if (!dataToSend.observaciones?.trim()) delete dataToSend.observaciones
@@ -624,6 +633,29 @@ export default function EditArticulo() {
                     className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all hover:border-surface-300"
                   />
                 </div>
+
+                {/* IMEI (solo celulares) */}
+                {(() => {
+                  const tipoId = watch('tipo_articulo_id')
+                  const nombreTipo = tiposArticulo.find(t => t.id === tipoId)?.nombre?.toLowerCase() || ''
+                  if (!nombreTipo.includes('cel')) return null
+                  return (
+                    <div className="space-y-1.5">
+                      <label htmlFor="imei" className="block text-sm font-semibold text-surface-700">
+                        IMEI
+                      </label>
+                      <input
+                        type="text"
+                        id="imei"
+                        maxLength={15}
+                        {...register('imei')}
+                        placeholder="15 dígitos"
+                        className={`w-full px-4 py-2.5 bg-surface-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all hover:border-surface-300 ${errors.imei ? 'border-rose-300' : 'border-surface-200'}`}
+                      />
+                      {errors.imei && <p className="text-xs text-rose-500">{errors.imei.message}</p>}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 
