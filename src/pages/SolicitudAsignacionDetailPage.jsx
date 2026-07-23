@@ -42,9 +42,6 @@ export default function SolicitudAsignacionDetailPage() {
   // Sección RRHH
   const [rrhhObs, setRrhhObs] = useState('')
 
-  // Sección cierre
-  const [cierreObs, setCierreObs] = useState('')
-
   // Generar remito
   const [tecnicoId, setTecnicoId] = useState('')
   const [soporte, setSoporte] = useState([])
@@ -88,20 +85,20 @@ export default function SolicitudAsignacionDetailPage() {
       .catch(() => setSoporte([]))
   }, [solicitud?.id, solicitud?.estado])
 
-  // Cargar categorías cuando la solicitud entra en pendiente_infra
+  // Cargar categorías cuando Infra revisa o Compras resuelve una compra pendiente
   useEffect(() => {
-    if (!solicitud || !hasInfraestructura) return
+    if (!solicitud || (!hasInfraestructura && !hasCompras)) return
     if (solicitud.inventario_asignado_id) return
-    if (solicitud.estado !== 'pendiente_infra' && !solicitud.compra_pendiente) return
+    if (solicitud.estado !== 'pendiente_infra' && !(hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente)) return
     categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
       .then(res => setCategorias(normalizeApiResponse(res, 200).data))
       .catch(() => setCategorias([]))
-  }, [solicitud?.id, solicitud?.estado])
+  }, [solicitud?.id, solicitud?.estado, hasInfraestructura, hasCompras])
 
   // Recargar inventario disponible cada vez que cambia la categoría seleccionada
   useEffect(() => {
     if (!solicitud || solicitud.inventario_asignado_id) return
-    if (solicitud.estado !== 'pendiente_infra' && !solicitud.compra_pendiente) return
+    if (solicitud.estado !== 'pendiente_infra' && !(hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente)) return
     if (!asignacion.categoria_id) { setInventarioDisponible([]); return }
     solicitudesAsignacionAPI.lookupInventarioDisponible({
       tipo_equipo: solicitud.tipo_equipo,
@@ -117,7 +114,7 @@ export default function SolicitudAsignacionDetailPage() {
         }))
       })
       .catch(() => setInventarioDisponible([]))
-  }, [asignacion.categoria_id, solicitud?.id])
+  }, [asignacion.categoria_id, solicitud?.id, hasCompras])
 
   const ejecutar = async (fn) => {
     try {
@@ -186,6 +183,7 @@ export default function SolicitudAsignacionDetailPage() {
 
   const esReposicion = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura'].includes(solicitud.motivo)
   const esTerminal = ['finalizada', 'rechazada', 'cancelada'].includes(solicitud.estado)
+  const solicitudFija = !!solicitud.inventario_asignado_id || !!solicitud.remito_id || solicitud.estado === 'remito_generado'
 
   return (
     <div className="p-6 sm:p-8 bg-surface-50 min-h-screen animate-fade-in">
@@ -210,7 +208,7 @@ export default function SolicitudAsignacionDetailPage() {
               </span>
             )}
           </div>
-          {!esTerminal && (hasInfraestructura || hasRRHH || hasCompras) && !editando && (
+          {!esTerminal && !solicitudFija && (hasInfraestructura || hasRRHH || hasCompras) && !editando && (
             <button
               onClick={abrirEdicion}
               className="text-xs font-medium text-surface-500 hover:text-primary-600 border border-surface-200 hover:border-primary-300 rounded-lg px-3 py-1.5 transition-colors"
@@ -467,17 +465,20 @@ export default function SolicitudAsignacionDetailPage() {
           </section>
 
           {/* Acción: Revisión de Infraestructura (asignar equipo / solicitar compra / aprobar) */}
-          {hasInfraestructura && !esTerminal && solicitud.estado !== 'remito_generado' &&
-            (solicitud.estado === 'pendiente_infra' || (solicitud.compra_pendiente && !solicitud.inventario_asignado_id)) && !editando && (
+          {((hasInfraestructura && !esTerminal && solicitud.estado !== 'remito_generado' &&
+            (solicitud.estado === 'pendiente_infra' || (solicitud.compra_pendiente && !solicitud.inventario_asignado_id))) ||
+            (hasCompras && solicitud.estado === 'aprobada' && solicitud.compra_pendiente && !solicitud.inventario_asignado_id)) && !editando && (
             <section className="card-base p-6 border-l-4 border-l-sky-500">
               <h2 className="font-bold text-surface-900 mb-1">
-                {solicitud.estado === 'pendiente_infra' ? 'Revisión de Infraestructura' : 'Asignar equipo'}
+                {hasCompras && !hasInfraestructura && solicitud.estado === 'aprobada' ? 'Asignar equipo comprado' : solicitud.estado === 'pendiente_infra' ? 'Revisión de Infraestructura' : 'Asignar equipo'}
               </h2>
 
               {solicitud.compra_pendiente && !solicitud.inventario_asignado_id && (
                 <div className="mb-4 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-sm text-orange-700">
                   Compra del equipo pendiente.{' '}
-                  {solicitud.estado === 'pendiente_infra'
+                  {hasCompras && !hasInfraestructura && solicitud.estado === 'aprobada'
+                    ? 'Al asignar el equipo se generará un borrador de remito para que Infraestructura lo complete.'
+                    : solicitud.estado === 'pendiente_infra'
                     ? 'Podés aprobar por Infra igual; cuando entre el stock se asignará el equipo.'
                     : 'La aprobación sigue su curso; cuando entre el stock, seleccioná la categoría y el equipo para asignarlo.'}
                 </div>
@@ -690,13 +691,13 @@ export default function SolicitudAsignacionDetailPage() {
             </section>
           )}
 
-          {/* Acción: Finalizar (remito_generado + Infra o RRHH) */}
-          {solicitud.estado === 'remito_generado' && (hasInfraestructura || hasRRHH) && (
+          {/* Estado fijo: remito generado */}
+          {solicitud.estado === 'remito_generado' && (
             <section className="card-base p-6 border-l-4 border-l-emerald-500">
-              <h2 className="font-bold text-surface-900 mb-4">Finalizar solicitud</h2>
+              <h2 className="font-bold text-surface-900 mb-4">Solicitud fijada</h2>
               {solicitud.remito_id && (
                 <p className="text-sm text-surface-600 mb-3">
-                  Remito:{' '}
+                  El remito ya fue generado. La evolución posterior se gestiona desde Remitos:{' '}
                   <button
                     onClick={() => navigate(`/remitos/${solicitud.remito_id}`)}
                     className="text-primary-700 hover:underline font-medium"
@@ -705,18 +706,6 @@ export default function SolicitudAsignacionDetailPage() {
                   </button>
                 </p>
               )}
-              <input
-                value={cierreObs}
-                onChange={e => setCierreObs(e.target.value)}
-                className="input-base mb-4"
-                placeholder="Observación de cierre (opcional)"
-              />
-              <button
-                className="btn-primary"
-                onClick={() => ejecutar(() => solicitudesAsignacionAPI.finalizar(id, { observacion: cierreObs }))}
-              >
-                Finalizar
-              </button>
             </section>
           )}
 
@@ -744,7 +733,7 @@ export default function SolicitudAsignacionDetailPage() {
           )}
 
           {/* Acción: Cancelar */}
-          {!esTerminal && (hasInfraestructura || hasRRHH || hasCompras) && (
+          {!esTerminal && !solicitud.remito_id && (hasInfraestructura || hasRRHH || hasCompras) && (
             <section className="card-base p-6">
               <h2 className="font-bold text-surface-900 mb-4">Cancelar solicitud</h2>
               <p className="text-sm text-surface-500 mb-3">
