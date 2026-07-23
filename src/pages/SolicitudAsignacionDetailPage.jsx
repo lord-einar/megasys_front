@@ -553,7 +553,6 @@ export default function SolicitudAsignacionDetailPage() {
                         <option key={inv.id} value={inv.id}>
                           {inv.marca} {inv.modelo}
                           {identificadorEquipo(inv, solicitud.tipo_equipo)}
-                          {inv.sedePrincipal?.nombre_sede ? ` · ${inv.sedePrincipal.nombre_sede}` : ''}
                         </option>
                       ))}
                     </select>
