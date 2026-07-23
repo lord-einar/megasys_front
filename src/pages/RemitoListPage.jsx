@@ -51,6 +51,8 @@ function RemitoListPage() {
     switch (estado) {
       case 'borrador':
         return `${baseClass} bg-amber-50 text-amber-700 border-amber-100`
+      case 'preparado':
+        return `${baseClass} bg-yellow-50 text-yellow-700 border-yellow-100`
       case 'en_transito':
         return `${baseClass} bg-blue-50 text-blue-700 border-blue-100`
       case 'entregado':
@@ -59,6 +61,8 @@ function RemitoListPage() {
         return `${baseClass} bg-orange-50 text-orange-700 border-orange-100`
       case 'devuelto':
         return `${baseClass} bg-violet-50 text-violet-700 border-violet-100`
+      case 'completado':
+        return `${baseClass} bg-purple-50 text-purple-700 border-purple-100`
       case 'cancelado':
         return `${baseClass} bg-rose-50 text-rose-700 border-rose-100`
       default:
@@ -69,8 +73,10 @@ function RemitoListPage() {
   const getEstadoLabel = (estado) => {
     const labels = {
       borrador: 'Borrador',
+      preparado: 'Preparado',
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
+      completado: 'Completado',
       devuelto_parcial: 'Devuelto Parcial',
       devuelto: 'Devuelto',
       cancelado: 'Cancelado'
@@ -127,8 +133,10 @@ function RemitoListPage() {
               >
                 <option value="">Todos los estados</option>
                 <option value="borrador">Borrador</option>
+                <option value="preparado">Preparado</option>
                 <option value="en_transito">En Tránsito</option>
                 <option value="entregado">Entregado</option>
+                <option value="completado">Completado</option>
                 <option value="devuelto_parcial">Devuelto Parcial</option>
                 <option value="devuelto">Devuelto</option>
                 <option value="cancelado">Cancelado</option>

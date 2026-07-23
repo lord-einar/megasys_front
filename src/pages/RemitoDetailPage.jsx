@@ -161,6 +161,8 @@ function RemitoDetailPage() {
   const getEstadoBadgeClass = (estado) => {
     const baseClass = 'px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 w-fit'
     switch (estado) {
+      case 'borrador':
+        return `${baseClass} bg-amber-50 text-amber-700 border-amber-100`
       case 'preparado':
         return `${baseClass} bg-amber-50 text-amber-700 border-amber-100`
       case 'en_transito':
@@ -182,6 +184,7 @@ function RemitoDetailPage() {
 
   const getEstadoLabel = (estado) => {
     const labels = {
+      borrador: 'Borrador',
       preparado: 'Preparado',
       en_transito: 'En Tránsito',
       entregado: 'Entregado',
@@ -199,6 +202,7 @@ function RemitoDetailPage() {
     // desde el selector de estados. Se usa el modal de procesamiento de devolución.
     const tienePrestamos = remito.es_prestamo || remito.detalles?.some(d => d.es_prestamo)
     const transiciones = {
+      'borrador': ['preparado', 'cancelado'],
       'preparado': ['en_transito', 'cancelado'],
       'en_transito': ['entregado', 'cancelado'],
       'entregado': tienePrestamos
@@ -601,7 +605,7 @@ function RemitoDetailPage() {
               </button>
             )}
             {/* Acciones Globales */}
-            {remito && remito.estado !== 'preparado' && remito.estado !== 'completado' && canUpdate('remitos') && (
+            {remito && !['borrador', 'preparado', 'completado'].includes(remito.estado) && canUpdate('remitos') && (
               <button
                 onClick={handleReenviarEmails}
                 disabled={reenviandoEmails}
@@ -790,9 +794,14 @@ function RemitoDetailPage() {
               <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
                 Remito {remito.numero_remito}
               </h1>
-              <span className={getEstadoBadgeClass(remito.estado)}>
-                {getEstadoLabel(remito.estado)}
+            <span className={getEstadoBadgeClass(remito.estado)}>
+              {getEstadoLabel(remito.estado)}
+            </span>
+            {remito.generado_desde_solicitud_asignacion && (
+              <span className="px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 w-fit bg-sky-50 text-sky-700 border-sky-100">
+                Solicitud de asignación
               </span>
+            )}
             </div>
             <p className="text-surface-500 font-medium flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
