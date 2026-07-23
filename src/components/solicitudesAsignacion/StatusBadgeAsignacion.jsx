@@ -8,6 +8,10 @@ const ESTADO_CONFIG = {
     label: 'Pendiente RRHH',
     classes: 'bg-blue-50 text-blue-700 border-blue-200'
   },
+  pendiente_compra: {
+    label: 'Compra pendiente',
+    classes: 'bg-orange-50 text-orange-700 border-orange-200'
+  },
   aprobada: {
     label: 'Aprobada',
     classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'

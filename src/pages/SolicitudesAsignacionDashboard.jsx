@@ -200,20 +200,21 @@ const PASOS = [
   },
   {
     num: 2,
-    titulo: 'Infra asigna el equipo',
-    quien: 'Infraestructura',
+    titulo: 'Infra revisa y Compras puede asignar',
+    quien: 'Infraestructura / Compras',
     color: 'violet',
     icon: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
-    descripcion: 'Infraestructura revisa la solicitud y selecciona un equipo disponible del depósito según la categoría.',
+    descripcion: 'Infraestructura revisa la solicitud. Compras puede asignar celulares mientras estén pendientes las aprobaciones de Infra o RRHH.',
     detalle: [
       'Ingresá al detalle de la solicitud',
       'En la sección "Asignar equipo", seleccioná primero la categoría del equipo (ej: Gerente, Ejecutivo)',
       'Al elegir la categoría, se cargan automáticamente los equipos disponibles de esa categoría en el depósito',
       'Seleccioná el equipo específico (marca, modelo, número de serie)',
       'Si es una reposición, indicá qué hacer con el equipo anterior (mantenimiento o baja)',
-      'Confirmá la asignación → la solicitud pasa a "Pendiente RRHH"',
+      'Infra debe aprobar explícitamente para que la solicitud pase a "Pendiente RRHH"',
+      'Compras solo puede asignar celulares; el equipo queda reservado pero todavía no se genera el borrador de remito',
     ],
-    tip: 'Solo aparecen equipos del depósito (stock nuevo). Los equipos que ya fueron asignados previamente no se muestran.',
+    tip: 'El borrador de remito requiere equipo asignado y las aprobaciones de Infra y RRHH.',
     estado: 'pendiente_rrhh'
   },
   {
@@ -236,39 +237,21 @@ const PASOS = [
   },
   {
     num: 4,
-    titulo: 'Infra genera el remito',
+    titulo: 'Se habilita el remito',
     quien: 'Infraestructura',
     color: 'teal',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    descripcion: 'Con la solicitud aprobada, Infra prepara el equipo y genera el remito de entrega asignando un técnico.',
+    descripcion: 'Con el equipo y las dos aprobaciones completas se habilita el remito. Si asignó Compras, se crea como borrador para que Infra lo complete.',
     detalle: [
-      'Ingresá al detalle de la solicitud aprobada',
-      'Seleccioná el técnico de soporte que realizará la entrega física',
-      'Hacé click en "Generar remito" → se crea el remito automáticamente',
+      'Si el equipo fue asignado por Compras, el borrador se genera automáticamente al completar la última condición',
+      'Infra ingresa al borrador, completa el técnico y los datos de entrega',
+      'Si el equipo fue asignado por Infra, Infra genera el remito desde la solicitud aprobada',
       'El remito incluye: beneficiario como solicitante, técnico asignado, sede origen y destino',
       'El número de remito REM-XXXX queda vinculado a la solicitud',
       'Podés ver el remito completo haciendo click en "Ver remito" desde el detalle de la solicitud',
     ],
-    tip: 'El remito queda en estado "Preparado". Desde el módulo de Remitos podés avanzar el estado a En tránsito → Entregado → Completado.',
+    tip: 'La solicitud queda fija al vincular el remito; los estados posteriores del remito no modifican la solicitud.',
     estado: 'remito_generado'
-  },
-  {
-    num: 5,
-    titulo: 'Finalizar la solicitud',
-    quien: 'Infraestructura o RRHH',
-    color: 'emerald',
-    icon: 'M5 13l4 4L19 7',
-    descripcion: 'Una vez entregado el equipo, se cierra la solicitud formalmente. Queda registrada en el historial del beneficiario.',
-    detalle: [
-      'Una vez que el equipo fue entregado físicamente al beneficiario, ingresá al detalle de la solicitud',
-      'Hacé click en "Finalizar" y podés agregar una observación de cierre',
-      'La solicitud pasa a estado "Finalizada" — estado terminal',
-      'El equipo queda registrado como "En uso" en el inventario a nombre del beneficiario',
-      'El historial del beneficiario queda actualizado: desde Stock de equipos podés ver quién tiene qué equipo y desde cuándo',
-      'Si el beneficiario tiene más de 3 equipos del mismo tipo en su historial, el sistema genera una alerta',
-    ],
-    tip: 'Podés acceder al historial de equipos de cualquier persona desde Stock de equipos → ícono de reloj junto al nombre.',
-    estado: 'finalizada'
   }
 ]
 
