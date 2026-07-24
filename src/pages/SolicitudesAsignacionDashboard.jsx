@@ -15,7 +15,9 @@ const ESTADOS_TARJETA = [
   'rechazada'
 ]
 
-const ESTADOS_PENDIENTES = ['pendiente_infra', 'pendiente_rrhh', 'aprobada', 'remito_generado']
+// remito_generado es el estado final de la solicitud: ya no requiere acción.
+const ESTADOS_PENDIENTES = ['pendiente_infra', 'pendiente_rrhh', 'aprobada']
+const ESTADOS_COMPLETADAS = ['remito_generado', 'finalizada']
 
 export default function SolicitudesAsignacionDashboard() {
   const navigate = useNavigate()
@@ -37,8 +39,8 @@ export default function SolicitudesAsignacionDashboard() {
     return acc
   }, {})
 
-  const totalActivas = solicitudes.filter(s => !['finalizada', 'rechazada', 'cancelada'].includes(s.estado)).length
-  const totalFinalizadas = solicitudes.filter(s => s.estado === 'finalizada').length
+  const totalActivas = solicitudes.filter(s => !['remito_generado', 'finalizada', 'rechazada', 'cancelada'].includes(s.estado)).length
+  const totalFinalizadas = solicitudes.filter(s => ESTADOS_COMPLETADAS.includes(s.estado)).length
   const totalRechazadas = solicitudes.filter(s => s.estado === 'rechazada').length
 
   const pendientes = solicitudes.filter(s => ESTADOS_PENDIENTES.includes(s.estado)).slice(0, 8)
@@ -85,9 +87,9 @@ export default function SolicitudesAsignacionDashboard() {
           iconPath="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <SummaryCard
-          title="Finalizadas"
+          title="Completadas"
           value={totalFinalizadas}
-          subtitle="Equipos entregados y asignados"
+          subtitle="Con remito generado"
           accent="emerald"
           iconPath="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
         />
