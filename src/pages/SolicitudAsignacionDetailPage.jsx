@@ -186,7 +186,8 @@ export default function SolicitudAsignacionDetailPage() {
   if (!solicitud) return <div className="p-8 bg-surface-50 min-h-screen text-rose-600">{error || 'Solicitud no encontrada'}</div>
 
   const esReposicion = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura'].includes(solicitud.motivo)
-  const esTerminal = ['finalizada', 'rechazada', 'cancelada'].includes(solicitud.estado)
+  // remito_generado es estado final de la solicitud (se gestiona desde Remitos).
+  const esTerminal = ['remito_generado', 'finalizada', 'rechazada', 'cancelada'].includes(solicitud.estado)
   const solicitudFija = !!solicitud.inventario_asignado_id || !!solicitud.remito_id || solicitud.estado === 'remito_generado'
 
   return (
