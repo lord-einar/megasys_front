@@ -1,6 +1,6 @@
 // Espejo (solo UI) de megasys_back/src/modules/solicitudesAsignacion/services/solicitudAsignacionPolicy.js
 // La autoridad es el backend; mantener ambos en sync ante cambios de reglas.
-const ESTADOS_ASIGNABLES_COMPRAS = ['pendiente_infra', 'pendiente_rrhh', 'pendiente_compra'];
+const ESTADOS_ASIGNABLES_COMPRAS = ['pendiente_infra', 'pendiente_rrhh', 'pendiente_compra', 'aprobada'];
 
 export const esCompraPendiente = (solicitud) =>
   solicitud?.compra_pendiente === true || solicitud?.estado === 'pendiente_compra';
