@@ -639,7 +639,8 @@ function RemitoDetailPage() {
                 <select value={editForm.tecnico_asignado_id} onChange={e => setEditForm(p => ({ ...p, tecnico_asignado_id: e.target.value }))} className="input-base">
                   <option value="">— Sin técnico —</option>
                   {personal
-                    .filter(p => ROLES_TECNICO.includes(p.privilegio_app))
+                    .filter(p => ROLES_TECNICO.includes(p.privilegio_app) ||
+                      (remito.generado_desde_solicitud_asignacion && p.privilegio_app === 'compras'))
                     .map(p => <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>)}
                 </select>
               </label>
