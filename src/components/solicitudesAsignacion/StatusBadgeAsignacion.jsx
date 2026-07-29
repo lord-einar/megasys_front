@@ -17,11 +17,11 @@ const ESTADO_CONFIG = {
     classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
   },
   remito_generado: {
-    label: 'Remito generado',
+    label: 'Remito generado · pend. entrega',
     classes: 'bg-teal-50 text-teal-700 border-teal-200'
   },
   finalizada: {
-    label: 'Finalizada',
+    label: 'Equipo entregado',
     classes: 'bg-green-50 text-green-700 border-green-200'
   },
   rechazada: {
