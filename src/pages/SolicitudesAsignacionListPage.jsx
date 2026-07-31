@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { solicitudesAsignacionAPI } from '../services/api'
 import { useListData } from '../hooks/useListData'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
+import ListPagination from '../components/ListPagination'
+import { pendienteDeEntrega } from '../utils/solicitudAsignacionPolicy'
 import { FileText, Plus, RefreshCw } from 'lucide-react'
 
 const TIPO_EQUIPO_LABEL = {
@@ -16,8 +18,21 @@ export default function SolicitudesAsignacionListPage() {
   const [estado, setEstado] = useState('')
   const [tipoEquipo, setTipoEquipo] = useState('')
   const [motivo, setMotivo] = useState('')
-  const { data, loading, error, updateFilters, reload } = useListData(solicitudesAsignacionAPI.list, {
-    initialLimit: 20,
+  const {
+    data,
+    loading,
+    error,
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage,
+    reload
+  } = useListData(solicitudesAsignacionAPI.list, {
+    initialLimit: 15,
     initialFilters: {}
   })
 
@@ -97,7 +112,9 @@ export default function SolicitudesAsignacionListPage() {
         <div className="px-4 sm:px-6 py-4 border-b border-surface-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
             <h2 className="font-bold text-surface-900">Solicitudes</h2>
-            <p className="text-xs text-surface-500 mt-0.5">{data.length} registros visibles</p>
+            <p className="text-xs text-surface-500 mt-0.5">
+              {totalRecords} {totalRecords === 1 ? 'registro' : 'registros'}
+            </p>
           </div>
           <button onClick={reload} className="btn-secondary text-xs py-2">
             <RefreshCw className="w-4 h-4" />
@@ -140,6 +157,11 @@ export default function SolicitudesAsignacionListPage() {
                     Compra pendiente
                   </span>
                 )}
+                {pendienteDeEntrega(s) && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200">
+                    Pendiente de entrega
+                  </span>
+                )}
                 <span className="text-xs text-surface-400">
                   {s.created_at ? new Date(s.created_at).toLocaleDateString('es-AR') : ''}
                 </span>
@@ -148,6 +170,17 @@ export default function SolicitudesAsignacionListPage() {
             </button>
           ))}
         </div>
+        {!loading && (
+          <ListPagination
+            page={page}
+            limit={limit}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            goToPage={goToPage}
+            previousPage={previousPage}
+            nextPage={nextPage}
+          />
+        )}
       </div>
     </div>
   )

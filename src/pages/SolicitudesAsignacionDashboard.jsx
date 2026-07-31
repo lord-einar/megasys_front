@@ -4,6 +4,7 @@ import { solicitudesAsignacionAPI } from '../services/api'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import { usePermissions } from '../hooks/usePermissions'
+import { pendienteDeEntrega } from '../utils/solicitudAsignacionPolicy'
 import { Plus, Laptop, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
 
 const ESTADOS_TARJETA = [
@@ -17,6 +18,10 @@ const ESTADOS_TARJETA = [
 
 // remito_generado sigue requiriendo acción: marcar "Equipo entregado".
 const ESTADOS_PENDIENTES = ['pendiente_infra', 'pendiente_rrhh', 'aprobada', 'remito_generado']
+
+// Entregada pero sin remito: queda pendiente hacer el remito de respaldo.
+const requiereAccion = (s) =>
+  ESTADOS_PENDIENTES.includes(s.estado) || (s.estado === 'finalizada' && !s.remito_id)
 
 export default function SolicitudesAsignacionDashboard() {
   const navigate = useNavigate()
@@ -42,7 +47,7 @@ export default function SolicitudesAsignacionDashboard() {
   const totalFinalizadas = solicitudes.filter(s => s.estado === 'finalizada').length
   const totalRechazadas = solicitudes.filter(s => s.estado === 'rechazada').length
 
-  const pendientes = solicitudes.filter(s => ESTADOS_PENDIENTES.includes(s.estado)).slice(0, 8)
+  const pendientes = solicitudes.filter(requiereAccion).slice(0, 8)
 
   return (
     <div className="page-shell">
@@ -164,7 +169,14 @@ export default function SolicitudesAsignacionDashboard() {
                     <span className="capitalize">{(s.motivo || '').replaceAll('_', ' ')}</span>
                   </p>
                 </div>
-                <StatusBadgeAsignacion estado={s.estado} />
+                <div className="flex items-center gap-2 shrink-0">
+                  {pendienteDeEntrega(s) && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200">
+                      Pendiente de entrega
+                    </span>
+                  )}
+                  <StatusBadgeAsignacion estado={s.estado} />
+                </div>
               </button>
             ))}
           </div>
@@ -238,20 +250,36 @@ const PASOS = [
   },
   {
     num: 4,
-    titulo: 'Se habilita el remito',
+    titulo: 'Entregar el equipo',
+    quien: 'Infraestructura / RRHH / Compras',
+    color: 'emerald',
+    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+    descripcion: 'Con la solicitud aprobada y el equipo asignado, la solicitud queda "Pendiente de entrega" y se habilita el botón "Equipo entregado".',
+    detalle: [
+      'En el listado, la solicitud muestra el flag "Pendiente de entrega"',
+      'Ingresá al detalle: en la sección "Entregar equipo" está el botón "Equipo entregado"',
+      'Marcá la entrega recién cuando le entregues el equipo en mano al beneficiario',
+      'La solicitud pasa a estado "Equipo entregado" y queda registrado quién y cuándo lo entregó',
+    ],
+    tip: 'La entrega va antes que el remito: primero se confirma que el equipo llegó al beneficiario.',
+    estado: 'finalizada'
+  },
+  {
+    num: 5,
+    titulo: 'Se realiza el remito',
     quien: 'Infraestructura',
     color: 'teal',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    descripcion: 'Con el equipo y las dos aprobaciones completas se habilita el remito. Si asignó Compras, se crea como borrador para que Infra lo complete.',
+    descripcion: 'Con el equipo ya entregado, Infra genera el remito que respalda la entrega. Si asignó Compras, se crea como borrador para que Infra lo complete.',
     detalle: [
-      'Si el equipo fue asignado por Compras, el borrador se genera automáticamente al completar la última condición',
+      'Si el equipo fue asignado por Compras, el borrador se genera automáticamente al completar las aprobaciones',
       'Infra ingresa al borrador, completa el técnico y los datos de entrega',
-      'Si el equipo fue asignado por Infra, Infra genera el remito desde la solicitud aprobada',
+      'Si el equipo fue asignado por Infra, Infra genera el remito desde el detalle de la solicitud',
       'El remito incluye: beneficiario como solicitante, técnico asignado, sede origen y destino',
       'El número de remito REM-XXXX queda vinculado a la solicitud',
       'Podés ver el remito completo haciendo click en "Ver remito" desde el detalle de la solicitud',
     ],
-    tip: 'La solicitud queda fija al vincular el remito; los estados posteriores del remito no modifican la solicitud.',
+    tip: 'Cada solicitud genera un único remito; los estados posteriores del remito no modifican la solicitud.',
     estado: 'remito_generado'
   }
 ]

@@ -43,11 +43,12 @@ export const useListData = (apiFunction, options = {}) => {
       setLoading(true)
       setError(null)
 
-      // Preparar parámetros para la API
-      const params = {
-        page,
-        limit,
-        ...filters
+      // Preparar parámetros para la API. Los filtros vacíos se descartan: si se
+      // pasan como null/undefined, URLSearchParams los serializa literalmente
+      // ("estado=undefined") y el backend los rechaza por validación.
+      const params = { page, limit }
+      for (const [clave, valor] of Object.entries(filters)) {
+        if (valor !== null && valor !== undefined) params[clave] = valor
       }
 
       // Llamar a la API
