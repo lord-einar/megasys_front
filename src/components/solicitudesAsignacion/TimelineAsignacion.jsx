@@ -9,7 +9,7 @@ const ACCION_CONFIG = {
   rechazada:        { label: 'Rechazada',           color: 'bg-rose-500'    },
   cancelada:        { label: 'Cancelada',           color: 'bg-surface-500' },
   remito_generado:  { label: 'Remito generado',     color: 'bg-teal-500'    },
-  finalizada:       { label: 'Finalizada',          color: 'bg-emerald-500' },
+  finalizada:       { label: 'Equipo entregado',    color: 'bg-emerald-500' },
   reenviada_infra:  { label: 'Reenviada a Infra',   color: 'bg-amber-500'   },
   adjunto_agregado: { label: 'Adjunto agregado',    color: 'bg-surface-300' }
 }

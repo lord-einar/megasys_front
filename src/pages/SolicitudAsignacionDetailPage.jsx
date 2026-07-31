@@ -6,7 +6,7 @@ import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBad
 import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsignacion'
 import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
 import { usePermissions } from '../hooks/usePermissions'
-import { comprasPuedeAsignarEquipo, esCompraPendiente } from '../utils/solicitudAsignacionPolicy'
+import { comprasPuedeAsignarEquipo, esCompraPendiente, pendienteDeEntrega, puedeGenerarRemito } from '../utils/solicitudAsignacionPolicy'
 
 const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
 
@@ -81,16 +81,17 @@ export default function SolicitudAsignacionDetailPage() {
 
   useEffect(() => { cargar() }, [id])
 
-  // Cargar técnicos de soporte cuando la solicitud entra en aprobada
+  // Cargar técnicos de soporte cuando el remito ya se puede generar (aprobada o
+  // ya entregada, mientras no exista remito)
   useEffect(() => {
-    if (!solicitud || solicitud.estado !== 'aprobada') return
+    if (!puedeGenerarRemito(solicitud)) return
     solicitudesAsignacionAPI.lookupSoporte()
       .then(res => {
         const data = Array.isArray(res?.data) ? res.data : (res?.data?.data || [])
         setSoporte(data)
       })
       .catch(() => setSoporte([]))
-  }, [solicitud?.id, solicitud?.estado])
+  }, [solicitud?.id, solicitud?.estado, solicitud?.remito_id, solicitud?.inventario_asignado_id])
 
   // Cargar categorías cuando Infra revisa o Compras resuelve una compra pendiente
   useEffect(() => {
@@ -186,7 +187,9 @@ export default function SolicitudAsignacionDetailPage() {
   if (!solicitud) return <div className="p-8 bg-surface-50 min-h-screen text-rose-600">{error || 'Solicitud no encontrada'}</div>
 
   const esReposicion = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura'].includes(solicitud.motivo)
-  // remito_generado es estado final de la solicitud (se gestiona desde Remitos).
+  // Estados sin acciones de workflow. remito_generado se incluye para ocultar
+  // asignar/aprobar/cancelar/reenviar; su acción propia ("Equipo entregado") se
+  // renderiza aparte. finalizada = entregado (terminal real).
   const esTerminal = ['remito_generado', 'finalizada', 'rechazada', 'cancelada'].includes(solicitud.estado)
   const solicitudFija = !!solicitud.inventario_asignado_id || !!solicitud.remito_id || solicitud.estado === 'remito_generado'
 
@@ -210,6 +213,11 @@ export default function SolicitudAsignacionDetailPage() {
             {solicitud.compra_pendiente && !solicitud.inventario_asignado_id && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-50 text-orange-700 border-orange-200">
                 Compra pendiente
+              </span>
+            )}
+            {pendienteDeEntrega(solicitud) && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200">
+                Pendiente de entrega
               </span>
             )}
           </div>
@@ -673,13 +681,67 @@ export default function SolicitudAsignacionDetailPage() {
             </section>
           )}
 
-          {/* Acción: Generar remito (aprobada + Infra + equipo ya asignado) */}
-          {hasInfraestructura && solicitud.estado === 'aprobada' && solicitud.inventario_asignado_id &&
+          {/* Entregar equipo (solicitud aprobada con equipo asignado, con o sin remito) */}
+          {['aprobada', 'remito_generado'].includes(solicitud.estado) &&
+            solicitud.inventario_asignado_id &&
+            (hasInfraestructura || hasRRHH || hasCompras) && (
+            <section className="card-base p-6 border-l-4 border-l-emerald-500">
+              <h2 className="font-bold text-surface-900 mb-2">Entregar equipo</h2>
+              {solicitud.estado === 'remito_generado' && solicitud.remito_id && (
+                <p className="text-sm text-surface-600 mb-3">
+                  Remito generado:{' '}
+                  <button
+                    onClick={() => navigate(`/remitos/${solicitud.remito_id}`)}
+                    className="text-primary-700 hover:underline font-medium"
+                  >
+                    Ver remito
+                  </button>
+                </p>
+              )}
+              <p className="text-sm text-surface-500 mb-3">
+                Marcá la entrega cuando le entregues el equipo en mano al beneficiario.
+                {!solicitud.remito_id && ' Una vez entregado vas a poder generar el remito.'}
+              </p>
+              <button
+                className="btn-primary"
+                onClick={() => ejecutar(() => solicitudesAsignacionAPI.finalizar(id))}
+              >
+                Equipo entregado
+              </button>
+            </section>
+          )}
+
+          {/* Entregada (terminal) */}
+          {solicitud.estado === 'finalizada' && (
+            <section className="card-base p-6 border-l-4 border-l-green-500">
+              <h2 className="font-bold text-surface-900 mb-1">Equipo entregado</h2>
+              <p className="text-sm text-surface-600">
+                El equipo fue entregado en mano al beneficiario
+                {solicitud.cierre_fecha ? ` el ${new Date(solicitud.cierre_fecha).toLocaleDateString('es-AR')}` : ''}.
+                {solicitud.remito_id && (
+                  <>
+                    {' '}
+                    <button
+                      onClick={() => navigate(`/remitos/${solicitud.remito_id}`)}
+                      className="text-primary-700 hover:underline font-medium"
+                    >
+                      Ver remito
+                    </button>
+                  </>
+                )}
+              </p>
+            </section>
+          )}
+
+          {/* Acción: Generar remito (equipo asignado y sin remito; antes o después de la entrega) */}
+          {hasInfraestructura && puedeGenerarRemito(solicitud) &&
             !solicitud.equipo_asignado_por_compras && (
             <section className="card-base p-6 border-l-4 border-l-teal-500">
               <h2 className="font-bold text-surface-900 mb-2">Generar remito de entrega</h2>
               <p className="text-sm text-surface-500 mb-4">
-                El equipo está listo. Seleccioná el técnico que realizará la entrega y generá el remito.
+                {solicitud.estado === 'finalizada'
+                  ? 'El equipo ya fue entregado. Seleccioná el técnico responsable y generá el remito que respalda la entrega.'
+                  : 'El equipo está listo. Seleccioná el técnico que realizará la entrega y generá el remito.'}
               </p>
               <div className="mb-4">
                 <label className="label-base block mb-1">
@@ -711,24 +773,6 @@ export default function SolicitudAsignacionDetailPage() {
               >
                 Generar remito
               </button>
-            </section>
-          )}
-
-          {/* Estado fijo: remito generado */}
-          {solicitud.estado === 'remito_generado' && (
-            <section className="card-base p-6 border-l-4 border-l-emerald-500">
-              <h2 className="font-bold text-surface-900 mb-4">Solicitud fijada</h2>
-              {solicitud.remito_id && (
-                <p className="text-sm text-surface-600 mb-3">
-                  El remito ya fue generado. La evolución posterior se gestiona desde Remitos:{' '}
-                  <button
-                    onClick={() => navigate(`/remitos/${solicitud.remito_id}`)}
-                    className="text-primary-700 hover:underline font-medium"
-                  >
-                    Ver remito
-                  </button>
-                </p>
-              )}
             </section>
           )}
 

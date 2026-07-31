@@ -3,20 +3,39 @@ import { useNavigate } from 'react-router-dom'
 import { solicitudesCompraAPI } from '../services/api'
 import { useListData } from '../hooks/useListData'
 import StatusBadge from '../components/solicitudesCompra/StatusBadge'
+import ListPagination from '../components/ListPagination'
 import { FileText, Plus, RefreshCw } from 'lucide-react'
 
 export default function SolicitudesCompraListPage() {
   const navigate = useNavigate()
   const [estado, setEstado] = useState('')
+  const [tipoEquipo, setTipoEquipo] = useState('')
   const [q, setQ] = useState('')
-  const { data, loading, error, updateFilters, reload } = useListData(solicitudesCompraAPI.list, {
-    initialLimit: 20,
+  const {
+    data,
+    loading,
+    error,
+    page,
+    limit,
+    totalPages,
+    totalRecords,
+    updateFilters,
+    goToPage,
+    previousPage,
+    nextPage,
+    reload
+  } = useListData(solicitudesCompraAPI.list, {
+    initialLimit: 15,
     initialFilters: {}
   })
 
   const buscar = (e) => {
     e.preventDefault()
-    updateFilters({ estado: estado || undefined, q: q || undefined })
+    updateFilters({
+      estado: estado || undefined,
+      tipo_equipo: tipoEquipo || undefined,
+      q: q || undefined
+    })
   }
 
   return (
@@ -35,10 +54,19 @@ export default function SolicitudesCompraListPage() {
         </div>
       </div>
 
-      <form onSubmit={buscar} className="card-base p-5 mb-6 grid grid-cols-1 md:grid-cols-[1fr_260px_auto] gap-4">
+      <form onSubmit={buscar} className="card-base p-5 mb-6 grid grid-cols-1 md:grid-cols-[1fr_200px_260px_auto] gap-4">
         <label>
           <span className="label-base">Buscar</span>
           <input value={q} onChange={e => setQ(e.target.value)} className="input-base" placeholder="Beneficiario, email o apellido" />
+        </label>
+        <label>
+          <span className="label-base">Tipo de equipo</span>
+          <select value={tipoEquipo} onChange={e => setTipoEquipo(e.target.value)} className="input-base">
+            <option value="">Todos los tipos</option>
+            <option value="celular">Celular</option>
+            <option value="notebook">Notebook</option>
+            <option value="pc_escritorio">PC de escritorio</option>
+          </select>
         </label>
         <label>
           <span className="label-base">Estado</span>
@@ -71,7 +99,9 @@ export default function SolicitudesCompraListPage() {
         <div className="px-4 sm:px-6 py-4 border-b border-surface-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
             <h2 className="font-bold text-surface-900">Solicitudes</h2>
-            <p className="text-xs text-surface-500 mt-0.5">{data.length} registros visibles</p>
+            <p className="text-xs text-surface-500 mt-0.5">
+              {totalRecords} {totalRecords === 1 ? 'registro' : 'registros'}
+            </p>
           </div>
           <button onClick={reload} className="btn-secondary text-xs py-2">
             <RefreshCw className="w-4 h-4" />
@@ -108,6 +138,17 @@ export default function SolicitudesCompraListPage() {
             </button>
           ))}
         </div>
+        {!loading && (
+          <ListPagination
+            page={page}
+            limit={limit}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            goToPage={goToPage}
+            previousPage={previousPage}
+            nextPage={nextPage}
+          />
+        )}
       </div>
     </div>
   )
