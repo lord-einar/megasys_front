@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { inventarioAPI, tipoArticuloAPI, sedesAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { usePermissionError } from '../hooks/usePermissionError'
+import { categoriaTipoDeArticulo, CATEGORIA_TIPO_LABELS } from '../utils/tipoEquipo'
 import Swal from 'sweetalert2'
 import LoadingOverlay from '../components/LoadingOverlay'
 
@@ -24,8 +25,14 @@ const articuloSchema = yup.object().shape({
     .min(2, 'El modelo debe tener al menos 2 caracteres'),
   numero_serie: yup.string().nullable().notRequired(),
   service_tag: yup.string().nullable().notRequired(),
-  fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
-  observaciones: yup.string().nullable().notRequired(),
+  // El input date vacío devuelve '', que yup castea a Invalid Date: sin el
+  // transform, dejar la fecha en blanco bloqueaba el submit como si fuera obligatoria.
+  fecha_adquisicion: yup
+    .date()
+    .nullable()
+    .notRequired()
+    .transform((valor, original) => (original === '' || original === undefined ? null : valor))
+    .max(new Date(), 'La fecha no puede ser futura'),
   observaciones: yup.string().nullable().notRequired(),
   sede_id: yup.string().required('Debe seleccionar una sede'),
   procesador: yup.string().nullable().notRequired(),
@@ -102,18 +109,18 @@ export default function CreateArticulo() {
     cargarDatosIniciales()
   }, [])
 
-  // Cargar categorías cuando el tipo seleccionado es notebook o celular
+  // Cargar categorías cuando el tipo seleccionado es un equipo asignable
+  // (celular, notebook o PC de escritorio).
   const tipoActual = watch ? watch('tipo_articulo_id') : undefined
+  const tipoCategoria = categoriaTipoDeArticulo(
+    tiposArticulo.find(t => t.id === tipoActual)?.nombre
+  )
   useEffect(() => {
-    if (!tipoActual) { setCategorias([]); setCategoriaId(''); return }
-    const tipoNombre = tiposArticulo.find(t => t.id === tipoActual)?.nombre?.toLowerCase() || ''
-    const esNbCel = tipoNombre.includes('notebook') || tipoNombre.includes('celular')
-    if (!esNbCel) { setCategorias([]); setCategoriaId(''); return }
-    const tipo = tipoNombre.includes('celular') ? 'celular' : 'notebook'
-    categoriaEquiposAsignacionAPI.list({ tipo, activo: true })
+    if (!tipoCategoria) { setCategorias([]); setCategoriaId(''); return }
+    categoriaEquiposAsignacionAPI.list({ tipo: tipoCategoria, activo: true })
       .then(r => setCategorias(r?.data || []))
       .catch(() => setCategorias([]))
-  }, [tipoActual, tiposArticulo])
+  }, [tipoCategoria])
 
   const cargarDatosIniciales = async () => {
     try {
@@ -296,23 +303,36 @@ export default function CreateArticulo() {
                   )}
                 </div>
 
-                {/* Categoría — solo para notebook/celular */}
-                {categorias.length > 0 && (
+                {/* Categoría — para celular, notebook y PC de escritorio */}
+                {tipoCategoria && (
                   <div className="space-y-1.5">
                     <label className="block text-sm font-semibold text-surface-700">
                       Categoría <span className="text-rose-500">*</span>
                     </label>
-                    <select
-                      value={categoriaId}
-                      onChange={e => setCategoriaId(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                    >
-                      <option value="">— Seleccioná la categoría del equipo —</option>
-                      {categorias.map(c => (
-                        <option key={c.id} value={c.id}>{c.nombre}</option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-surface-400">Indica para qué perfil es este equipo (Gerente, Ejecutivo, etc.)</p>
+                    {categorias.length === 0 ? (
+                      <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                        No hay categorías para {CATEGORIA_TIPO_LABELS[tipoCategoria]}.{' '}
+                        <button
+                          type="button"
+                          onClick={() => navigate('/categoria-equipos-asignacion')}
+                          className="underline font-medium"
+                        >
+                          Crear categorías
+                        </button>
+                      </p>
+                    ) : (
+                      <select
+                        value={categoriaId}
+                        onChange={e => setCategoriaId(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                      >
+                        <option value="">— Seleccioná la categoría del equipo —</option>
+                        {categorias.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                    )}
+                    <p className="text-xs text-surface-400">Indica para qué perfil es este equipo (Gerente, Ejecutivo, etc.). Sin categoría el equipo no aparece al asignarlo.</p>
                   </div>
                 )}
 
