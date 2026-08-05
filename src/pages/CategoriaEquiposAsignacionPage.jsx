@@ -2,16 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { categoriaEquiposAsignacionAPI } from '../services/api'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
+import { CATEGORIA_TIPO_LABELS as TIPO_LABELS, CATEGORIA_TIPO_TODOS } from '../utils/tipoEquipo'
 import { Plus, RefreshCw, Pencil, ArrowLeft } from 'lucide-react'
 
-const TIPO_LABELS = {
-  notebook: 'Notebook',
-  celular: 'Celular',
-  pc: 'PC de escritorio',
-  ambos: 'Ambos'
-}
-
-const FORM_INICIAL = { nombre: '', descripcion: '', tipo: 'ambos' }
+const FORM_INICIAL = { nombre: '', descripcion: '', tipo: CATEGORIA_TIPO_TODOS }
 
 export default function CategoriaEquiposAsignacionPage() {
   const navigate = useNavigate()
@@ -165,11 +159,14 @@ export default function CategoriaEquiposAsignacionPage() {
                 onChange={e => setField('tipo', e.target.value)}
                 className="input-base"
               >
-                <option value="ambos">Ambos</option>
+                <option value={CATEGORIA_TIPO_TODOS}>Todos los tipos</option>
                 <option value="notebook">Notebook</option>
                 <option value="celular">Celular</option>
                 <option value="pc">PC de escritorio</option>
               </select>
+              <p className="text-xs text-surface-400 mt-1">
+                "Todos los tipos" hace que la categoría sirva para celulares, notebooks y PCs.
+              </p>
             </label>
             <label>
               <span className="label-base">Descripción (opcional)</span>

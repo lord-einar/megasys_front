@@ -56,7 +56,14 @@ const schema = yup.object().shape({
     .nullable()
     .notRequired()
     .matches(/^\d{15}$/, { message: 'El IMEI debe tener exactamente 15 dígitos', excludeEmptyString: true }),
-  fecha_adquisicion: yup.date().nullable().notRequired().max(new Date(), 'La fecha no puede ser futura'),
+  // El input date vacío devuelve '', que yup castea a Invalid Date: sin el
+  // transform, dejar la fecha en blanco bloqueaba el submit como si fuera obligatoria.
+  fecha_adquisicion: yup
+    .date()
+    .nullable()
+    .notRequired()
+    .transform((valor, original) => (original === '' || original === undefined ? null : valor))
+    .max(new Date(), 'La fecha no puede ser futura'),
   valor_adquisicion: yup
     .number()
     .nullable()

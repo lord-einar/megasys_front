@@ -7,6 +7,7 @@ import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsig
 import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
 import { usePermissions } from '../hooks/usePermissions'
 import { comprasPuedeAsignarEquipo, esCompraPendiente, pendienteDeEntrega, puedeGenerarRemito } from '../utils/solicitudAsignacionPolicy'
+import { categoriaTipoDeSolicitud } from '../utils/tipoEquipo'
 
 const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
 
@@ -96,7 +97,8 @@ export default function SolicitudAsignacionDetailPage() {
   // Cargar categorías cuando Infra revisa o Compras resuelve una compra pendiente
   useEffect(() => {
     if (!puedeGestionarAsignacion) return
-    categoriaEquiposAsignacionAPI.list({ tipo: solicitud.tipo_equipo, activo: true })
+    // La categoría usa 'pc' donde la solicitud dice 'pc_escritorio'.
+    categoriaEquiposAsignacionAPI.list({ tipo: categoriaTipoDeSolicitud(solicitud.tipo_equipo), activo: true })
       .then(res => setCategorias(normalizeApiResponse(res, 200).data))
       .catch(() => setCategorias([]))
   }, [solicitud?.id, solicitud?.estado, solicitud?.tipo_equipo, puedeGestionarAsignacion])
@@ -561,7 +563,16 @@ export default function SolicitudAsignacionDetailPage() {
                     </p>
                   ) : inventarioDisponible.length === 0 ? (
                     <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                      No hay {solicitud.tipo_equipo}s disponibles en esa categoría
+                      No hay equipos en esa categoría con stock libre. Sólo aparecen los que están
+                      en estado "disponible": si el equipo ya figura asignado a alguien o prestado,
+                      no se lista. Revisalo en{' '}
+                      <button
+                        type="button"
+                        onClick={() => navigate('/inventario')}
+                        className="underline font-medium"
+                      >
+                        Inventario
+                      </button>.
                     </p>
                   ) : (
                     <select
