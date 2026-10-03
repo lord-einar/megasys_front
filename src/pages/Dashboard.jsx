@@ -7,6 +7,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { FileText, Package, Users, Truck, Plus, AlertTriangle, Zap } from 'lucide-react'
 
+// "Pendiente" = todo lo que no está completado (mismo criterio que antes).
+const ESTADOS_REMITO_PENDIENTE = ['borrador', 'preparado', 'en_transito', 'entregado', 'devuelto_parcial', 'devuelto', 'cancelado']
+
 function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -45,9 +48,18 @@ function Dashboard() {
       let inventarioCount = 0
       let remitosCount = 0
 
+      // Todo en paralelo. Del backend se piden solo los 5 remitos pendientes y
+      // el total (limit 1), en vez de bajar 100 remitos para filtrarlos acá.
+      const [estadisticasRes, remitosRes, totalRemitosRes] = await Promise.allSettled([
+        sedesAPI.getEstadisticas(),
+        remitosAPI.list({ limit: 5, estado: ESTADOS_REMITO_PENDIENTE }),
+        remitosAPI.list({ limit: 1 })
+      ])
+
       // Cargar estadísticas
       try {
-        const response = await sedesAPI.getEstadisticas()
+        if (estadisticasRes.status === 'rejected') throw estadisticasRes.reason
+        const response = estadisticasRes.value
         const estadisticas = response?.data || response
         sedesCount = estadisticas?.sedes?.activas || 0
         personalCount = estadisticas?.personal?.total || 0
@@ -58,12 +70,14 @@ function Dashboard() {
 
       // Cargar remitos
       try {
-        const remitosData = await remitosAPI.list({ limit: 100 })
-        const remitos = Array.isArray(remitosData.data) ? remitosData.data : remitosData || []
-        remitosCount = remitosData?.pagination?.total || remitos.length || 0
-
-        const pendientes = remitos.filter(r => r.estado !== 'completado').slice(0, 5)
+        if (remitosRes.status === 'rejected') throw remitosRes.reason
+        const remitosData = remitosRes.value
+        const pendientes = Array.isArray(remitosData.data) ? remitosData.data : remitosData || []
         setPendingRemitos(pendientes)
+
+        if (totalRemitosRes.status === 'fulfilled') {
+          remitosCount = totalRemitosRes.value?.pagination?.total || 0
+        }
       } catch (err) {
         console.warn('No se pudieron cargar los remitos pendientes:', err.message)
       }

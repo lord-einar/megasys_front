@@ -289,9 +289,20 @@ export const inventarioAPI = {
 }
 
 // Remitos Endpoints
+// Query string que envía los arrays como claves repetidas (?estado=a&estado=b),
+// el formato que esperan los filtros de varios valores del backend.
+const toQueryString = (params = {}) => {
+  const search = new URLSearchParams()
+  for (const [clave, valor] of Object.entries(params)) {
+    if (Array.isArray(valor)) valor.forEach(v => search.append(clave, v))
+    else search.append(clave, valor)
+  }
+  return search.toString()
+}
+
 export const remitosAPI = {
   list: (params = {}) => {
-    const query = new URLSearchParams(params).toString()
+    const query = toQueryString(params)
     return apiCall(`/remitos${query ? '?' + query : ''}`)
   },
   getById: (id) => apiCall(`/remitos/${id}`),
@@ -795,17 +806,12 @@ export const categoriaEquiposAsignacionAPI = {
 // Solicitudes de asignación de equipos
 export const solicitudesAsignacionAPI = {
   list: (params = {}) => {
-    // Los arrays (p. ej. varios estados) se envían como claves repetidas:
-    // ?estado=a&estado=b, que es lo que espera la validación del backend.
-    const search = new URLSearchParams()
-    for (const [clave, valor] of Object.entries(params)) {
-      if (Array.isArray(valor)) valor.forEach(v => search.append(clave, v))
-      else search.append(clave, valor)
-    }
-    const qs = search.toString()
+    const qs = toQueryString(params)
     return apiCall(`/solicitudes-asignacion${qs ? `?${qs}` : ''}`)
   },
   getById: (id) => apiCall(`/solicitudes-asignacion/${id}`),
+  // Conteos por estado y solicitudes que requieren acción (calculado en el backend)
+  resumen: () => apiCall('/solicitudes-asignacion/resumen'),
   lookupPersonal: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
     return apiCall(`/solicitudes-asignacion/lookups/personal${qs ? `?${qs}` : ''}`)

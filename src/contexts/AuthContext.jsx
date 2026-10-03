@@ -21,6 +21,9 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
           setToken(savedToken);
+          // La app arranca ya con la sesión guardada; la validación no bloquea
+          // la primera pantalla (cada llamada a la API valida el token igual).
+          setLoading(false);
 
           // Luego valida el token con el backend en background con timeout
           const controller = new AbortController();
