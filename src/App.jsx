@@ -1,79 +1,91 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
-import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
-import Profile from './pages/Profile'
-import SedesPage from './pages/SedesPage'
-import SedeDetallePage from './pages/SedeDetallePage'
-import NuevaSede from './pages/NuevaSede'
-import EditSede from './pages/EditSede'
-import AsignarTecnicoPage from './pages/AsignarTecnicoPage'
-import AsignarSedesPage from './pages/AsignarSedesPage'
-import PersonalPage from './pages/PersonalPage'
-import PersonalDetailPage from './pages/PersonalDetailPage'
-import NuevoPersonal from './pages/NuevoPersonal'
-import EditPersonal from './pages/EditPersonal'
-import InventarioPage from './pages/InventarioPage'
-import CreateArticulo from './pages/CreateArticulo'
-import EditArticulo from './pages/EditArticulo'
-import InventarioDetailPage from './pages/InventarioDetailPage'
-import RemitoListPage from './pages/RemitoListPage'
-import CreateRemitoPage from './pages/CreateRemitoPage'
-import RemitoDetailPage from './pages/RemitoDetailPage'
-import CelularesPage from './pages/CelularesPage'
-import ConfirmacionRecepcionPage from './pages/ConfirmacionRecepcionPage'
-import VisitasPage from './pages/VisitasPage'
-import SolicitudPreVisitaPage from './pages/SolicitudPreVisitaPage'
-import VisitaFeedbackPublico from './pages/VisitaFeedbackPublico'
-import ReportesVisitasPage from './pages/ReportesVisitasPage'
-import ConfiguracionVisitasPage from './pages/ConfiguracionVisitasPage'
-import ConfiguracionRolesPage from './pages/ConfiguracionRolesPage'
-import ProveedoresPage from './pages/ProveedoresPage'
-import ProveedorDetailPage from './pages/ProveedorDetailPage'
-import ProveedorFormPage from './pages/ProveedorFormPage'
-import ServiciosPage from './pages/ServiciosPage'
-import ServicioFormPage from './pages/ServicioFormPage'
-import ReclamosPage from './pages/ReclamosPage'
-import ReclamoDetailPage from './pages/ReclamoDetailPage'
-import ReclamoFormPage from './pages/ReclamoFormPage'
-import EquiposPage from './pages/EquiposPage'
-import EquipoFormPage from './pages/EquipoFormPage'
-import EjecutivosPage from './pages/EjecutivosPage'
-import EjecutivoFormPage from './pages/EjecutivoFormPage'
-import TiposServicioPage from './pages/TiposServicioPage'
-import TipoServicioFormPage from './pages/TipoServicioFormPage'
-import TiposArticuloPage from './pages/TiposArticuloPage'
-import CasosSoportePage from './pages/CasosSoportePage'
-import StockEquiposPage from './pages/StockEquiposPage'
-import IngresoCelularesPage from './pages/IngresoCelularesPage'
-import SolicitudesAsignacionDashboard from './pages/SolicitudesAsignacionDashboard'
-import SolicitudesAsignacionListPage from './pages/SolicitudesAsignacionListPage'
-import SolicitudAsignacionFormPage from './pages/SolicitudAsignacionFormPage'
-import SolicitudAsignacionDetailPage from './pages/SolicitudAsignacionDetailPage'
-import CategoriaEquiposAsignacionPage from './pages/CategoriaEquiposAsignacionPage'
-import HistorialEquiposPersonalPage from './pages/HistorialEquiposPersonalPage'
-import HistorialEquiposSedePage from './pages/HistorialEquiposSedePage'
-import CatalogoEquiposPage from './pages/CatalogoEquiposPage'
-import LoginLoadingPreview from './pages/LoginLoadingPreview'
-import AlertaStockPage from './pages/AlertaStockPage'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
+// Cada pantalla se descarga recién cuando se visita: el arranque solo trae
+// el shell, el login y lo que use la ruta actual.
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Profile = lazy(() => import('./pages/Profile'))
+const SedesPage = lazy(() => import('./pages/SedesPage'))
+const SedeDetallePage = lazy(() => import('./pages/SedeDetallePage'))
+const NuevaSede = lazy(() => import('./pages/NuevaSede'))
+const EditSede = lazy(() => import('./pages/EditSede'))
+const AsignarTecnicoPage = lazy(() => import('./pages/AsignarTecnicoPage'))
+const AsignarSedesPage = lazy(() => import('./pages/AsignarSedesPage'))
+const PersonalPage = lazy(() => import('./pages/PersonalPage'))
+const PersonalDetailPage = lazy(() => import('./pages/PersonalDetailPage'))
+const NuevoPersonal = lazy(() => import('./pages/NuevoPersonal'))
+const EditPersonal = lazy(() => import('./pages/EditPersonal'))
+const InventarioPage = lazy(() => import('./pages/InventarioPage'))
+const CreateArticulo = lazy(() => import('./pages/CreateArticulo'))
+const EditArticulo = lazy(() => import('./pages/EditArticulo'))
+const InventarioDetailPage = lazy(() => import('./pages/InventarioDetailPage'))
+const RemitoListPage = lazy(() => import('./pages/RemitoListPage'))
+const CreateRemitoPage = lazy(() => import('./pages/CreateRemitoPage'))
+const RemitoDetailPage = lazy(() => import('./pages/RemitoDetailPage'))
+const CelularesPage = lazy(() => import('./pages/CelularesPage'))
+const ConfirmacionRecepcionPage = lazy(() => import('./pages/ConfirmacionRecepcionPage'))
+const VisitasPage = lazy(() => import('./pages/VisitasPage'))
+const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
+const VisitaFeedbackPublico = lazy(() => import('./pages/VisitaFeedbackPublico'))
+const ReportesVisitasPage = lazy(() => import('./pages/ReportesVisitasPage'))
+const ConfiguracionVisitasPage = lazy(() => import('./pages/ConfiguracionVisitasPage'))
+const ConfiguracionRolesPage = lazy(() => import('./pages/ConfiguracionRolesPage'))
+const ProveedoresPage = lazy(() => import('./pages/ProveedoresPage'))
+const ProveedorDetailPage = lazy(() => import('./pages/ProveedorDetailPage'))
+const ProveedorFormPage = lazy(() => import('./pages/ProveedorFormPage'))
+const ServiciosPage = lazy(() => import('./pages/ServiciosPage'))
+const ServicioFormPage = lazy(() => import('./pages/ServicioFormPage'))
+const ReclamosPage = lazy(() => import('./pages/ReclamosPage'))
+const ReclamoDetailPage = lazy(() => import('./pages/ReclamoDetailPage'))
+const ReclamoFormPage = lazy(() => import('./pages/ReclamoFormPage'))
+const EquiposPage = lazy(() => import('./pages/EquiposPage'))
+const EquipoFormPage = lazy(() => import('./pages/EquipoFormPage'))
+const EjecutivosPage = lazy(() => import('./pages/EjecutivosPage'))
+const EjecutivoFormPage = lazy(() => import('./pages/EjecutivoFormPage'))
+const TiposServicioPage = lazy(() => import('./pages/TiposServicioPage'))
+const TipoServicioFormPage = lazy(() => import('./pages/TipoServicioFormPage'))
+const TiposArticuloPage = lazy(() => import('./pages/TiposArticuloPage'))
+const CasosSoportePage = lazy(() => import('./pages/CasosSoportePage'))
+const StockEquiposPage = lazy(() => import('./pages/StockEquiposPage'))
+const IngresoCelularesPage = lazy(() => import('./pages/IngresoCelularesPage'))
+const SolicitudesAsignacionDashboard = lazy(() => import('./pages/SolicitudesAsignacionDashboard'))
+const SolicitudesAsignacionListPage = lazy(() => import('./pages/SolicitudesAsignacionListPage'))
+const SolicitudAsignacionFormPage = lazy(() => import('./pages/SolicitudAsignacionFormPage'))
+const SolicitudAsignacionDetailPage = lazy(() => import('./pages/SolicitudAsignacionDetailPage'))
+const CategoriaEquiposAsignacionPage = lazy(() => import('./pages/CategoriaEquiposAsignacionPage'))
+const HistorialEquiposPersonalPage = lazy(() => import('./pages/HistorialEquiposPersonalPage'))
+const HistorialEquiposSedePage = lazy(() => import('./pages/HistorialEquiposSedePage'))
+const CatalogoEquiposPage = lazy(() => import('./pages/CatalogoEquiposPage'))
+const LoginLoadingPreview = lazy(() => import('./pages/LoginLoadingPreview'))
+const AlertaStockPage = lazy(() => import('./pages/AlertaStockPage'))
+
+function CargandoPantalla() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center" role="status">
+      <div className="h-8 w-8 rounded-full border-[3px] border-surface-200 border-t-primary-600 motion-safe:animate-spin" aria-hidden="true" />
+      <span className="sr-only">Cargando pantalla…</span>
+    </div>
+  )
+}
+
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024)
   const { isAuthenticated, loading } = useAuth()
   const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-screen bg-surface-50" role="status">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <div className="inline-block motion-safe:animate-spin rounded-full h-10 w-10 border-[3px] border-surface-200 border-t-primary-600" aria-hidden="true"></div>
+          <p className="mt-4 text-surface-700">Cargando el portal…</p>
         </div>
       </div>
     )
@@ -84,7 +96,7 @@ function App() {
   const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar', '/preview/login-loading', '/alerta-stock']
   const isFeedbackPath = window.location.pathname.startsWith('/visitas/feedback/')
   if (publicPaths.includes(window.location.pathname) || isFeedbackPath) {
-    return <Routes>
+    return <Suspense fallback={<CargandoPantalla />}><Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="/visitas/solicitar" element={<SolicitudPreVisitaPage />} />
@@ -92,16 +104,16 @@ function App() {
       <Route path="/preview/login-loading" element={<LoginLoadingPreview />} />
       <Route path="/alerta-stock" element={<AlertaStockPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+    </Routes></Suspense>
   }
 
   if (!isAuthenticated) {
-    return <Routes>
+    return <Suspense fallback={<CargandoPantalla />}><Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/alerta-stock" element={<AlertaStockPage />} />
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+    </Routes></Suspense>
   }
 
   return (
@@ -110,8 +122,17 @@ function App() {
         path="/*"
         element={
           <div className="flex h-screen bg-surface-50">
+            <a
+              href="#contenido"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary-600 focus:px-4 focus:py-2 focus:font-semibold focus:text-white"
+            >
+              Saltar al contenido
+            </a>
             {/* Sidebar */}
-            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} />
+            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} onExpand={() => setSidebarOpen(true)} />
+
+            {/* En tablet la barra es fija y superpuesta: este espacio reserva su riel de íconos */}
+            <div className="hidden md:block lg:hidden w-20 shrink-0" aria-hidden="true" />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -122,7 +143,8 @@ function App() {
               />
 
               {/* Content Area */}
-              <main className="flex-1 overflow-y-auto overscroll-contain">
+              <main id="contenido" tabIndex={-1} className="flex-1 overflow-y-auto overscroll-contain focus:outline-none">
+                <Suspense fallback={<CargandoPantalla />}>
                 <Routes>
                   <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-asignacion/dashboard'} replace />} />
                   <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
@@ -204,6 +226,7 @@ function App() {
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
+                </Suspense>
               </main>
             </div>
           </div>

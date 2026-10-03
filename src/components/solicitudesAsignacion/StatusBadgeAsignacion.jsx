@@ -1,50 +1,58 @@
-// Mapeo de estados del módulo de Solicitudes de Asignación a la paleta de badges.
+import { Ban, CircleCheck, CircleDashed, FileCheck, PackageCheck, ShoppingCart, XCircle } from 'lucide-react'
+
+// Estados del módulo de Solicitudes de Asignación. Cada uno lleva ícono + texto:
+// el color refuerza, nunca es la única forma de distinguirlos.
+// `etapa` indica dónde está la solicitud en el riel Infra → RRHH → Entrega
+// (índice de la etapa en curso; 3 = todas cumplidas; null = flujo detenido).
 const ESTADO_CONFIG = {
-  pendiente_infra: {
-    label: 'En revisión Infra',
-    classes: 'bg-amber-50 text-amber-700 border-amber-200'
-  },
-  pendiente_rrhh: {
-    label: 'Pendiente RRHH',
-    classes: 'bg-blue-50 text-blue-700 border-blue-200'
-  },
-  pendiente_compra: {
-    label: 'Compra pendiente',
-    classes: 'bg-orange-50 text-orange-700 border-orange-200'
-  },
-  aprobada: {
-    label: 'Aprobada',
-    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-  },
-  remito_generado: {
-    label: 'Remito generado · pend. entrega',
-    classes: 'bg-teal-50 text-teal-700 border-teal-200'
-  },
-  finalizada: {
-    label: 'Equipo entregado',
-    classes: 'bg-green-50 text-green-700 border-green-200'
-  },
-  rechazada: {
-    label: 'Rechazada',
-    classes: 'bg-rose-50 text-rose-700 border-rose-200'
-  },
-  cancelada: {
-    label: 'Cancelada',
-    classes: 'bg-surface-100 text-surface-700 border-surface-200'
-  }
+  pendiente_infra: { label: 'En revisión Infra', tono: 'wait', Icon: CircleDashed, etapa: 0 },
+  pendiente_rrhh: { label: 'En revisión RRHH', tono: 'progress', Icon: CircleDashed, etapa: 1 },
+  pendiente_compra: { label: 'Compra pendiente', tono: 'buy', Icon: ShoppingCart, etapa: 0 },
+  aprobada: { label: 'Aprobada, falta entregar', tono: 'ready', Icon: PackageCheck, etapa: 2 },
+  remito_generado: { label: 'Remito listo, falta entregar', tono: 'ready', Icon: FileCheck, etapa: 2 },
+  finalizada: { label: 'Equipo entregado', tono: 'done', Icon: CircleCheck, etapa: 3 },
+  rechazada: { label: 'Rechazada', tono: 'stop', Icon: XCircle, etapa: null },
+  cancelada: { label: 'Cancelada', tono: 'neutral', Icon: Ban, etapa: null }
 }
 
+const ETAPAS = ['Infra', 'RRHH', 'Entrega']
+
+const configDe = (estado) =>
+  ESTADO_CONFIG[estado] || { label: estado || '—', tono: 'neutral', Icon: CircleDashed, etapa: null }
+
 export default function StatusBadgeAsignacion({ estado, className = '' }) {
-  const cfg = ESTADO_CONFIG[estado] || {
-    label: estado || '—',
-    classes: 'bg-surface-100 text-surface-700 border-surface-200'
-  }
+  const { label, tono, Icon } = configDe(estado)
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${cfg.classes} ${className}`}>
-      {cfg.label}
+    <span className={`status status-${tono} ${className}`}>
+      <Icon aria-hidden="true" strokeWidth={2.25} />
+      {label}
     </span>
   )
 }
 
-export { ESTADO_CONFIG }
+// Riel de etapas. La descripción textual va como texto accesible; el riel es
+// un refuerzo visual que distingue hecho / en curso / pendiente por forma.
+export function EtapasAsignacion({ estado, className = '' }) {
+  const { etapa } = configDe(estado)
+  const detenida = etapa === null
+
+  const descripcion = detenida
+    ? 'Flujo detenido'
+    : etapa >= ETAPAS.length
+      ? 'Todas las etapas cumplidas'
+      : `Etapa ${etapa + 1} de ${ETAPAS.length}: ${ETAPAS[etapa]}`
+
+  return (
+    <span className={`stage-rail ${className}`} title={descripcion}>
+      {ETAPAS.map((nombre, i) => {
+        const clase = detenida
+          ? 'stage-halted'
+          : i < etapa ? 'stage-done' : i === etapa ? 'stage-current' : 'stage-todo'
+        return <span key={nombre} className={clase} aria-hidden="true" />
+      })}
+      <span className="sr-only">{descripcion}</span>
+    </span>
+  )
+}
+

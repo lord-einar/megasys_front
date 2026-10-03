@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { solicitudesAsignacionAPI } from '../services/api'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
-import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import { usePermissions } from '../hooks/usePermissions'
 import { pendienteDeEntrega } from '../utils/solicitudAsignacionPolicy'
 import { Plus, Laptop, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
@@ -19,35 +18,36 @@ const ESTADOS_TARJETA = [
 // remito_generado sigue requiriendo acción: marcar "Equipo entregado".
 const ESTADOS_PENDIENTES = ['pendiente_infra', 'pendiente_rrhh', 'aprobada', 'remito_generado']
 
-// Entregada pero sin remito: queda pendiente hacer el remito de respaldo.
-const requiereAccion = (s) =>
-  ESTADOS_PENDIENTES.includes(s.estado) || (s.estado === 'finalizada' && !s.remito_id)
+// Qué cuenta como "requiere acción" lo decide el backend (/solicitudes-asignacion/resumen):
+// estados pendientes, o entregada sin remito de respaldo.
 
 export default function SolicitudesAsignacionDashboard() {
   const navigate = useNavigate()
   const { hasInfraestructura } = usePermissions()
-  const [solicitudes, setSolicitudes] = useState([])
+  const [resumen, setResumen] = useState({ porEstado: {}, pendientes: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
-    solicitudesAsignacionAPI.list({ limit: 100 })
-      .then(res => setSolicitudes(normalizeApiResponse(res, 100).data))
+    solicitudesAsignacionAPI.resumen()
+      .then(res => setResumen(res?.data || res))
       .catch(err => setError(err.message || 'No se pudo cargar el panel'))
       .finally(() => setLoading(false))
   }, [])
 
+  // Conteos sobre todas las solicitudes (antes se calculaban sobre las últimas 100)
+  const porEstado = resumen.porEstado || {}
   const counts = ESTADOS_TARJETA.reduce((acc, estado) => {
-    acc[estado] = solicitudes.filter(s => s.estado === estado).length
+    acc[estado] = porEstado[estado] || 0
     return acc
   }, {})
 
-  const totalActivas = solicitudes.filter(s => !['finalizada', 'rechazada', 'cancelada'].includes(s.estado)).length
-  const totalFinalizadas = solicitudes.filter(s => s.estado === 'finalizada').length
-  const totalRechazadas = solicitudes.filter(s => s.estado === 'rechazada').length
+  const totalActivas = ESTADOS_PENDIENTES.reduce((acc, estado) => acc + (porEstado[estado] || 0), 0)
+  const totalFinalizadas = porEstado.finalizada || 0
+  const totalRechazadas = porEstado.rechazada || 0
 
-  const pendientes = solicitudes.filter(requiereAccion).slice(0, 8)
+  const pendientes = resumen.pendientes || []
 
   return (
     <div className="page-shell">
@@ -107,17 +107,27 @@ export default function SolicitudesAsignacionDashboard() {
       </div>
 
       {/* Distribución por estado */}
-      <div className="card-base p-6 mb-8">
-        <h2 className="text-sm font-bold text-surface-400 uppercase tracking-wider mb-4">Distribución por estado</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <section className="card-base p-4 sm:p-6 mb-8" aria-labelledby="titulo-distribucion">
+        <h2 id="titulo-distribucion" className="text-base font-bold text-surface-900 mb-4">Distribución por estado</h2>
+        {/* Cada conteo abre el listado filtrado por ese estado */}
+        <ul className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
           {ESTADOS_TARJETA.map(estado => (
-            <div key={estado} className="flex flex-col gap-2">
-              <StatusBadgeAsignacion estado={estado} />
-              <p className="text-2xl font-extrabold text-surface-900">{counts[estado] || 0}</p>
-            </div>
+            <li key={estado}>
+              <Link
+                to={`/solicitudes-asignacion?estado=${estado}`}
+                className="flex h-full flex-col items-start gap-2 rounded-md p-2 transition-colors duration-150 hover:bg-surface-100 active:bg-surface-200"
+              >
+                {/* El texto del estado puede ocupar dos líneas en columnas angostas */}
+                <StatusBadgeAsignacion estado={estado} className="max-w-full whitespace-normal" />
+                <span className="text-2xl font-bold text-surface-900">
+                  {counts[estado] || 0}
+                  <span className="sr-only"> solicitudes, ver listado</span>
+                </span>
+              </Link>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </section>
 
       {/* Guía del flujo */}
       <GuiaFlujo navigate={navigate} hasInfraestructura={hasInfraestructura} />
