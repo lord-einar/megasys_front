@@ -5,6 +5,7 @@ import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import LoginLoadingScreen from './components/LoginLoadingScreen'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
@@ -82,12 +83,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-surface-50" role="status">
-        <div className="text-center">
-          <div className="inline-block motion-safe:animate-spin rounded-full h-10 w-10 border-[3px] border-surface-200 border-t-primary-600" aria-hidden="true"></div>
-          <p className="mt-4 text-surface-700">Cargando el portal…</p>
-        </div>
-      </div>
+      // Misma pantalla petróleo que el login: el ingreso se ve como una sola transición
+      <LoginLoadingScreen message="Cargando el portal…" />
     )
   }
 
