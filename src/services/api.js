@@ -795,7 +795,14 @@ export const categoriaEquiposAsignacionAPI = {
 // Solicitudes de asignación de equipos
 export const solicitudesAsignacionAPI = {
   list: (params = {}) => {
-    const qs = new URLSearchParams(params).toString()
+    // Los arrays (p. ej. varios estados) se envían como claves repetidas:
+    // ?estado=a&estado=b, que es lo que espera la validación del backend.
+    const search = new URLSearchParams()
+    for (const [clave, valor] of Object.entries(params)) {
+      if (Array.isArray(valor)) valor.forEach(v => search.append(clave, v))
+      else search.append(clave, valor)
+    }
+    const qs = search.toString()
     return apiCall(`/solicitudes-asignacion${qs ? `?${qs}` : ''}`)
   },
   getById: (id) => apiCall(`/solicitudes-asignacion/${id}`),

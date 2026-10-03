@@ -64,16 +64,16 @@ import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024)
   const { isAuthenticated, loading } = useAuth()
   const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-screen bg-surface-50" role="status">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <div className="inline-block motion-safe:animate-spin rounded-full h-10 w-10 border-[3px] border-surface-200 border-t-primary-600" aria-hidden="true"></div>
+          <p className="mt-4 text-surface-700">Cargando el portal…</p>
         </div>
       </div>
     )
@@ -110,8 +110,17 @@ function App() {
         path="/*"
         element={
           <div className="flex h-screen bg-surface-50">
+            <a
+              href="#contenido"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary-600 focus:px-4 focus:py-2 focus:font-semibold focus:text-white"
+            >
+              Saltar al contenido
+            </a>
             {/* Sidebar */}
-            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} />
+            <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} onClose={() => setSidebarOpen(false)} onExpand={() => setSidebarOpen(true)} />
+
+            {/* En tablet la barra es fija y superpuesta: este espacio reserva su riel de íconos */}
+            <div className="hidden md:block lg:hidden w-20 shrink-0" aria-hidden="true" />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -122,7 +131,7 @@ function App() {
               />
 
               {/* Content Area */}
-              <main className="flex-1 overflow-y-auto overscroll-contain">
+              <main id="contenido" tabIndex={-1} className="flex-1 overflow-y-auto overscroll-contain focus:outline-none">
                 <Routes>
                   <Route path="/" element={<Navigate to={hasLegacyAccess ? '/dashboard' : '/solicitudes-asignacion/dashboard'} replace />} />
                   <Route path="/dashboard" element={hasLegacyAccess ? <Dashboard /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
