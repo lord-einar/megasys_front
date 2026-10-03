@@ -5,13 +5,55 @@ import { API_BASE_URL } from '../config/api';
 import { authAPI } from '../services/api';
 import logo from '../assets/logo.png';
 import LoginLoadingScreen from '../components/LoginLoadingScreen';
+import { AlertTriangle, X } from 'lucide-react';
+
+const ROL_DEV = { super_admin: 'Infraestructura', rrhh: 'RRHH', compras: 'Compras' };
+
+// Errores habituales del inicio de sesión de Microsoft, en lenguaje del usuario.
+// El detalle técnico original se conserva como segunda línea.
+const ERRORES_MICROSOFT = {
+  access_denied: 'Cancelaste el ingreso o tu cuenta no dio permiso al portal.',
+  consent_required: 'Tu cuenta necesita autorización de un administrador para usar el portal.',
+  interaction_required: 'Microsoft necesita que vuelvas a ingresar.',
+  login_required: 'Microsoft necesita que vuelvas a ingresar.'
+};
+
+// Microsoft a veces envía solo la descripción (p. ej. "AADSTS65004: User declined to consent").
+const CODIGOS_AADSTS = { AADSTS65004: 'access_denied', AADSTS50105: 'consent_required', AADSTS65001: 'consent_required' };
+
+const describirError = (mensaje) => {
+  const aadsts = Object.keys(CODIGOS_AADSTS).find(c => mensaje.includes(c));
+  const codigo = aadsts ? CODIGOS_AADSTS[aadsts] : Object.keys(ERRORES_MICROSOFT).find(c => mensaje.includes(c));
+  if (codigo) return { titulo: 'No se pudo ingresar', detalle: ERRORES_MICROSOFT[codigo] };
+  if (/conexi[oó]n/i.test(mensaje)) {
+    return { titulo: 'No hay conexión con el portal', detalle: 'Revisá tu conexión a internet y volvé a intentar.' };
+  }
+  return { titulo: 'No se pudo ingresar', detalle: mensaje };
+};
+
+// Logo de Microsoft en sus colores oficiales, sobre un recuadro blanco para que
+// se lea sobre el botón petróleo.
+function MicrosoftLogo() {
+  return (
+    <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-white" aria-hidden="true">
+      <svg viewBox="0 0 21 21" className="h-4 w-4">
+        <rect x="0" y="0" width="10" height="10" fill="#f25022" />
+        <rect x="11" y="0" width="10" height="10" fill="#7fba00" />
+        <rect x="0" y="11" width="10" height="10" fill="#00a4ef" />
+        <rect x="11" y="11" width="10" height="10" fill="#ffb900" />
+      </svg>
+    </span>
+  );
+}
 
 export default function Login() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { login, loading } = useAuth();
   const [error, setError] = useState(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  // Si se vuelve de Microsoft con la sesión en la URL, se muestra la espera desde
+  // el primer render: así no aparece el formulario un instante antes del portal.
+  const [isLoggingIn, setIsLoggingIn] = useState(() => !!searchParams.get('auth_data'));
   const [devUsers, setDevUsers] = useState([]);
   const hasProcessedRef = useRef(false);
   const showDevLogin = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEV_LOGIN === 'true';
@@ -154,122 +196,92 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-950 p-4 sm:p-6 relative overflow-hidden">
-      <div
-        className="absolute inset-0 overflow-hidden z-0 pointer-events-none opacity-[0.08]"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-          backgroundSize: '56px 56px',
-        }}
-      >
-        <div className="absolute inset-x-0 top-0 h-px bg-primary-500"></div>
-      </div>
+    <div className="min-h-screen bg-surface-50 lg:grid lg:grid-cols-[minmax(22rem,5fr)_7fr]">
+      {/* Marca: franja superior en móvil/tablet, columna en escritorio */}
+      <aside className="bg-nav-bg text-white px-6 py-6 sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
+        {/* El PNG trae ~20/234 de margen a la izquierda: se compensa para alinear con el texto */}
+        <img src={logo} alt="Grupo Megatlon" className="-ml-[14px] h-7 w-auto self-start invert mix-blend-screen lg:-ml-[18px] lg:h-9" />
 
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-[21rem] p-6 sm:max-w-[28rem] sm:p-8 md:p-10 relative z-10 transition-colors duration-200 border border-surface-200 overflow-hidden">
-
-        {/* Logo Section */}
-        <div className="text-center mb-10">
-          <div className="flex justify-center mb-6">
-            <img src={logo} alt="Grupo Megatlon" className="h-12 max-w-full w-auto object-contain" />
+        <div className="hidden lg:block">
+          {/* Riel de etapas: la misma firma visual que el seguimiento de solicitudes */}
+          <div className="mb-8 flex gap-1.5" aria-hidden="true">
+            <span className="h-2.5 w-14 rounded-full bg-nav-mark" />
+            <span className="h-2.5 w-14 rounded-full bg-nav-mark" />
+            <span className="h-2.5 w-14 rounded-full ring-2 ring-inset ring-nav-mark" />
           </div>
-          <h1 className="text-2xl font-extrabold text-surface-900 tracking-tight">Portal IT Megatlon</h1>
-          <p className="text-surface-500 mt-2 text-sm font-medium">Sistema Integral de Gestión</p>
+          <p className="max-w-[18ch] text-4xl font-bold leading-tight">
+            Portal IT de Megatlon
+          </p>
+          <p className="mt-4 max-w-[36ch] text-lg leading-relaxed text-nav-text">
+            Sedes, inventario, remitos, asignación de equipos y visitas técnicas en un solo lugar.
+          </p>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 mb-8 flex items-start gap-3 animate-fade-in">
-            <svg className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-rose-800">Error de acceso</h3>
-              <p className="text-rose-600 text-xs mt-0.5 leading-relaxed">{error}</p>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              className="text-rose-400 hover:text-rose-700 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+        <p className="hidden text-sm text-nav-text lg:block">Infraestructura IT, Grupo Megatlon</p>
+      </aside>
 
-        {/* Login Action */}
-        <div className="space-y-8">
-          <div className="text-left bg-surface-50 p-5 sm:p-6 rounded-xl border border-surface-100">
-            <h3 className="text-sm font-bold text-surface-900 mb-1">
-              Acceso Corporativo
-            </h3>
-            <p className="text-xs text-surface-500 mb-4">
-              Utiliza tus credenciales de Microsoft 365
-            </p>
+      <main className="flex items-start justify-center px-6 py-10 sm:px-10 sm:py-16 lg:items-center lg:py-12">
+        <div className="w-full max-w-sm">
+          <h1 className="text-[1.75rem] font-bold leading-tight text-surface-900">Ingresá al Portal IT</h1>
+          <p className="mt-2 text-base text-surface-600">
+            Usá tu cuenta corporativa de Microsoft 365.
+          </p>
 
-            <button
-              onClick={handleLoginClick}
-              disabled={isLoggingIn}
-              className="w-full min-w-0 py-3.5 px-4 bg-surface-900 text-white rounded-lg font-bold text-sm hover:bg-surface-800 transition-colors duration-150 flex items-center justify-center gap-3 group relative overflow-hidden"
-            >
-              {isLoggingIn ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  <span>Redirigiendo...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6v-11.4H24V24zM11.4 12.6H0V1.2h11.4v11.4zm12.6 0H12.6V1.2H24v11.4z" />
-                  </svg>
-                  <span className="truncate">Ingresar con Microsoft</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {showDevLogin && devUsers.length > 0 && (
-            <div className="text-left bg-amber-50 p-5 sm:p-6 rounded-xl border border-amber-100">
-              <h3 className="text-sm font-bold text-amber-950 mb-1">
-                Acceso local de desarrollo
-              </h3>
-              <p className="text-xs text-amber-700 mb-4">
-                Usuarios de prueba para validar permisos y flujos.
-              </p>
-
-              <div className="space-y-2">
-                {devUsers.map((devUser) => (
-                  <button
-                    key={devUser.key}
-                    type="button"
-                    onClick={() => handleDevLoginClick(devUser)}
-                    disabled={isLoggingIn}
-                    className="w-full py-3 px-4 bg-white text-surface-900 rounded-xl font-bold text-sm hover:bg-amber-100 transition-colors border border-amber-200 flex items-center justify-between gap-3"
-                  >
-                    <span className="capitalize">{devUser.role.replace('_', ' ')}</span>
-                    <span className="text-xs font-medium text-surface-500 truncate">{devUser.email}</span>
-                  </button>
-                ))}
+          {error && (
+            <div role="alert" className="mt-6 flex items-start gap-3 rounded-lg border border-error-500/40 bg-error-50 p-4 motion-safe:animate-fade-in">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-error-700" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-error-700">{describirError(error).titulo}</p>
+                <p className="mt-0.5 text-sm text-error-700 break-words">{describirError(error).detalle}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                aria-label="Cerrar aviso"
+                className="-m-2 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-error-700 hover:bg-error-500/10"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-2 text-xs text-surface-400 font-medium">
-            <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Acceso corporativo protegido</span>
-          </div>
-        </div>
+          <button
+            type="button"
+            onClick={handleLoginClick}
+            disabled={isLoggingIn}
+            className="btn-primary mt-8 w-full min-h-12 text-base"
+          >
+            <MicrosoftLogo />
+            Ingresar con Microsoft
+          </button>
 
-        {/* Footer */}
-        <div className="mt-10 text-center border-t border-surface-100 pt-6">
-          <p className="text-[10px] text-surface-400 font-bold uppercase tracking-widest">
-            Megatlon Infraestructura &copy; 2026
+          <p className="mt-4 text-sm text-surface-600">
+            Si no tenés acceso al portal, pedilo al equipo de Infraestructura.
           </p>
+
+          {showDevLogin && devUsers.length > 0 && (
+            <section aria-labelledby="titulo-dev" className="mt-10 rounded-lg border border-dashed border-warning-500 bg-warning-50 p-4">
+              <h2 id="titulo-dev" className="text-base font-bold text-warning-700">Acceso de desarrollo</h2>
+              <p className="mt-1 text-sm text-warning-700">Solo en entorno local. Entrá como un usuario de prueba de cada área.</p>
+              <ul className="mt-3 space-y-2">
+                {devUsers.map((devUser) => (
+                  <li key={devUser.key}>
+                    <button
+                      type="button"
+                      onClick={() => handleDevLoginClick(devUser)}
+                      disabled={isLoggingIn}
+                      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-warning-500/50 bg-white px-3 py-2 text-left hover:bg-warning-50"
+                    >
+                      <span className="font-semibold text-surface-900">{ROL_DEV[devUser.role] || devUser.role}</span>
+                      <span className="truncate text-sm text-surface-600">{devUser.email}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

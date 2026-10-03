@@ -85,7 +85,12 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Foco visible y consistente para todo lo navegable con teclado */
+  /* Foco visible y consistente para todo lo navegable con teclado.
+     El color se fija de antemano: si no, los elementos con transition-colors
+     animan el contorno desde currentColor (p. ej. blanco en botones primarios). */
+  :where(a, button, input, select, textarea, summary, [tabindex]) {
+    outline-color: var(--color-primary-500);
+  }
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 3px solid var(--color-primary-500);
     outline-offset: 2px;
