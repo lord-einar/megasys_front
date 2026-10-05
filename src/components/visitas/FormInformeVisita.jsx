@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { visitasAPI, categoriasProblemasAPI, visitaImagenesAPI, crmAPI } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
 import LoadingOverlay from '../LoadingOverlay';
 import Swal from 'sweetalert2';
 
 const FormInformeVisita = ({ visita, onClose, onSave }) => {
-    const { user } = useAuth();
     const [checklistItems, setChecklistItems] = useState([]);
     const [checklistExtra, setChecklistExtra] = useState([]);
     const [casosResueltos, setCasosResueltos] = useState([]);
@@ -243,6 +241,45 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
         }
     };
 
+    const ACCION_POR_ESTADO = { realizado: 'completar', cancelada: 'cancelar', postergado: 'postergar' };
+
+    /**
+     * Envía a Dynamics los cambios de cada tarea. Solo actúa sobre tareas que
+     * siguen abiertas en el CRM y que cambiaron respecto del informe anterior:
+     * así editar un informe no repite comentarios ni intenta cerrar tareas ya
+     * cerradas. Devuelve las tareas que fallaron para avisarle al usuario.
+     */
+    const sincronizarTareasCRM = async () => {
+        const tareasAbiertas = new Map();
+        for (const caso of casosCRM) {
+            for (const tarea of caso.tareas || []) {
+                if (tarea.estadoCodigo === 0) tareasAbiertas.set(tarea.id, { asunto: tarea.asunto, numeroCaso: caso.numeroCaso });
+            }
+        }
+        const previos = new Map((visita.informe?.casos_crm_estado || []).map(c => [c.tareaId, c]));
+        const fallos = [];
+
+        for (const [tareaId, ts] of Object.entries(tareasEstado)) {
+            const accion = ACCION_POR_ESTADO[ts.estado];
+            const tarea = tareasAbiertas.get(tareaId);
+            if (!accion || !tarea) continue;
+
+            const previo = previos.get(tareaId);
+            const observacion = (ts.observacion || '').trim();
+            const sinCambios = previo && previo.estado === ts.estado && (previo.observacion || '').trim() === observacion;
+            // Sin cambios: el comentario ya se envió. Si la tarea sigue abierta y
+            // debía cerrarse, se reintenta solo el cambio de estado.
+            if (sinCambios && accion === 'postergar') continue;
+
+            try {
+                await crmAPI.resolverTarea(tareaId, accion, sinCambios ? '' : observacion);
+            } catch (e) {
+                fallos.push({ ...tarea, mensaje: e.message || 'Error desconocido' });
+            }
+        }
+        return fallos;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -346,29 +383,27 @@ const FormInformeVisita = ({ visita, onClose, onSave }) => {
 
             await visitasAPI.marcarRealizada(visita.id, payload);
 
-            // Ejecutar acciones CRM por tarea individual
-            for (const [tareaId, ts] of Object.entries(tareasEstado)) {
-                if (ts.estado === 'realizado') {
-                    try { await crmAPI.completarTarea(tareaId); } catch (e) { console.error(`Error completando tarea ${tareaId}:`, e); }
-                } else if (ts.estado === 'cancelada') {
-                    try { await crmAPI.cancelarTarea(tareaId); } catch (e) { console.error(`Error cancelando tarea ${tareaId}:`, e); }
-                }
-                // Agregar observación como nota en CRM si hay texto
-                // Agregar observación como nota en CRM (siempre, para los 3 estados)
-                const nombreUsuario = user?.fullName || user?.name || 'Usuario';
-                const asuntoNota = ts.estado === 'realizado' ? `Tarea completada - Portal IT - ${nombreUsuario}`
-                    : ts.estado === 'cancelada' ? `Tarea cancelada - Portal IT - ${nombreUsuario}`
-                    : `Tarea postergada - Portal IT - ${nombreUsuario}`;
-                if (ts.observacion && ts.observacion.trim()) {
-                    try { await crmAPI.agregarNotaTarea(tareaId, ts.observacion.trim(), asuntoNota); } catch (e) { console.error(`Error agregando nota a tarea ${tareaId}:`, e); }
-                }
-            }
+            // Acciones en Dynamics por tarea. El backend escribe primero el
+            // comentario (con el autor de la sesión) y después completa o cancela.
+            const fallosCRM = await sincronizarTareasCRM();
 
             // Subir imágenes staged
             for (const { file } of imagenesStaged) {
                 await visitaImagenesAPI.upload(visita.id, file);
             }
             imagenesStaged.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
+
+            if (fallosCRM.length > 0) {
+                const escapar = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'El informe se guardó, pero el CRM no se actualizó del todo',
+                    html: `<p>Estas tareas no se pudieron actualizar en Dynamics. Volvé a abrir el informe y guardalo para reintentar, o actualizalas desde Soporte CRM.</p>
+                        <ul style="text-align:left;margin-top:12px">${fallosCRM.map(f =>
+                            `<li style="margin-bottom:8px"><strong>${escapar(f.numeroCaso)}</strong>: ${escapar(f.asunto)}<br/><small>${escapar(f.mensaje)}</small></li>`).join('')}</ul>`,
+                    confirmButtonText: 'Entendido'
+                });
+            }
 
             onSave();
             onClose();
