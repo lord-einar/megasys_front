@@ -668,9 +668,15 @@ export const crmAPI = {
   getCaso: (id) => apiCall(`/crm/casos/${id}`),
   completarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/completar`, { method: 'PATCH' }),
   cancelarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/cancelar`, { method: 'PATCH' }),
-  agregarNotaTarea: (tareaId, texto, asunto) => apiCall(`/crm/tareas/${tareaId}/nota`, {
+  agregarNotaTarea: (tareaId, texto) => apiCall(`/crm/tareas/${tareaId}/nota`, {
     method: 'POST',
-    body: JSON.stringify({ texto, asunto }),
+    body: JSON.stringify({ texto }),
+  }),
+  // Comentario (con autor, lo agrega el backend) y después completar/cancelar.
+  // accion: 'completar' | 'cancelar' | 'postergar'
+  resolverTarea: (tareaId, accion, observacion) => apiCall(`/crm/tareas/${tareaId}/resolver`, {
+    method: 'POST',
+    body: JSON.stringify({ accion, observacion }),
   }),
   getResumen: () => apiCall('/crm/resumen'),
   vincularSede: (sedeId, accountId) => apiCall(`/crm/sedes/${sedeId}/vincular`, {

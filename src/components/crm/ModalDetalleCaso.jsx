@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { crmAPI } from '../../services/api'
 import Swal from 'sweetalert2'
 
+// El asunto viene de Dynamics: se escapa antes de insertarlo como HTML en el diálogo
+const escaparHtml = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
 const ESTADO_BADGES = {
   0: { label: 'Activo', style: 'bg-blue-50 text-blue-700 border-blue-100' },
   1: { label: 'Resuelto', style: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
@@ -46,7 +49,7 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
   const handleCompletarTarea = async (tareaId, asunto) => {
     const result = await Swal.fire({
       title: '¿Completar tarea?',
-      html: `<p>Se marcará como completada:<br/><strong>${asunto}</strong></p>`,
+      html: `<p>Se marcará como completada:<br/><strong>${escaparHtml(asunto)}</strong></p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -68,7 +71,7 @@ export default function ModalDetalleCaso({ caso: casoInicial, onClose }) {
   const handleCancelarTarea = async (tareaId, asunto) => {
     const result = await Swal.fire({
       title: '¿Cancelar tarea?',
-      html: `<p>Se marcará como cancelada:<br/><strong>${asunto}</strong></p>`,
+      html: `<p>Se marcará como cancelada:<br/><strong>${escaparHtml(asunto)}</strong></p>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
