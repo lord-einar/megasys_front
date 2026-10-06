@@ -2,22 +2,31 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { asignacionesAPI, inventarioAPI, personalAPI, tipoArticuloAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { aFecha, getLocalDateString } from '../utils/dateUtils'
 
-export default function CelularesPage() {
+// Equipos personales: se asignan a una persona y la acompañan si cambia de sede.
+// tipoArticulo es el nombre del TipoArticulo en inventario.
+const TIPOS = {
+  celular: { label: 'Celular', plural: 'Celulares', tipoArticulo: 'Celular' },
+  notebook: { label: 'Notebook', plural: 'Notebooks', tipoArticulo: 'Notebook' }
+}
+
+export default function EquiposAsignadosPage() {
   const navigate = useNavigate()
   const [asignaciones, setAsignaciones] = useState([])
   const [loading, setLoading] = useState(true)
   const [mostrarModal, setMostrarModal] = useState(false)
   const [filtroActivos, setFiltroActivos] = useState(true)
+  const [tipo, setTipo] = useState('celular')
 
   useEffect(() => {
     cargar()
-  }, [filtroActivos])
+  }, [filtroActivos, tipo])
 
   const cargar = async () => {
     try {
       setLoading(true)
-      const params = { tipo_articulo: 'Celular' }
+      const params = { tipo_articulo: TIPOS[tipo].tipoArticulo }
       if (filtroActivos) params.activo = true
       const res = await asignacionesAPI.list(params)
       setAsignaciones(res?.data || res || [])
@@ -30,7 +39,7 @@ export default function CelularesPage() {
 
   const formatDate = (d) => {
     if (!d) return '—'
-    return new Date(d).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
+    return aFecha(d).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
   const handleCerrar = async (asig) => {
@@ -56,18 +65,28 @@ export default function CelularesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-surface-900">Celulares asignados</h1>
-            <p className="text-surface-500 mt-1">Registro de celulares entregados al personal</p>
+            <h1 className="text-3xl font-extrabold text-surface-900">Equipos asignados</h1>
+            <p className="text-surface-500 mt-1">Celulares y notebooks entregados al personal. El equipo acompaña a la persona si cambia de sede.</p>
           </div>
           <button
             onClick={() => setMostrarModal(true)}
             className="btn-primary"
           >
-            + Asignar celular
+            + Asignar {TIPOS[tipo].label.toLowerCase()}
           </button>
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.entries(TIPOS).map(([key, t]) => (
+            <button
+              key={key}
+              onClick={() => setTipo(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${tipo === key ? 'bg-surface-900 text-white' : 'bg-white text-surface-600 border border-surface-200'}`}
+            >
+              {t.plural}
+            </button>
+          ))}
+          <span className="w-px bg-surface-200 mx-1" aria-hidden="true" />
           <button
             onClick={() => setFiltroActivos(true)}
             className={`px-4 py-2 rounded-lg text-sm font-medium ${filtroActivos ? 'bg-primary-600 text-white' : 'bg-white text-surface-600 border border-surface-200'}`}
@@ -93,7 +112,8 @@ export default function CelularesPage() {
                 <thead className="bg-surface-50 border-b border-surface-200">
                   <tr>
                     <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Persona</th>
-                    <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Celular</th>
+                    <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">{TIPOS[tipo].label}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Sede</th>
                     <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Fecha asignación</th>
                     <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Fecha devolución</th>
                     <th className="px-6 py-4 text-xs font-bold text-surface-400 uppercase tracking-wider">Motivo</th>
@@ -118,6 +138,7 @@ export default function CelularesPage() {
                           <p className="text-xs text-surface-500">S/N: {a.inventario.numero_serie}</p>
                         )}
                       </td>
+                      <td className="px-6 py-4 text-sm text-surface-700">{a.inventario?.sedePrincipal?.nombre_sede || '—'}</td>
                       <td className="px-6 py-4 text-sm text-surface-700">{formatDate(a.fecha_asignacion)}</td>
                       <td className="px-6 py-4 text-sm text-surface-700">{formatDate(a.fecha_devolucion)}</td>
                       <td className="px-6 py-4 text-sm text-surface-600 max-w-xs truncate" title={a.motivo}>{a.motivo}</td>
@@ -146,7 +167,8 @@ export default function CelularesPage() {
       </div>
 
       {mostrarModal && (
-        <ModalAsignarCelular
+        <ModalAsignarEquipo
+          tipo={TIPOS[tipo]}
           onClose={() => setMostrarModal(false)}
           onSaved={() => { setMostrarModal(false); cargar() }}
         />
@@ -155,13 +177,13 @@ export default function CelularesPage() {
   )
 }
 
-function ModalAsignarCelular({ onClose, onSaved }) {
+function ModalAsignarEquipo({ tipo, onClose, onSaved }) {
   const [inventarios, setInventarios] = useState([])
   const [personales, setPersonales] = useState([])
   const [form, setForm] = useState({
     inventario_id: '',
     personal_id: '',
-    fecha_asignacion: new Date().toISOString().slice(0, 10),
+    fecha_asignacion: getLocalDateString(),
     motivo: ''
   })
   const [loading, setLoading] = useState(false)
@@ -176,10 +198,13 @@ function ModalAsignarCelular({ onClose, onSaved }) {
       setCargandoListas(true)
       const tiposRes = await tipoArticuloAPI.list({ limit: 100 })
       const tipos = tiposRes?.data || []
-      const tipoCelular = tipos.find(t => t.nombre === 'Celular')
+      const tipoArticulo = tipos.find(t => t.nombre === tipo.tipoArticulo)
+      if (!tipoArticulo) {
+        setInventarios([])
+        return
+      }
 
-      const invParams = { limit: 500, estado: 'disponible' }
-      if (tipoCelular) invParams.tipo_articulo_id = tipoCelular.id
+      const invParams = { limit: 500, estado: 'disponible', tipo_articulo_id: tipoArticulo.id }
 
       const [invRes, perRes] = await Promise.all([
         inventarioAPI.list(invParams),
@@ -197,13 +222,13 @@ function ModalAsignarCelular({ onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.inventario_id || !form.personal_id || !form.motivo.trim()) {
-      Swal.fire('Datos incompletos', 'Seleccioná celular, persona y completá el motivo', 'warning')
+      Swal.fire('Datos incompletos', `Seleccioná ${tipo.label.toLowerCase()}, persona y completá el motivo`, 'warning')
       return
     }
     try {
       setLoading(true)
       await asignacionesAPI.crear(form)
-      Swal.fire('Éxito', 'Celular asignado correctamente', 'success')
+      Swal.fire('Éxito', `${tipo.label} asignado correctamente. Queda ubicado en la sede de la persona.`, 'success')
       onSaved()
     } catch (err) {
       Swal.fire('Error', err.message || 'No se pudo asignar', 'error')
@@ -216,7 +241,7 @@ function ModalAsignarCelular({ onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-surface-900">Asignar celular</h2>
+          <h2 className="text-xl font-bold text-surface-900">Asignar {tipo.label.toLowerCase()}</h2>
           <button onClick={onClose} className="text-surface-400 hover:text-surface-600">✕</button>
         </div>
 
@@ -225,7 +250,7 @@ function ModalAsignarCelular({ onClose, onSaved }) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-surface-700 mb-1">Celular</label>
+              <label className="block text-sm font-bold text-surface-700 mb-1">{tipo.label}</label>
               <select
                 value={form.inventario_id}
                 onChange={e => setForm({ ...form, inventario_id: e.target.value })}
@@ -235,12 +260,12 @@ function ModalAsignarCelular({ onClose, onSaved }) {
                 <option value="">Seleccionar...</option>
                 {inventarios.map(i => (
                   <option key={i.id} value={i.id}>
-                    {i.marca} {i.modelo} {i.numero_serie ? `— S/N: ${i.numero_serie}` : ''}
+                    {i.marca} {i.modelo} {i.numero_serie ? `— S/N: ${i.numero_serie}` : ''} {i.sedePrincipal?.nombre_sede ? `(${i.sedePrincipal.nombre_sede})` : ''}
                   </option>
                 ))}
               </select>
               {inventarios.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">No hay celulares disponibles en inventario. Cargá uno en /inventario/crear con tipo "Celular".</p>
+                <p className="text-xs text-amber-600 mt-1">No hay {tipo.plural.toLowerCase()} disponibles en inventario. Cargá uno en /inventario/crear con tipo "{tipo.tipoArticulo}".</p>
               )}
             </div>
 

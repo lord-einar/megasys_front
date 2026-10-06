@@ -706,6 +706,18 @@ export const asignacionesAPI = {
     method: 'PATCH',
     body: JSON.stringify(data)
   }),
+  trasladoPreview: (personalId, sedeId) =>
+    apiCall(`/asignaciones/traslado-preview?${new URLSearchParams({ personal_id: personalId, sede_id: sedeId })}`),
+}
+
+export const novedadesPersonalAPI = {
+  resumen: () => apiCall('/novedades-personal/resumen'),
+  list: (estado = 'pendiente') => apiCall(`/novedades-personal?estado=${estado}`),
+  confirmar: (id) => apiCall(`/novedades-personal/${id}/confirmar`, { method: 'POST' }),
+  descartar: (id, observaciones) => apiCall(`/novedades-personal/${id}/descartar`, {
+    method: 'POST',
+    body: JSON.stringify({ observaciones })
+  }),
 }
 
 // Catálogo de equipos aprobados (celulares y notebooks)

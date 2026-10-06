@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { remitosAPI, personalAPI, sedesAPI, tipoArticuloAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
+import { getLocalDateString } from '../utils/dateUtils'
 
 function RemitoDetailPage() {
   const navigate = useNavigate()
@@ -1098,7 +1099,7 @@ function RemitoDetailPage() {
                     type="date"
                     value={editingDate}
                     onChange={(e) => setEditingDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getLocalDateString()}
                     className="w-full px-4 py-2 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                   />
                 </div>
@@ -1292,7 +1293,7 @@ function RemitoDetailPage() {
                               ...prev,
                               [detalle.id]: { ...prev[detalle.id], nueva_fecha: e.target.value }
                             }))}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={getLocalDateString()}
                             className="flex-1 px-3 py-1.5 border border-surface-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                           />
                         </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { solicitudesCompraAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { Laptop, Smartphone, Monitor, Search, ArrowLeft, User as UserIcon, Building2, History, Plus, Pencil } from 'lucide-react'
+import { aFecha } from '../utils/dateUtils'
 
 const TIPO_LABELS = {
   notebook: 'Notebooks',
@@ -359,7 +360,7 @@ function FilaEquipo({ item, mostrarImei, onClickPersonal, onClickSede, onHistori
             <p className="line-clamp-2">{item.asignacion_actual.motivo}</p>
             {item.asignacion_actual.fecha_asignacion && (
               <p className="text-xs text-surface-400 mt-0.5">
-                Desde {new Date(item.asignacion_actual.fecha_asignacion).toLocaleDateString('es-AR')}
+                Desde {aFecha(item.asignacion_actual.fecha_asignacion).toLocaleDateString('es-AR')}
               </p>
             )}
           </div>

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import LoginLoadingScreen from './components/LoginLoadingScreen'
+import NovedadesPersonalBanner from './components/NovedadesPersonalBanner'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './hooks/usePermissions'
 
@@ -30,7 +31,8 @@ const InventarioDetailPage = lazy(() => import('./pages/InventarioDetailPage'))
 const RemitoListPage = lazy(() => import('./pages/RemitoListPage'))
 const CreateRemitoPage = lazy(() => import('./pages/CreateRemitoPage'))
 const RemitoDetailPage = lazy(() => import('./pages/RemitoDetailPage'))
-const CelularesPage = lazy(() => import('./pages/CelularesPage'))
+const EquiposAsignadosPage = lazy(() => import('./pages/EquiposAsignadosPage'))
+const NovedadesPersonalPage = lazy(() => import('./pages/NovedadesPersonalPage'))
 const ConfirmacionRecepcionPage = lazy(() => import('./pages/ConfirmacionRecepcionPage'))
 const VisitasPage = lazy(() => import('./pages/VisitasPage'))
 const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
@@ -79,7 +81,7 @@ function CargandoPantalla() {
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024)
   const { isAuthenticated, loading } = useAuth()
-  const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura } = usePermissions()
+  const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura, hasRole } = usePermissions()
 
   if (loading) {
     return (
@@ -139,6 +141,9 @@ function App() {
                 sidebarOpen={sidebarOpen}
               />
 
+              {/* Aviso de novedades de movimiento de personal (solo super_admin) */}
+              {hasRole('super_admin') && <NovedadesPersonalBanner />}
+
               {/* Content Area */}
               <main id="contenido" tabIndex={-1} className="flex-1 overflow-y-auto overscroll-contain focus:outline-none">
                 <Suspense fallback={<CargandoPantalla />}>
@@ -171,6 +176,7 @@ function App() {
 
                   {/* Personal routes - más específicas primero */}
                   <Route path="/personal/crear" element={<NuevoPersonal />} />
+                  <Route path="/personal/novedades" element={hasRole('super_admin') ? <NovedadesPersonalPage /> : <Navigate to="/personal" replace />} />
                   <Route path="/personal/:id/asignar-sedes" element={<AsignarSedesPage />} />
                   <Route path="/personal/:id/editar" element={<EditPersonal />} />
                   <Route path="/personal/:id" element={<PersonalDetailPage />} />
@@ -189,8 +195,9 @@ function App() {
                   <Route path="/remitos/:id" element={<RemitoDetailPage />} />
                   <Route path="/remitos" element={<RemitoListPage />} />
 
-                  {/* Celulares / Asignaciones de inventario a personal */}
-                  <Route path="/celulares" element={<CelularesPage />} />
+                  {/* Celulares y notebooks asignados al personal */}
+                  <Route path="/equipos-asignados" element={<EquiposAsignadosPage />} />
+                  <Route path="/celulares" element={<Navigate to="/equipos-asignados" replace />} />
 
                   {/* CRM / Soporte routes */}
                   <Route path="/soporte" element={<CasosSoportePage />} />

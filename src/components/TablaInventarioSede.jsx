@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { aFecha } from '../utils/dateUtils'
 
 export default function TablaInventarioSede({ articulos = [], loading = false }) {
   const navigate = useNavigate()
@@ -176,7 +177,7 @@ export default function TablaInventarioSede({ articulos = [], loading = false })
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600">
                     {articulo.fecha_adquisicion
-                      ? new Date(articulo.fecha_adquisicion).toLocaleDateString('es-AR')
+                      ? aFecha(articulo.fecha_adquisicion).toLocaleDateString('es-AR')
                       : '-'
                     }
                   </td>

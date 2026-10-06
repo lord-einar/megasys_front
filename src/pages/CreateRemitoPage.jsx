@@ -4,6 +4,7 @@ import { personalAPI, sedesAPI, tipoArticuloAPI, remitosAPI } from '../services/
 import { usePermissions } from '../hooks/usePermissions'
 import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
+import { aFecha, getLocalDateString } from '../utils/dateUtils'
 
 function CreateRemitoPage() {
   const navigate = useNavigate()
@@ -33,7 +34,7 @@ function CreateRemitoPage() {
     tecnico_id: '',
     sede_origen_id: '',
     sede_destino_id: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: getLocalDateString(),
     observaciones: '',
     articulos: []
   })
@@ -543,7 +544,7 @@ function CreateRemitoPage() {
                                 className={`text-xs font-medium px-2 py-1 rounded border flex items-center gap-1.5 transition-colors ${art.fecha_devolucion ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 animate-pulse'}`}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                {art.fecha_devolucion ? new Date(art.fecha_devolucion).toLocaleDateString('es-AR') : 'Definir Fecha'}
+                                {art.fecha_devolucion ? aFecha(art.fecha_devolucion).toLocaleDateString('es-AR') : 'Definir Fecha'}
                               </button>
                             )}
                           </div>
@@ -673,7 +674,7 @@ function CreateRemitoPage() {
 
             <input
               type="date"
-              min={new Date().toISOString().split('T')[0]}
+              min={getLocalDateString()}
               defaultValue={formData.articulos[selectedArticuloIndex]?.fecha_devolucion || ''}
               onChange={(e) => setFechaDevolucion(e.target.value)}
               className="w-full px-4 py-3 border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-surface-900 font-medium mb-6"

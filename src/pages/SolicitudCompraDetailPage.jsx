@@ -5,6 +5,7 @@ import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import StatusBadge from '../components/solicitudesCompra/StatusBadge'
 import TimelineSolicitud from '../components/solicitudesCompra/TimelineSolicitud'
 import { usePermissions } from '../hooks/usePermissions'
+import { getLocalDateString } from '../utils/dateUtils'
 
 export default function SolicitudCompraDetailPage() {
   const { id } = useParams()
@@ -26,7 +27,7 @@ export default function SolicitudCompraDetailPage() {
   const [sistemas, setSistemas] = useState({
     imei: '',
     numero_serie: '',
-    fecha_adquisicion: new Date().toISOString().slice(0, 10),
+    fecha_adquisicion: getLocalDateString(),
     valor_adquisicion: '',
     observacion: ''
   })
