@@ -21,7 +21,8 @@ function Sidebar({ isOpen, onNavigate, onClose, onExpand }) {
   const {
     hasLegacyAccess,
     canViewSolicitudesAsignacion,
-    hasInfraestructura
+    hasInfraestructura,
+    hasRole
   } = usePermissions()
   const [expandedMenu, setExpandedMenu] = useState(null)
   // Debajo de 1024px la barra expandida se superpone al contenido (no lo empuja)
@@ -105,6 +106,7 @@ function Sidebar({ isOpen, onNavigate, onClose, onExpand }) {
         { label: 'Listar Personal', href: '/personal' },
         { label: 'Nuevo Personal', href: '/personal/crear' },
         { label: 'Configuración de Roles', href: '/configuracion/roles' },
+        ...(hasRole('super_admin') ? [{ label: 'Novedades de movimiento', href: '/personal/novedades' }] : []),
       ],
     },
     {
@@ -129,10 +131,10 @@ function Sidebar({ isOpen, onNavigate, onClose, onExpand }) {
       ],
     },
     {
-      label: 'Celulares',
+      label: 'Equipos asignados',
       visible: hasLegacyAccess,
       icon: <Smartphone className="w-5 h-5" strokeWidth={2} />,
-      href: '/celulares',
+      href: '/equipos-asignados',
     },
     {
       label: 'Asignación de equipos',

@@ -3,13 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { personalAPI, sedesAPI, rolesAPI } from '../services/api'
+import { personalAPI, sedesAPI, rolesAPI, asignacionesAPI } from '../services/api'
 import { parseApiError, getFieldError, hasFieldError } from '../services/errorHandler'
 import { usePermissions } from '../hooks/usePermissions'
 import { usePermissionError } from '../hooks/usePermissionError'
 import Swal from 'sweetalert2'
 import LoadingOverlay from '../components/LoadingOverlay'
 import FieldError from '../components/FieldError'
+
+const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+))
 
 // Schema de validación con Yup
 const personalSchema = yup.object().shape({
@@ -70,6 +74,10 @@ export default function EditPersonal() {
   const [sedesFilter, setSedesFilter] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [filteredSedes, setFilteredSedes] = useState([])
+  // Sede principal guardada y la elegida en el formulario. Al cambiar la
+  // principal, el celular y la notebook asignados se trasladan con la persona.
+  const [sedePrincipalActual, setSedePrincipalActual] = useState(null)
+  const [sedePrincipal, setSedePrincipal] = useState('')
 
   const {
     register,
@@ -138,6 +146,8 @@ export default function EditPersonal() {
           rol_id: personal.rol?.id || '',
           color: personal.color || '#007bff'
         })
+        setSedePrincipalActual(personal.sede_id || null)
+        setSedePrincipal(personal.sede_id || '')
 
       } catch (err) {
         console.error('Error cargando datos:', err)
@@ -163,28 +173,76 @@ export default function EditPersonal() {
     }
   }, [sedesFilter, sedes])
 
+  // Avisa qué equipos se moverán si cambia la sede principal. Devuelve false si
+  // el usuario cancela o si hay un bloqueo (ej: remito en tránsito).
+  const confirmarTrasladoEquipos = async (sedeNuevaId) => {
+    const preview = (await asignacionesAPI.trasladoPreview(id, sedeNuevaId))?.data
+    if (!preview || preview.equipos.length === 0) return true
+
+    const nombreSede = sedes.find(s => s.id === sedeNuevaId)?.nombre_sede || 'la sede nueva'
+    if (!preview.puedeTrasladar) {
+      await Swal.fire({
+        title: 'No se puede cambiar la sede',
+        html: [...new Set(preview.bloqueos.map(b => b.motivo))].map(m => `<p>${escaparHtml(m)}</p>`).join(''),
+        icon: 'warning',
+        customClass: { popup: 'rounded-2xl' }
+      })
+      return false
+    }
+
+    const ACCIONES = {
+      mover: `se mueve a ${nombreSede}`,
+      redirigir_remito: `se redirige su remito a ${nombreSede}`,
+      sin_cambios: 'ya está en esa sede'
+    }
+    const lista = preview.equipos
+      .map(e => `<li><b>${escaparHtml(e.descripcion)}</b> — ${escaparHtml(ACCIONES[e.accion] || e.accion)}</li>`)
+      .join('')
+    const result = await Swal.fire({
+      title: 'Cambio de sede principal',
+      html: `<p>Los equipos asignados acompañan a la persona:</p><ul style="text-align:left;margin-top:8px">${lista}</ul>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar y mover equipos',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'rounded-2xl' }
+    })
+    return result.isConfirmed
+  }
+
   const onSubmit = async (data) => {
     try {
       setServerFieldErrors({})
       setIsLoading(true)
+
+      // La sede principal va primera: el backend toma sedes[0] como principal
+      const principal = data.sedes.includes(sedePrincipal) ? sedePrincipal : data.sedes[0]
+      const sedesOrdenadas = [principal, ...data.sedes.filter(s => s !== principal)]
+
+      if (principal !== sedePrincipalActual && !(await confirmarTrasladoEquipos(principal))) {
+        return
+      }
 
       const datosPersonal = {
         nombre: data.nombre,
         apellido: data.apellido,
         email: data.email,
         telefono: data.telefono || null,
-        sedes: data.sedes,
+        sedes: sedesOrdenadas,
         rol_id: data.rol_id,
         color: data.color || '#007bff'
       }
 
-      await personalAPI.update(id, datosPersonal)
+      const response = await personalAPI.update(id, datosPersonal)
+      const trasladados = response?.data?.equiposTrasladados || []
 
       await Swal.fire({
         title: 'Personal Actualizado',
-        text: 'La información ha sido guardada correctamente.',
+        text: trasladados.length > 0
+          ? `La información ha sido guardada. ${trasladados.length} equipo(s)/remito(s) se actualizaron a la sede nueva.`
+          : 'La información ha sido guardada correctamente.',
         icon: 'success',
-        timer: 1500,
+        timer: trasladados.length > 0 ? 3000 : 1500,
         timerProgressBar: true,
         customClass: {
           popup: 'rounded-2xl',
@@ -445,6 +503,27 @@ export default function EditPersonal() {
                   serverError={getFieldError('sedes', serverFieldErrors)}
                   clientError={errors.sedes}
                 />
+
+                {selectedSedes.length > 1 && (
+                  <div>
+                    <label htmlFor="sede-principal" className="block text-sm font-semibold text-surface-700 mb-1">
+                      Sede principal
+                    </label>
+                    <select
+                      id="sede-principal"
+                      value={selectedSedes.includes(sedePrincipal) ? sedePrincipal : selectedSedes[0]}
+                      onChange={(e) => setSedePrincipal(e.target.value)}
+                      className="w-full px-3 py-2 bg-surface-50 border border-surface-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
+                    >
+                      {selectedSedes.map(sedeId => (
+                        <option key={sedeId} value={sedeId}>
+                          {sedes.find(s => s.id === sedeId)?.nombre_sede || sedeId}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-surface-500 mt-1">El celular y la notebook asignados se ubican en la sede principal.</p>
+                  </div>
+                )}
               </div>
             </div>
 

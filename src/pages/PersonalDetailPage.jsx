@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { personalAPI, authAPI, asignacionesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import HistorialEquipos from '../components/solicitudesCompra/HistorialEquipos'
+import { CATEGORIA_TIPO_LABELS, categoriaTipoDeArticulo } from '../utils/tipoEquipo'
 
 export default function PersonalDetailPage() {
   const { id } = useParams()
@@ -13,6 +14,10 @@ export default function PersonalDetailPage() {
   const [activeTab, setActiveTab] = useState('general')
   const [currentUser, setCurrentUser] = useState(null)
   const [asignaciones, setAsignaciones] = useState([])
+  // Celulares y notebooks: los equipos que acompañan a la persona
+  const equiposPersonales = asignaciones.filter(a =>
+    ['celular', 'notebook'].includes(categoriaTipoDeArticulo(a.inventario?.tipoArticulo?.nombre))
+  )
   const [editandoFechaId, setEditandoFechaId] = useState(null)
   const [nuevaFecha, setNuevaFecha] = useState('')
   const { canUpdate, isSuperAdmin, canViewSolicitudesCompra } = usePermissions()
@@ -192,9 +197,9 @@ export default function PersonalDetailPage() {
                 label="Estadísticas"
               />
               <TabButton
-                active={activeTab === 'celulares'}
-                onClick={() => setActiveTab('celulares')}
-                label={`Celulares (${asignaciones.filter(a => a.inventario?.tipoArticulo?.nombre === 'Celular').length})`}
+                active={activeTab === 'asignados'}
+                onClick={() => setActiveTab('asignados')}
+                label={`Equipos asignados (${equiposPersonales.filter(a => a.activo).length})`}
               />
               {canViewSolicitudesCompra && (
                 <TabButton
@@ -324,9 +329,9 @@ export default function PersonalDetailPage() {
                 <HistorialEquipos scope="personal" id={id} showHeader={false} />
               )}
 
-              {activeTab === 'celulares' && (
-                <CelularesTab
-                  asignaciones={asignaciones.filter(a => a.inventario?.tipoArticulo?.nombre === 'Celular')}
+              {activeTab === 'asignados' && (
+                <EquiposAsignadosTab
+                  asignaciones={equiposPersonales}
                   isSuperAdmin={isSuperAdmin}
                   editandoFechaId={editandoFechaId}
                   nuevaFecha={nuevaFecha}
@@ -402,12 +407,12 @@ function StatBox({ label, value, color }) {
   )
 }
 
-function CelularesTab({ asignaciones, isSuperAdmin, editandoFechaId, nuevaFecha, onIniciarEditFecha, onCambiarFecha, onCancelarEdit, onGuardarFecha, formatDate }) {
+function EquiposAsignadosTab({ asignaciones, isSuperAdmin, editandoFechaId, nuevaFecha, onIniciarEditFecha, onCambiarFecha, onCancelarEdit, onGuardarFecha, formatDate }) {
   if (!asignaciones || asignaciones.length === 0) {
     return (
       <div className="text-center py-12 bg-surface-50 rounded-xl border border-dashed border-surface-200">
-        <p className="text-surface-500 font-medium">Sin celulares asignados</p>
-        <p className="text-surface-400 text-sm mt-1">Todavía no se registró ninguna entrega de celular a esta persona.</p>
+        <p className="text-surface-500 font-medium">Sin equipos asignados</p>
+        <p className="text-surface-400 text-sm mt-1">Todavía no se registró ninguna entrega de celular o notebook a esta persona.</p>
       </div>
     )
   }
@@ -419,7 +424,8 @@ function CelularesTab({ asignaciones, isSuperAdmin, editandoFechaId, nuevaFecha,
     <div className="space-y-8">
       {activos.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wide mb-4">Celular actual</h3>
+          <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wide mb-1">Equipos actuales</h3>
+          <p className="text-xs text-surface-500 mb-4">Acompañan a la persona: si cambia su sede principal, se trasladan con ella.</p>
           <div className="grid grid-cols-1 gap-4">
             {activos.map(a => (
               <AsignacionCard
@@ -471,11 +477,17 @@ function AsignacionCard({ asignacion, isSuperAdmin, editandoFechaId, nuevaFecha,
     <div className={`p-5 rounded-xl border ${highlight ? 'border-primary-200 bg-primary-50/30' : 'border-surface-200 bg-surface-50'}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-surface-400">
+            {CATEGORIA_TIPO_LABELS[categoriaTipoDeArticulo(asignacion.inventario?.tipoArticulo?.nombre)] || asignacion.inventario?.tipoArticulo?.nombre}
+          </p>
           <p className="text-lg font-bold text-surface-900">
             {asignacion.inventario?.marca} {asignacion.inventario?.modelo}
           </p>
           {asignacion.inventario?.numero_serie && (
             <p className="text-xs text-surface-500 mt-1">S/N: {asignacion.inventario.numero_serie}</p>
+          )}
+          {asignacion.activo && asignacion.inventario?.sedePrincipal && (
+            <p className="text-xs text-surface-500 mt-1">Ubicado en: {asignacion.inventario.sedePrincipal.nombre_sede}</p>
           )}
         </div>
         <div>
