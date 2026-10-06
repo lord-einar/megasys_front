@@ -142,7 +142,9 @@ export default function EditPersonal() {
           apellido: personal.apellido || '',
           email: personal.email || '',
           telefono: personal.telefono || '',
-          sedes: personal.sedesAsignadas?.map(s => s.sede_id) || [],
+          // La sede principal puede no figurar entre las asignadas: se incluye
+          // para que guardar el formulario no la cambie sin querer.
+          sedes: [...new Set([personal.sede_id, ...(personal.sedesAsignadas?.map(s => s.sede_id) || [])].filter(Boolean))],
           rol_id: personal.rol?.id || '',
           color: personal.color || '#007bff'
         })
