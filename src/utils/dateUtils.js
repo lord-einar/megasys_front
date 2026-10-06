@@ -75,3 +75,17 @@ export const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
+
+/**
+ * Convierte el valor que llega de la API a Date sin correr el día.
+ * Las fechas puras "YYYY-MM-DD" (columnas DATEONLY) se interpretan en hora local:
+ * new Date("2026-10-06") las toma como UTC y en Argentina muestra el día anterior.
+ *
+ * @param {string|Date} valor
+ * @returns {Date|null}
+ */
+export const aFecha = (valor) => {
+  if (!valor) return null;
+  if (valor instanceof Date) return valor;
+  return /^\d{4}-\d{2}-\d{2}$/.test(valor) ? parseLocalDate(valor) : new Date(valor);
+};

@@ -4,6 +4,7 @@ import { personalAPI, authAPI, asignacionesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import HistorialEquipos from '../components/solicitudesCompra/HistorialEquipos'
 import { CATEGORIA_TIPO_LABELS, categoriaTipoDeArticulo } from '../utils/tipoEquipo'
+import { aFecha } from '../utils/dateUtils'
 
 export default function PersonalDetailPage() {
   const { id } = useParams()
@@ -59,7 +60,7 @@ export default function PersonalDetailPage() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('es-AR', {
+    return aFecha(dateString).toLocaleDateString('es-AR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

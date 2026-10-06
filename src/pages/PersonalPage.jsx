@@ -7,6 +7,7 @@ import { useListData } from '../hooks/useListData'
 import { usePermissionError } from '../hooks/usePermissionError'
 import { normalizeStatsResponse } from '../utils/apiResponseNormalizer'
 import { getPaginationNumbers, getRecordRange } from '../utils/paginationHelper'
+import { getLocalDateString } from '../utils/dateUtils'
 
 export default function PersonalPage() {
   const navigate = useNavigate()
@@ -81,7 +82,7 @@ export default function PersonalPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `personal_${new Date().toISOString().split('T')[0]}.csv`
+      a.download = `personal_${getLocalDateString()}.csv`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)

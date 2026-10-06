@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { asignacionesAPI, inventarioAPI, personalAPI, tipoArticuloAPI } from '../services/api'
 import Swal from 'sweetalert2'
+import { aFecha, getLocalDateString } from '../utils/dateUtils'
 
 // Equipos personales: se asignan a una persona y la acompañan si cambia de sede.
 // tipoArticulo es el nombre del TipoArticulo en inventario.
@@ -38,7 +39,7 @@ export default function EquiposAsignadosPage() {
 
   const formatDate = (d) => {
     if (!d) return '—'
-    return new Date(d).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
+    return aFecha(d).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
   }
 
   const handleCerrar = async (asig) => {
@@ -182,7 +183,7 @@ function ModalAsignarEquipo({ tipo, onClose, onSaved }) {
   const [form, setForm] = useState({
     inventario_id: '',
     personal_id: '',
-    fecha_asignacion: new Date().toISOString().slice(0, 10),
+    fecha_asignacion: getLocalDateString(),
     motivo: ''
   })
   const [loading, setLoading] = useState(false)

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { aFecha } from '../utils/dateUtils'
 import { inventarioAPI } from '../services/api'
 import Swal from 'sweetalert2'
 
@@ -24,7 +25,7 @@ function getEstadoLabel(estado) {
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleDateString('es-AR', {
+  return aFecha(dateString).toLocaleDateString('es-AR', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'

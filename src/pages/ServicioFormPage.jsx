@@ -5,6 +5,7 @@ import { serviciosAPI, proveedoresAPI, tiposServicioAPI, sedesAPI, equiposServic
 import { usePermissions } from '../hooks/usePermissions'
 import { normalizeApiResponse, normalizeItemResponse } from '../utils/apiResponseNormalizer'
 import Swal from 'sweetalert2'
+import { getLocalDateString } from '../utils/dateUtils'
 
 export default function ServicioFormPage() {
   const { id } = useParams()
@@ -154,7 +155,7 @@ export default function ServicioFormPage() {
           const promesasAsignacion = sedesSeleccionadas.map(sedeId =>
             sedesAPI.assignService(sedeId, {
               servicio_id: nuevoServicioId,
-              fecha_contratacion: new Date().toISOString().split('T')[0],
+              fecha_contratacion: getLocalDateString(),
               activo: true
             }).catch(err => {
               console.error(`Error asignando servicio a sede ${sedeId}:`, err)
