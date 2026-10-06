@@ -4,6 +4,7 @@ import { inventarioAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import Swal from 'sweetalert2'
 import { usePermissions } from '../hooks/usePermissions'
 import GarantiaCard from '../components/GarantiaCard'
+import { aFecha } from '../utils/dateUtils'
 
 export default function InventarioDetailPage() {
   const navigate = useNavigate()
@@ -181,7 +182,7 @@ export default function InventarioDetailPage() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('es-AR', {
+    return aFecha(dateString).toLocaleDateString('es-AR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -192,7 +193,7 @@ export default function InventarioDetailPage() {
 
   const formatDateSimple = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('es-AR', {
+    return aFecha(dateString).toLocaleDateString('es-AR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -603,7 +604,6 @@ export default function InventarioDetailPage() {
                       <option value="en_uso">En Uso</option>
                       <option value="mantenimiento">Mantenimiento</option>
                       <option value="dado_de_baja">Dado de Baja</option>
-                      <option value="en_prestamo">En Préstamo</option>
                       <option value="producto_proveedor">Producto de Proveedor</option>
                     </select>
                   </div>
