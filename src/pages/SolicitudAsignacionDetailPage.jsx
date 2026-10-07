@@ -5,6 +5,7 @@ import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsignacion'
 import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
+import SelectInventarioAsignado from '../components/solicitudesCompra/SelectInventarioAsignado'
 import { usePermissions } from '../hooks/usePermissions'
 import { comprasPuedeAsignarEquipo, esCompraPendiente, pendienteDeEntrega, puedeGenerarRemito } from '../utils/solicitudAsignacionPolicy'
 import { categoriaTipoDeSolicitud } from '../utils/tipoEquipo'
@@ -140,6 +141,7 @@ export default function SolicitudAsignacionDetailPage() {
       motivo: solicitud.motivo,
       observacion_solicitante: solicitud.observacion_solicitante || '',
       beneficiario_personal_id: solicitud.beneficiario_personal_id || solicitud.beneficiario?.id || '',
+      inventario_anterior_id: solicitud.inventario_anterior_id || '',
       denuncia_presentada: solicitud.denuncia_presentada === true ? 'true'
         : solicitud.denuncia_presentada === false ? 'false' : '',
       comentario_edicion: ''
@@ -156,11 +158,16 @@ export default function SolicitudAsignacionDetailPage() {
       if (!editForm.beneficiario_personal_id) {
         throw new Error('Seleccioná un beneficiario de la lista')
       }
+      const editEsReposicion = MOTIVOS_REPOSICION.includes(editForm.motivo)
+      if (editEsReposicion && !editForm.inventario_anterior_id) {
+        throw new Error('Seleccioná el equipo actual que se va a reponer')
+      }
       const payload = {
         tipo_equipo: editForm.tipo_equipo,
         motivo: editForm.motivo,
         observacion_solicitante: editForm.observacion_solicitante,
         beneficiario_personal_id: editForm.beneficiario_personal_id,
+        inventario_anterior_id: editEsReposicion ? editForm.inventario_anterior_id : null,
         comentario_edicion: editForm.comentario_edicion || null
       }
       if (editForm.motivo === 'reposicion_robo') {
@@ -312,6 +319,18 @@ export default function SolicitudAsignacionDetailPage() {
                     disabled={guardandoEdicion}
                   />
                 </div>
+                {MOTIVOS_REPOSICION.includes(editForm.motivo) && (
+                  <div className="md:col-span-2">
+                    <label className="label-base block mb-1">Equipo actual a reponer</label>
+                    <SelectInventarioAsignado
+                      personalId={editForm.beneficiario_personal_id}
+                      tipoEquipo={editForm.tipo_equipo}
+                      value={editForm.inventario_anterior_id}
+                      onChange={(invId) => setEdit('inventario_anterior_id', invId || '')}
+                      disabled={guardandoEdicion}
+                    />
+                  </div>
+                )}
                 {editForm.motivo === 'reposicion_robo' && (
                   <div>
                     <label className="label-base block mb-1">Denuncia presentada</label>
