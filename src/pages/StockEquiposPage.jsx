@@ -69,10 +69,6 @@ export default function StockEquiposPage() {
     }
   }
 
-  if (!canView) {
-    return <div className="p-8 text-center"><p className="text-surface-500">No tenés permisos para ver esta sección.</p></div>
-  }
-
   const esEntregado = (item) => item.titular_tipo === 'persona' || item.titular_tipo === 'sede'
 
   const itemsFiltrados = data.items.filter(item => {
@@ -107,6 +103,11 @@ export default function StockEquiposPage() {
     })
     return Object.values(map).sort((a, b) => b.count - a.count)
   }, [data.items])
+
+  // Después de todos los hooks: React exige el mismo orden de hooks en cada render.
+  if (!canView) {
+    return <div className="p-8 text-center"><p className="text-surface-500">No tenés permisos para ver esta sección.</p></div>
+  }
 
   return (
     <div className="page-shell">

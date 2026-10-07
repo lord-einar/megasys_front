@@ -87,7 +87,6 @@ export default function EditArticulo() {
       sede_id: '',
       fecha_adquisicion: null,
       valor_adquisicion: '',
-      valor_adquisicion: '',
       observaciones: '',
       procesador: '',
       memoria: '',
@@ -170,7 +169,6 @@ export default function EditArticulo() {
           sede_id: item.sede_id || '',
           // Handle date correctly for input type="date"
           fecha_adquisicion: item.fecha_adquisicion ? item.fecha_adquisicion.split('T')[0] : null,
-          valor_adquisicion: item.valor_adquisicion || '',
           valor_adquisicion: item.valor_adquisicion || '',
           observaciones: item.observaciones || '',
           procesador: item.procesador || '',
