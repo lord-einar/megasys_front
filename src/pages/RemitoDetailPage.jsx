@@ -13,9 +13,6 @@ function RemitoDetailPage() {
   const [error, setError] = useState(null)
   const [changingState, setChangingState] = useState(false)
   const [newState, setNewState] = useState('')
-  const [selectedDetalles, setSelectedDetalles] = useState([])
-  const [showDevolucionModal, setShowDevolucionModal] = useState(false)
-  const [devolviendoArticulos, setDevolviendoArticulos] = useState(false)
   const [editingLoanId, setEditingLoanId] = useState(null)
   const [editingDate, setEditingDate] = useState('')
   const [markingReturned, setMarkingReturned] = useState(false)
@@ -334,58 +331,6 @@ function RemitoDetailPage() {
     }
   }
 
-  const handleSeleccionarDetalle = (detalleId) => {
-    if (selectedDetalles.includes(detalleId)) {
-      setSelectedDetalles(selectedDetalles.filter(id => id !== detalleId))
-    } else {
-      setSelectedDetalles([...selectedDetalles, detalleId])
-    }
-  }
-
-  const handleGenerarDevolucion = async () => {
-    if (selectedDetalles.length === 0) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Selecciona al menos un artículo para devolver',
-        icon: 'error',
-        customClass: { popup: 'rounded-2xl' }
-      })
-      return
-    }
-
-    try {
-      setDevolviendoArticulos(true)
-      const response = await remitosAPI.devolver(id, selectedDetalles)
-
-      const remitoDevolucion = response.data
-      Swal.fire({
-        title: 'Éxito',
-        html: `Remito de devolución <strong>${remitoDevolucion.numero_remito}</strong> creado correctamente`,
-        icon: 'success',
-        customClass: { popup: 'rounded-2xl' }
-      })
-
-      setShowDevolucionModal(false)
-      setSelectedDetalles([])
-      await cargarDetalle()
-    } catch (err) {
-      Swal.fire({
-        title: 'Error',
-        text: err.message || 'Error al generar remito de devolución',
-        icon: 'error',
-        customClass: { popup: 'rounded-2xl' }
-      })
-    } finally {
-      setDevolviendoArticulos(false)
-    }
-  }
-
-  const canGenerarDevolucion = () => {
-    if (!remito) return false
-    // Solo se pueden devolver artículos de remitos en estado 'en_transito'
-    return remito.estado === 'en_transito' && remito.es_prestamo
-  }
-
   const getPrestamosNoDevueltos = () => {
     if (!remito || !remito.detalles) return []
     return remito.detalles.filter(d => d.es_prestamo && !d.devuelto)
@@ -430,7 +375,7 @@ function RemitoDetailPage() {
   const handleMarcarDevuelto = async (detalleId) => {
     const confirm = await Swal.fire({
       title: '¿Marcar como devuelto?',
-      text: 'Esta acción marcará el artículo como devuelto',
+      text: 'El artículo vuelve a la sede de origen del remito y queda disponible.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, devolver',
@@ -447,8 +392,7 @@ function RemitoDetailPage() {
 
     try {
       setMarkingReturned(true)
-      // Usar el endpoint de devolver con solo este detalle
-      await remitosAPI.devolver(id, [detalleId])
+      await remitosAPI.procesarDevolucion(id, [{ detalle_id: detalleId, accion: 'devolver' }])
       Swal.fire({
         title: 'Éxito',
         text: 'Artículo marcado como devuelto',
@@ -910,17 +854,6 @@ function RemitoDetailPage() {
               Artículos Incluidos
             </h3>
 
-            {/* Botón Generar Devolución (Solo si corresponde) */}
-            {canGenerarDevolucion() && getPrestamosNoDevueltos().length > 0 && (
-              <button
-                onClick={() => setShowDevolucionModal(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors shadow-lg shadow-emerald-900/10 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-                Generar Devolución
-              </button>
-            )}
-
             {/* Botón Procesar Devolución (modal granular por artículo) */}
             {canProcesarDevolucion() && canUpdate('remitos') && (
               <button
@@ -1123,48 +1056,10 @@ function RemitoDetailPage() {
           </div>
         )}
 
-        {(showDevolucionModal || showReceptorModal) && (
+        {showReceptorModal && (
           <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
             {/* El contenido específico de cada modal iría aquí, reutilizando estilos de cards */}
             {/* Implementación simplificada para brevedad, usando la misma lógica de estado */}
-
-            {showDevolucionModal && (
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
-                <h3 className="text-lg font-bold text-surface-900 mb-4">Devolver Artículos</h3>
-                <div className="space-y-3 mb-6">
-                  {getPrestamosNoDevueltos().map(detalle => (
-                    <label key={detalle.id} className={`flex items-start p-3 border rounded-xl cursor-pointer transition-all ${selectedDetalles.includes(detalle.id) ? 'border-primary-500 bg-primary-50' : 'border-surface-200 hover:bg-surface-50'}`}>
-                      <input
-                        type="checkbox"
-                        checked={selectedDetalles.includes(detalle.id)}
-                        onChange={() => handleSeleccionarDetalle(detalle.id)}
-                        className="mt-1 mr-3 w-4 h-4 text-primary-600 rounded border-surface-300 focus:ring-primary-500"
-                      />
-                      <div>
-                        <p className="font-bold text-surface-900 text-sm">{detalle.inventarioDetalle?.marca} {detalle.inventarioDetalle?.modelo}</p>
-                        <p className="text-xs text-surface-500">S/N: {detalle.inventarioDetalle?.numero_serie}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="flex gap-3 justify-end pt-4 border-t border-surface-100">
-                  <button
-                    onClick={() => { setShowDevolucionModal(false); setSelectedDetalles([]); }}
-                    className="px-4 py-2.5 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 text-sm"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleGenerarDevolucion}
-                    disabled={selectedDetalles.length === 0 || devolviendoArticulos}
-                    className="px-4 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 text-sm shadow-lg shadow-emerald-900/10"
-                  >
-                    {devolviendoArticulos ? 'Generando...' : 'Generar Devolución'}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {showReceptorModal && (
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">

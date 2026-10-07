@@ -96,7 +96,7 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
   const handleMarkReturned = async () => {
     const confirm = await Swal.fire({
       title: '¿Marcar como devuelto?',
-      text: 'Esta acción marcará el artículo como devuelto',
+      text: 'El artículo vuelve a la sede de origen del remito y queda disponible.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, devolver',
@@ -110,8 +110,7 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
       setError(null)
       setSuccess(null)
 
-      // Usar el endpoint de devolver con solo este detalle
-      await remitosAPI.devolver(loan.remito.id, [loan.id])
+      await remitosAPI.procesarDevolucion(loan.remito.id, [{ detalle_id: loan.id, accion: 'devolver' }])
 
       setSuccess('Artículo marcado como devuelto')
       setTimeout(() => {
