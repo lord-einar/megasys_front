@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { solicitudesAsignacionAPI } from '../services/api'
-import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
-import SelectInventarioAsignado from '../components/solicitudesCompra/SelectInventarioAsignado'
-
-const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
+import SelectBeneficiario from '../components/solicitudesAsignacion/SelectBeneficiario'
+import CamposPedidoEquipo from '../components/solicitudesAsignacion/CamposPedidoEquipo'
+import { esReposicion as motivoEsReposicion } from '../utils/solicitudAsignacion'
 
 export default function SolicitudAsignacionFormPage() {
   const navigate = useNavigate()
@@ -19,7 +18,7 @@ export default function SolicitudAsignacionFormPage() {
   const [adjuntos, setAdjuntos] = useState({ denuncia: null, rotura: null })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-  const esReposicion = MOTIVOS_REPOSICION.includes(form.motivo)
+  const esReposicion = motivoEsReposicion(form.motivo)
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
@@ -83,43 +82,6 @@ export default function SolicitudAsignacionFormPage() {
 
         <section>
           <div className="mb-5">
-            <h2 className="text-base font-bold text-surface-900">Clasificación</h2>
-            <p className="text-sm text-surface-500 mt-1">Define el tipo de equipo y el motivo general de la solicitud.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label>
-              <span className="label-base">Tipo de equipo</span>
-              <select
-                value={form.tipo_equipo}
-                onChange={e => set('tipo_equipo', e.target.value)}
-                className="input-base"
-              >
-                <option value="celular">Celular</option>
-                <option value="notebook">Notebook</option>
-                <option value="pc_escritorio">PC de escritorio</option>
-              </select>
-            </label>
-            <label>
-              <span className="label-base">Tipo de justificación</span>
-              <select
-                value={form.motivo}
-                onChange={e => set('motivo', e.target.value)}
-                className="input-base"
-              >
-                <option value="nuevo_ingreso">Nuevo ingreso</option>
-                <option value="nuevo_puesto">Nuevo puesto</option>
-                <option value="reposicion_robo">Reposición por robo</option>
-                <option value="reposicion_perdida">Reposición por pérdida</option>
-                <option value="reposicion_rotura">Reposición por rotura</option>
-                <option value="cambio_equipo">Cambio de equipo</option>
-                <option value="otro">Otro</option>
-              </select>
-            </label>
-          </div>
-        </section>
-
-        <section className="border-t border-surface-100 pt-8">
-          <div className="mb-5">
             <h2 className="text-base font-bold text-surface-900">Beneficiario</h2>
             <p className="text-sm text-surface-500 mt-1">La persona debe existir previamente en Personal.</p>
           </div>
@@ -133,72 +95,19 @@ export default function SolicitudAsignacionFormPage() {
           </label>
         </section>
 
-        {esReposicion && (
-          <section className="border-t border-surface-100 pt-8">
-            <div className="mb-5">
-              <h2 className="text-base font-bold text-surface-900">Equipo anterior</h2>
-              <p className="text-sm text-surface-500 mt-1">Selecciona el activo vigente que se va a reponer.</p>
-            </div>
-            <label className="block">
-              <span className="label-base">Equipo actual a reponer</span>
-              <SelectInventarioAsignado
-                personalId={form.beneficiario_personal_id}
-                tipoEquipo={form.tipo_equipo}
-                value={form.inventario_anterior_id}
-                onChange={(id) => set('inventario_anterior_id', id || '')}
-                disabled={saving}
-              />
-            </label>
-          </section>
-        )}
-
-        {(form.motivo === 'reposicion_robo' || form.motivo === 'reposicion_rotura') && (
-          <section className="border-t border-surface-100 pt-8">
-            <div className="mb-5">
-              <h2 className="text-base font-bold text-surface-900">Documentación</h2>
-              <p className="text-sm text-surface-500 mt-1">Los adjuntos ayudan a validar técnicamente la solicitud.</p>
-            </div>
-
-            {form.motivo === 'reposicion_robo' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <label>
-                  <span className="label-base">Denuncia presentada</span>
-                  <select
-                    value={form.denuncia_presentada}
-                    onChange={e => set('denuncia_presentada', e.target.value)}
-                    className="input-base"
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="true">Sí</option>
-                    <option value="false">No</option>
-                  </select>
-                </label>
-                <label>
-                  <span className="label-base">Denuncia adjunta (opcional)</span>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={e => setAdjuntos(prev => ({ ...prev, denuncia: e.target.files?.[0] || null }))}
-                    className="input-base file:mr-4 file:rounded-lg file:border-0 file:bg-surface-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-surface-700"
-                  />
-                </label>
-              </div>
-            )}
-
-            {form.motivo === 'reposicion_rotura' && (
-              <label className="block">
-                <span className="label-base">Foto/evidencia de rotura</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  required
-                  onChange={e => setAdjuntos(prev => ({ ...prev, rotura: e.target.files?.[0] || null }))}
-                  className="input-base file:mr-4 file:rounded-lg file:border-0 file:bg-surface-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-surface-700"
-                />
-              </label>
-            )}
-          </section>
-        )}
+        <section className="border-t border-surface-100 pt-8">
+          <div className="mb-5">
+            <h2 className="text-base font-bold text-surface-900">Equipo solicitado</h2>
+            <p className="text-sm text-surface-500 mt-1">En una reposición, elegí el equipo actual a reponer; robo y rotura piden documentación.</p>
+          </div>
+          <CamposPedidoEquipo
+            valores={form}
+            onChange={set}
+            personalId={form.beneficiario_personal_id}
+            onAdjuntoChange={(tipo, archivo) => setAdjuntos(prev => ({ ...prev, [tipo]: archivo }))}
+            disabled={saving}
+          />
+        </section>
 
         <section className="border-t border-surface-100 pt-8">
           <label className="block">

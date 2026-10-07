@@ -4,13 +4,12 @@ import { solicitudesAsignacionAPI, categoriaEquiposAsignacionAPI } from '../serv
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import TimelineAsignacion from '../components/solicitudesAsignacion/TimelineAsignacion'
-import SelectBeneficiario from '../components/solicitudesCompra/SelectBeneficiario'
-import SelectInventarioAsignado from '../components/solicitudesCompra/SelectInventarioAsignado'
+import SelectBeneficiario from '../components/solicitudesAsignacion/SelectBeneficiario'
+import CamposPedidoEquipo from '../components/solicitudesAsignacion/CamposPedidoEquipo'
 import { usePermissions } from '../hooks/usePermissions'
 import { comprasPuedeAsignarEquipo, esCompraPendiente, pendienteDeEntrega, puedeGenerarRemito } from '../utils/solicitudAsignacionPolicy'
-import { categoriaTipoDeSolicitud } from '../utils/tipoEquipo'
-
-const MOTIVOS_REPOSICION = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura']
+import { categoriaTipoDeSolicitud, TIPO_EQUIPO_LABELS } from '../utils/tipoEquipo'
+import { esReposicion as motivoEsReposicion, etiquetaMotivo } from '../utils/solicitudAsignacion'
 
 // Identificador para distinguir equipos en el dropdown: IMEI para celulares,
 // número de serie para notebook/PC.
@@ -158,7 +157,7 @@ export default function SolicitudAsignacionDetailPage() {
       if (!editForm.beneficiario_personal_id) {
         throw new Error('Seleccioná un beneficiario de la lista')
       }
-      const editEsReposicion = MOTIVOS_REPOSICION.includes(editForm.motivo)
+      const editEsReposicion = motivoEsReposicion(editForm.motivo)
       if (editEsReposicion && !editForm.inventario_anterior_id) {
         throw new Error('Seleccioná el equipo actual que se va a reponer')
       }
@@ -195,7 +194,7 @@ export default function SolicitudAsignacionDetailPage() {
   }
   if (!solicitud) return <div className="p-8 bg-surface-50 min-h-screen text-rose-600">{error || 'Solicitud no encontrada'}</div>
 
-  const esReposicion = ['reposicion_robo', 'reposicion_perdida', 'reposicion_rotura'].includes(solicitud.motivo)
+  const esReposicion = motivoEsReposicion(solicitud.motivo)
   // Estados sin acciones de workflow. remito_generado se incluye para ocultar
   // asignar/aprobar/cancelar/reenviar; su acción propia ("Equipo entregado") se
   // renderiza aparte. finalizada = entregado (terminal real).
@@ -212,8 +211,8 @@ export default function SolicitudAsignacionDetailPage() {
         <div className="min-w-0">
           <p className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-1">Solicitud de asignación</p>
           <h1 className="text-2xl font-bold text-surface-900">SA-{String(solicitud.numero).padStart(4, '0')}</h1>
-          <p className="text-surface-500 mt-1 font-medium capitalize">
-            {solicitud.tipo_equipo} · {(solicitud.motivo || '').replaceAll('_', ' ')}
+          <p className="text-surface-500 mt-1 font-medium">
+            {TIPO_EQUIPO_LABELS[solicitud.tipo_equipo] || solicitud.tipo_equipo} · {etiquetaMotivo(solicitud.motivo)}
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
@@ -278,73 +277,24 @@ export default function SolicitudAsignacionDetailPage() {
               <p className="text-sm text-surface-500 mb-4">
                 Los cambios quedan registrados en el historial y se avisa por mail a Compras, RRHH e Infraestructura.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="label-base block mb-1">Tipo de equipo</label>
-                  <select
-                    value={editForm.tipo_equipo}
-                    onChange={e => setEdit('tipo_equipo', e.target.value)}
-                    disabled={!!solicitud.inventario_asignado_id}
-                    className="input-base"
-                  >
-                    <option value="celular">Celular</option>
-                    <option value="notebook">Notebook</option>
-                    <option value="pc_escritorio">PC de escritorio</option>
-                  </select>
-                  {!!solicitud.inventario_asignado_id && (
-                    <p className="text-xs text-surface-400 mt-1">No se puede cambiar el tipo con un equipo ya asignado.</p>
-                  )}
-                </div>
-                <div>
-                  <label className="label-base block mb-1">Motivo</label>
-                  <select
-                    value={editForm.motivo}
-                    onChange={e => setEdit('motivo', e.target.value)}
-                    className="input-base"
-                  >
-                    <option value="nuevo_ingreso">Nuevo ingreso</option>
-                    <option value="nuevo_puesto">Nuevo puesto</option>
-                    <option value="reposicion_robo">Reposición por robo</option>
-                    <option value="reposicion_perdida">Reposición por pérdida</option>
-                    <option value="reposicion_rotura">Reposición por rotura</option>
-                    <option value="cambio_equipo">Cambio de equipo</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="label-base block mb-1">Beneficiario</label>
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="label-base">Beneficiario</span>
                   <SelectBeneficiario
                     value={editForm.beneficiario_personal_id}
                     onChange={(pid) => setEdit('beneficiario_personal_id', pid || '')}
                     disabled={guardandoEdicion}
                   />
-                </div>
-                {MOTIVOS_REPOSICION.includes(editForm.motivo) && (
-                  <div className="md:col-span-2">
-                    <label className="label-base block mb-1">Equipo actual a reponer</label>
-                    <SelectInventarioAsignado
-                      personalId={editForm.beneficiario_personal_id}
-                      tipoEquipo={editForm.tipo_equipo}
-                      value={editForm.inventario_anterior_id}
-                      onChange={(invId) => setEdit('inventario_anterior_id', invId || '')}
-                      disabled={guardandoEdicion}
-                    />
-                  </div>
-                )}
-                {editForm.motivo === 'reposicion_robo' && (
-                  <div>
-                    <label className="label-base block mb-1">Denuncia presentada</label>
-                    <select
-                      value={editForm.denuncia_presentada}
-                      onChange={e => setEdit('denuncia_presentada', e.target.value)}
-                      className="input-base"
-                    >
-                      <option value="">Seleccionar</option>
-                      <option value="true">Sí</option>
-                      <option value="false">No</option>
-                    </select>
-                  </div>
-                )}
+                </label>
+                <CamposPedidoEquipo
+                  valores={editForm}
+                  onChange={setEdit}
+                  personalId={editForm.beneficiario_personal_id}
+                  tipoBloqueado={!!solicitud.inventario_asignado_id}
+                  disabled={guardandoEdicion}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="md:col-span-2">
                   <label className="label-base block mb-1">Descripción amplia</label>
                   <textarea
@@ -391,8 +341,8 @@ export default function SolicitudAsignacionDetailPage() {
                   ? `${solicitud.solicitante.nombre} ${solicitud.solicitante.apellido}`
                   : '-'}
               />
-              <InfoItem label="Tipo de equipo" value={solicitud.tipo_equipo || '-'} />
-              <InfoItem label="Motivo" value={(solicitud.motivo || '').replaceAll('_', ' ')} />
+              <InfoItem label="Tipo de equipo" value={TIPO_EQUIPO_LABELS[solicitud.tipo_equipo] || solicitud.tipo_equipo || '-'} capitalize={false} />
+              <InfoItem label="Motivo" value={etiquetaMotivo(solicitud.motivo)} capitalize={false} />
 
               {solicitud.inventarioAsignado && (
                 <div className="md:col-span-2 rounded-xl bg-sky-50 border border-sky-100 px-4 py-3">
@@ -865,11 +815,12 @@ export default function SolicitudAsignacionDetailPage() {
   )
 }
 
-function InfoItem({ label, value }) {
+// capitalize=false para valores que ya vienen con su etiqueta (tipo, motivo)
+function InfoItem({ label, value, capitalize = true }) {
   return (
     <div className="rounded-xl bg-surface-50 border border-surface-100 px-4 py-3">
       <dt className="text-xs font-bold text-surface-400 uppercase tracking-wider">{label}</dt>
-      <dd className="font-semibold text-surface-900 mt-1 break-words capitalize">{value}</dd>
+      <dd className={`font-semibold text-surface-900 mt-1 break-words${capitalize ? ' capitalize' : ''}`}>{value}</dd>
     </div>
   )
 }

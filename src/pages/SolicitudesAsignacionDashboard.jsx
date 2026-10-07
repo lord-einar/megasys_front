@@ -4,6 +4,7 @@ import { solicitudesAsignacionAPI } from '../services/api'
 import StatusBadgeAsignacion from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import { usePermissions } from '../hooks/usePermissions'
 import { pendienteDeEntrega } from '../utils/solicitudAsignacionPolicy'
+import { etiquetaMotivo } from '../utils/solicitudAsignacion'
 import { Plus, Laptop, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
 
 const ESTADOS_TARJETA = [
@@ -176,7 +177,7 @@ export default function SolicitudesAsignacionDashboard() {
                     <span className="text-surface-300 mx-1.5">·</span>
                     <span className="capitalize">{s.tipo_equipo}</span>
                     <span className="text-surface-300 mx-1.5">·</span>
-                    <span className="capitalize">{(s.motivo || '').replaceAll('_', ' ')}</span>
+                    <span>{etiquetaMotivo(s.motivo)}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

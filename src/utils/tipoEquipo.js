@@ -1,6 +1,13 @@
 // Espejo (solo UI) de megasys_back/src/shared/constants/tipoEquipo.js
 // La autoridad es el backend; mantener ambos en sync ante cambios.
 
+// Etiquetas del tipo_equipo de una solicitud.
+export const TIPO_EQUIPO_LABELS = {
+  celular: 'Celular',
+  notebook: 'Notebook',
+  pc_escritorio: 'PC de escritorio'
+}
+
 // tipo_equipo de la solicitud -> tipo de categoría. Difieren sólo en la PC:
 // la solicitud la llama 'pc_escritorio' y la categoría 'pc'.
 export const TIPO_EQUIPO_TO_CATEGORIA_TIPO = {

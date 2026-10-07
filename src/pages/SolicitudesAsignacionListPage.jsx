@@ -18,21 +18,13 @@ import { useListData } from '../hooks/useListData'
 import StatusBadgeAsignacion, { EtapasAsignacion } from '../components/solicitudesAsignacion/StatusBadgeAsignacion'
 import ListPagination from '../components/ListPagination'
 import { esCompraPendiente } from '../utils/solicitudAsignacionPolicy'
+import { MOTIVO_LABELS as MOTIVOS } from '../utils/solicitudAsignacion'
+import { TIPO_EQUIPO_LABELS } from '../utils/tipoEquipo'
 
 const TIPOS_EQUIPO = {
-  celular: { label: 'Celular', Icon: Smartphone },
-  notebook: { label: 'Notebook', Icon: Laptop },
-  pc_escritorio: { label: 'PC de escritorio', Icon: Monitor }
-}
-
-const MOTIVOS = {
-  nuevo_ingreso: 'Nuevo ingreso',
-  nuevo_puesto: 'Nuevo puesto',
-  reposicion_robo: 'Reposición por robo',
-  reposicion_perdida: 'Reposición por pérdida',
-  reposicion_rotura: 'Reposición por rotura',
-  cambio_equipo: 'Cambio de equipo',
-  otro: 'Otro'
+  celular: { label: TIPO_EQUIPO_LABELS.celular, Icon: Smartphone },
+  notebook: { label: TIPO_EQUIPO_LABELS.notebook, Icon: Laptop },
+  pc_escritorio: { label: TIPO_EQUIPO_LABELS.pc_escritorio, Icon: Monitor }
 }
 
 // Vistas agrupadas del filtro de estado (el backend acepta varios estados).
