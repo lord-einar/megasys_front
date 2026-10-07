@@ -275,7 +275,6 @@ function CreateRemitoPage() {
     }
   }
 
-  const modalPages = Math.ceil(modalArticulosTotal / 50)
 
   if (!canCreate('remitos')) {
     return <div className="p-8 text-center text-surface-500">Cargando permisos...</div>
@@ -313,6 +312,12 @@ function CreateRemitoPage() {
             Cancelar y Volver
           </button>
         </div>
+
+        {error && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
