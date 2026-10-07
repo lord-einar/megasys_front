@@ -322,10 +322,6 @@ export const remitosAPI = {
     method: 'PATCH',
     body: JSON.stringify({ estado })
   }),
-  devolver: (id, detalleIds) => apiCall(`/remitos/${id}/devolver`, {
-    method: 'POST',
-    body: JSON.stringify({ detalleIds })
-  }),
   getArticulosDisponibles: (params = {}) => {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/remitos/articulos-disponibles${query ? '?' + query : ''}`)
