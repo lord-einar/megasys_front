@@ -12,6 +12,7 @@ import {
   LifeBuoy,
   Truck,
   ChevronDown,
+  Network,
   X,
 } from 'lucide-react'
 import logo from '../assets/logo.png'
@@ -22,7 +23,8 @@ function Sidebar({ isOpen, onNavigate, onClose, onExpand }) {
     hasLegacyAccess,
     canViewSolicitudesAsignacion,
     hasInfraestructura,
-    hasRole
+    hasRole,
+    hasPermission
   } = usePermissions()
   const [expandedMenu, setExpandedMenu] = useState(null)
   // Debajo de 1024px la barra expandida se superpone al contenido (no lo empuja)
@@ -147,6 +149,12 @@ function Sidebar({ isOpen, onNavigate, onClose, onExpand }) {
         { label: 'Nueva solicitud', href: '/solicitudes-asignacion/nueva' },
         ...(hasInfraestructura ? [{ label: 'Categorías', href: '/categoria-equipos-asignacion' }] : [])
       ],
+    },
+    {
+      label: 'Puestos',
+      visible: hasPermission('puestos', 'read'),
+      icon: <Network className="w-5 h-5" strokeWidth={2} />,
+      href: '/puestos',
     },
     {
       label: 'Visitas',

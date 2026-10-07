@@ -817,6 +817,27 @@ export const categoriaEquiposAsignacionAPI = {
   eliminar: (id) => apiCall(`/categoria-equipos/${id}`, { method: 'DELETE' })
 }
 
+// Organigrama de puestos (RRHH)
+export const puestosAPI = {
+  list: (params = {}) => {
+    const qs = toQueryString(params)
+    return apiCall(`/puestos${qs ? `?${qs}` : ''}`)
+  },
+  arbol: () => apiCall('/puestos/arbol'),
+  lookupPersonal: (params = {}) => {
+    const qs = toQueryString(params)
+    return apiCall(`/puestos/lookups/personal${qs ? `?${qs}` : ''}`)
+  },
+  lookupSedes: () => apiCall('/puestos/lookups/sedes'),
+  crear: (data) => apiCall('/puestos', { method: 'POST', body: JSON.stringify(data) }),
+  actualizar: (id, data) => apiCall(`/puestos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  desactivar: (id) => apiCall(`/puestos/${id}`, { method: 'DELETE' }),
+  asignarPersona: (personalId, puestoId) => apiCall(`/puestos/personal/${personalId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ puesto_id: puestoId })
+  })
+}
+
 // Solicitudes de asignación de equipos
 export const solicitudesAsignacionAPI = {
   list: (params = {}) => {

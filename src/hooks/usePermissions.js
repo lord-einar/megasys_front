@@ -70,6 +70,13 @@ const PERMISSIONS = {
     update: ['super_admin'],
     delete: ['super_admin']
   },
+  // Organigrama de puestos (RRHH). Lo usa la autogestión para elegir aprobador.
+  puestos: {
+    read: ['super_admin', 'rrhh'],
+    create: ['super_admin', 'rrhh'],
+    update: ['super_admin', 'rrhh'],
+    delete: ['super_admin', 'rrhh']
+  },
   solicitudes_asignacion: {
     read: ['super_admin', 'rrhh', 'compras'],
     create: ['super_admin', 'rrhh', 'compras'],

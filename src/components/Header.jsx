@@ -13,6 +13,7 @@ function Header({ onMenuClick, sidebarOpen }) {
     const path = location.pathname
     const contexts = [
       { test: path.startsWith('/solicitudes-asignacion') || path.startsWith('/categoria-equipos-asignacion'), title: 'Asignación de equipos', subtitle: 'Infraestructura, RRHH y Compras' },
+      { test: path.startsWith('/puestos'), title: 'Puestos', subtitle: 'Organigrama de RRHH' },
       { test: path.startsWith('/solicitudes-compra'), title: 'Asignación de equipos', subtitle: 'Stock e ingreso de equipos' },
       { test: path.startsWith('/catalogo-equipos'), title: 'Catálogo de equipos', subtitle: 'Modelos autorizados' },
       { test: path.startsWith('/sedes'), title: 'Sedes', subtitle: 'Operación y soporte' },

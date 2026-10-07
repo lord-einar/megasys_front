@@ -63,6 +63,7 @@ const SolicitudesAsignacionListPage = lazy(() => import('./pages/SolicitudesAsig
 const SolicitudAsignacionFormPage = lazy(() => import('./pages/SolicitudAsignacionFormPage'))
 const SolicitudAsignacionDetailPage = lazy(() => import('./pages/SolicitudAsignacionDetailPage'))
 const CategoriaEquiposAsignacionPage = lazy(() => import('./pages/CategoriaEquiposAsignacionPage'))
+const PuestosPage = lazy(() => import('./pages/PuestosPage'))
 const HistorialEquiposPersonalPage = lazy(() => import('./pages/HistorialEquiposPersonalPage'))
 const HistorialEquiposSedePage = lazy(() => import('./pages/HistorialEquiposSedePage'))
 const CatalogoEquiposPage = lazy(() => import('./pages/CatalogoEquiposPage'))
@@ -81,7 +82,7 @@ function CargandoPantalla() {
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024)
   const { isAuthenticated, loading } = useAuth()
-  const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura, hasRole } = usePermissions()
+  const { hasLegacyAccess, canViewSolicitudesAsignacion, hasInfraestructura, hasRole, hasPermission } = usePermissions()
 
   if (loading) {
     return (
@@ -165,6 +166,7 @@ function App() {
                   <Route path="/solicitudes-asignacion/:id" element={canViewSolicitudesAsignacion ? <SolicitudAsignacionDetailPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/solicitudes-asignacion" element={canViewSolicitudesAsignacion ? <SolicitudesAsignacionListPage /> : <Navigate to="/dashboard" replace />} />
                   <Route path="/categoria-equipos-asignacion" element={hasInfraestructura ? <CategoriaEquiposAsignacionPage /> : <Navigate to="/solicitudes-asignacion/dashboard" replace />} />
+                  <Route path="/puestos" element={hasPermission('puestos', 'read') ? <PuestosPage /> : <Navigate to="/" replace />} />
                   <Route path="/profile" element={<Profile />} />
 
                   {/* Sedes routes - más específicas primero */}
