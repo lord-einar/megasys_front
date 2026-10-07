@@ -25,7 +25,6 @@ export default function ProveedoresPage() {
     error,
     page,
     totalPages,
-    totalRecords,
     updateFilters,
     goToPage,
     previousPage,

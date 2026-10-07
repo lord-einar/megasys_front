@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { equiposServicioAPI, serviciosAPI, sedesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
-import { normalizeApiResponse, normalizeItemResponse } from '../utils/apiResponseNormalizer'
+import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
 import Swal from 'sweetalert2'
 
 export default function EquipoFormPage() {

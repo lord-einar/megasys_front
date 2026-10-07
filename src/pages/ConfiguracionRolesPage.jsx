@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { rolesAPI, personalAPI } from '../services/api';
+import { rolesAPI } from '../services/api';
 import { usePermissions } from '../hooks/usePermissions';
 import FormRol from '../components/FormRol';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 
 const ConfiguracionRolesPage = () => {
     const navigate = useNavigate();
-    const { isSuperAdmin, isHelpdesk, hasRole } = usePermissions();
+    const { isSuperAdmin, isHelpdesk } = usePermissions();
     const canAccessRoles = isSuperAdmin || isHelpdesk;
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);

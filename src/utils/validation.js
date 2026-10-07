@@ -6,7 +6,7 @@ export const validateEmail = (email) => {
 }
 
 export const validatePhone = (phone) => {
-  const re = /^[0-9\-\+\(\)\s]{7,}$/
+  const re = /^[0-9\-+()\s]{7,}$/
   return re.test(phone)
 }
 

@@ -23,7 +23,10 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Mismo criterio que el back: no se chequean argumentos ni errores de catch.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', args: 'none', caughtErrors: 'none', ignoreRestSiblings: true }],
+      // Hook y constantes que conviven con su componente a propósito.
+      'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'ESTADO_CONFIG'] }],
     },
   },
 ])

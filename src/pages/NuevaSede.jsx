@@ -53,7 +53,7 @@ const sedeSchema = yup.object().shape({
   telefono: yup
     .string()
     .optional()
-    .matches(/^[+]?[0-9\s\-\(\)]*$/, 'El formato del teléfono no es válido')
+    .matches(/^[+]?[0-9\s\-()]*$/, 'El formato del teléfono no es válido')
     .max(20, 'El teléfono no puede exceder 20 caracteres')
     .trim(),
   ip_sede: yup
@@ -103,8 +103,7 @@ export default function NuevaSede() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset
+    formState: { errors, isSubmitting }
   } = useForm({
     resolver: yupResolver(sedeSchema),
     defaultValues: {

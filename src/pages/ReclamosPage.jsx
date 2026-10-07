@@ -9,7 +9,7 @@ import { getPaginationNumbers } from '../utils/paginationHelper'
 
 export default function ReclamosPage() {
   const navigate = useNavigate()
-  const { canCreate, canUpdate } = usePermissions()
+  const { canCreate } = usePermissions()
 
   usePermissionError()
 
@@ -30,8 +30,7 @@ export default function ReclamosPage() {
     updateFilters,
     goToPage,
     previousPage,
-    nextPage,
-    reload
+    nextPage
   } = useListData(reclamosAPI.list, {
     initialLimit: 10,
     initialFilters: { estado: '', prioridad: '', servicio_id: '', sede_id: '' }

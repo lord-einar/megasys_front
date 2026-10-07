@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { sedesAPI, personalAPI, inventarioAPI, remitosAPI } from '../services/api'
+import { sedesAPI, remitosAPI } from '../services/api'
 import StatCard from '../components/StatCard'
 import RecentActivityCard from '../components/RecentActivityCard'
 import LoansAboutToExpireCard from '../components/LoansAboutToExpireCard'
@@ -20,7 +20,7 @@ function Dashboard() {
     remitos: 0,
   })
   const [pendingRemitos, setPendingRemitos] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   useEffect(() => {
     cargarEstadisticas()

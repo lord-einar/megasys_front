@@ -133,8 +133,6 @@ export default function InventarioPage() {
         })
         reload()
       } catch (err) {
-        // Verificar si es un error de autenticación
-        const isAuthError = err.message && err.message.includes('Token')
         Swal.fire({
           title: 'Error',
           text: err.message || 'Error al dar de baja el item.',

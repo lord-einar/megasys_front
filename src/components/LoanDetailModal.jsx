@@ -61,7 +61,7 @@ function LoanDetailModal({ loan, isOpen, onClose, onLoanUpdated }) {
       return
     }
 
-    const [, day, month, year] = match
+    const [, day, month] = match
     if (parseInt(day) < 1 || parseInt(day) > 31 || parseInt(month) < 1 || parseInt(month) > 12) {
       setError('Fecha inválida')
       return

@@ -25,15 +25,6 @@ export default function Profile() {
   }
 
   // Mapear nombres de grupos conocidos
-  const getGroupName = (guid) => {
-    const groupNames = {
-      'edc49d22-9ee8-4d90-a8b2-41cf64db1eed': 'Infraestructura',
-      '2a16d910-c440-41a3-a896-eb6287185fef': 'Soporte',
-      '71a6857d-3dec-4d6a-9ad7-cd2c03d06d12': 'Mesa de Ayuda'
-    }
-    return groupNames[guid] || guid.substring(0, 8) + '...'
-  }
-
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-4xl mx-auto px-6 py-8">

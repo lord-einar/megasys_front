@@ -61,17 +61,13 @@ export default function CreateArticulo() {
   const [categorias, setCategorias] = useState([])
   const [categoriaId, setCategoriaId] = useState('')
 
-  // Watch tipo_articulo_id para mostrar campos condicionales
-  const tipoSeleccionadoId = useForm().watch('tipo_articulo_id', undefined)
-  const [mostrarHardware, setMostrarHardware] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
-    reset
+    formState: { errors, isSubmitting }
   } = useForm({
     resolver: yupResolver(articuloSchema),
     defaultValues: {

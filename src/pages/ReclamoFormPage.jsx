@@ -17,7 +17,6 @@ export default function ReclamoFormPage() {
   const [servicios, setServicios] = useState([])
   const [sedes, setSedes] = useState([])
   const [equipos, setEquipos] = useState([])
-  const [sedeSeleccionada, setSedeSeleccionada] = useState('')
 
   const {
     register,

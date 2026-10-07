@@ -10,9 +10,7 @@ export default function ModalTipoArticulo({ isOpen, onClose, onSave, item = null
         register,
         handleSubmit,
         formState: { errors },
-        reset,
-        setValue,
-        watch
+        reset
     } = useForm({
         defaultValues: {
             nombre: '',
@@ -22,7 +20,6 @@ export default function ModalTipoArticulo({ isOpen, onClose, onSave, item = null
     })
 
     // Watch activo para el switch
-    const activo = watch('activo')
 
     useEffect(() => {
         if (isOpen) {

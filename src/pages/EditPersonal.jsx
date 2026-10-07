@@ -43,7 +43,7 @@ const personalSchema = yup.object().shape({
   telefono: yup
     .string()
     .optional()
-    .matches(/^[+]?[0-9\s\-\(\)]*$/, 'El formato del teléfono no es válido')
+    .matches(/^[+]?[0-9\s\-()]*$/, 'El formato del teléfono no es válido')
     .max(20, 'El teléfono no puede exceder 20 caracteres')
     .nullable()
     .transform((v, o) => o === '' ? null : v)

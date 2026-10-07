@@ -51,7 +51,7 @@ const sedeSchema = yup.object().shape({
   telefono: yup
     .string()
     .optional()
-    .matches(/^[+]?[0-9\s\-\(\)]*$/, 'El formato del teléfono no es válido')
+    .matches(/^[+]?[0-9\s\-()]*$/, 'El formato del teléfono no es válido')
     .max(20, 'El teléfono no puede exceder 20 caracteres')
     .trim(),
   ip_sede: yup
@@ -73,14 +73,14 @@ export default function EditSede() {
   usePermissionError()
 
   const [empresas, setEmpresas] = useState([])
-  const [sedeData, setSedeData] = useState(null)
+  const [, setSedeData] = useState(null)
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [error, setError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
   const [serverFieldErrors, setServerFieldErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState(null)
-  const [formValues, setFormValues] = useState({
+  const [, setFormValues] = useState({
     nombre_sede: '',
     direccion: '',
     localidad: '',
