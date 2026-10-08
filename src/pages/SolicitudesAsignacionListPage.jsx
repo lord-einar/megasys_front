@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Smartphone,
+  UserCheck,
   X
 } from 'lucide-react'
 import { solicitudesAsignacionAPI } from '../services/api'
@@ -73,6 +74,17 @@ const fecha = (valor) => {
 const codigo = (s) => `SA-${String(s.numero).padStart(4, '0')}`
 const nombreBeneficiario = (s) =>
   s.beneficiario ? `${s.beneficiario.apellido}, ${s.beneficiario.nombre}` : 'Sin beneficiario'
+
+// La pidió la propia persona desde la autogestión (con el visto bueno de su superior)
+function MarcaAutogestion({ solicitud }) {
+  if (solicitud.solicitante_grupo !== 'autogestion') return null
+  return (
+    <span className="ml-2 inline-flex items-center gap-1 text-sm font-medium text-primary-700">
+      <UserCheck className="h-3.5 w-3.5" aria-hidden="true" />
+      Autogestión
+    </span>
+  )
+}
 
 function EquipoAsignado({ solicitud }) {
   const inv = solicitud.inventarioAsignado
@@ -371,7 +383,7 @@ export default function SolicitudesAsignacionListPage() {
                     </td>
                     <td className="px-3 py-4">
                       <p className="font-semibold text-surface-900">{nombreBeneficiario(s)}</p>
-                      <p className="mt-1 text-sm text-surface-600">{MOTIVOS[s.motivo] || s.motivo}</p>
+                      <p className="mt-1 text-sm text-surface-600">{MOTIVOS[s.motivo] || s.motivo}<MarcaAutogestion solicitud={s} /></p>
                     </td>
                     <td className="px-3 py-4">
                       <TipoEquipo tipo={s.tipo_equipo} />
@@ -399,7 +411,7 @@ export default function SolicitudesAsignacionListPage() {
                       <time dateTime={s.created_at} className="text-sm text-surface-600">{fecha(s.created_at)}</time>
                     </div>
                     <p className="mt-1 text-lg font-semibold leading-snug text-surface-900">{nombreBeneficiario(s)}</p>
-                    <p className="mt-1 text-surface-600">{MOTIVOS[s.motivo] || s.motivo}</p>
+                    <p className="mt-1 text-surface-600">{MOTIVOS[s.motivo] || s.motivo}<MarcaAutogestion solicitud={s} /></p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
                       <TipoEquipo tipo={s.tipo_equipo} />
                       <EquipoAsignado solicitud={s} />

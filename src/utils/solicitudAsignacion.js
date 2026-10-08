@@ -20,3 +20,11 @@ export const esReposicion = (motivo) => MOTIVOS_REPOSICION.includes(motivo)
 export const requiereDocumentacion = (motivo) => motivo === 'reposicion_robo' || motivo === 'reposicion_rotura'
 
 export const etiquetaMotivo = (motivo) => MOTIVO_LABELS[motivo] || (motivo || '').replaceAll('_', ' ')
+
+// De qué pedido de autogestión salió: aprobado por el superior o cargado directo (sin superior)
+export function textoOrigenAutogestion(pedido) {
+  const codigo = pedido ? `PE-${String(pedido.numero).padStart(4, '0')}` : null
+  if (pedido?.autoaprobado) return `Pedida por la persona en autogestión (${codigo}); sin superior en el organigrama, se cargó directo`
+  const aprobador = pedido?.aprobador ? ` (${pedido.aprobador.nombre} ${pedido.aprobador.apellido})` : ''
+  return `Pedida por la persona en autogestión${codigo ? ` (${codigo})` : ''} y aprobada por su superior${aprobador}`
+}

@@ -10,7 +10,7 @@ import CamposPedidoEquipo from '../components/solicitudesAsignacion/CamposPedido
 import { usePermissions } from '../hooks/usePermissions'
 import { comprasPuedeAsignarEquipo, esCompraPendiente, pendienteDeEntrega, puedeGenerarRemito } from '../utils/solicitudAsignacionPolicy'
 import { categoriaTipoDeSolicitud, TIPO_EQUIPO_LABELS } from '../utils/tipoEquipo'
-import { esReposicion as motivoEsReposicion, etiquetaMotivo } from '../utils/solicitudAsignacion'
+import { esReposicion as motivoEsReposicion, etiquetaMotivo, textoOrigenAutogestion } from '../utils/solicitudAsignacion'
 
 // Identificador para distinguir equipos en el dropdown: IMEI para celulares,
 // número de serie para notebook/PC.
@@ -218,7 +218,12 @@ export default function SolicitudAsignacionDetailPage() {
           {solicitud.solicitante_grupo === 'autogestion' && (
             <p className="mt-2 inline-flex items-center gap-1.5 status status-neutral">
               <UserCheck className="h-4 w-4" aria-hidden="true" />
-              Pedida por la persona en autogestión y aprobada por su superior
+              {textoOrigenAutogestion(solicitud.pedidoEquipo)}
+            </p>
+          )}
+          {solicitud.pedidoEquipo?.nota_aprobacion && (
+            <p className="mt-2 text-sm text-surface-600">
+              <span className="font-semibold">Nota del superior:</span> {solicitud.pedidoEquipo.nota_aprobacion}
             </p>
           )}
         </div>
