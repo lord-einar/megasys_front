@@ -338,7 +338,10 @@ function FilaPuesto({
             </>
           ) : (
             <>
-              <button className="btn-secondary" onClick={onAsignar}><UserPlus className="h-4 w-4" aria-hidden="true" /> Asignar persona</button>
+              {/* Un puesto, una persona: para reemplazar, primero se quita a quien lo ocupa */}
+              {!nodo.ocupantes.length && (
+                <button className="btn-secondary" onClick={onAsignar}><UserPlus className="h-4 w-4" aria-hidden="true" /> Asignar persona</button>
+              )}
               <button className="btn-secondary" onClick={onNuevoSubordinado}><Plus className="h-4 w-4" aria-hidden="true" /> Subpuesto</button>
               <button className="icon-button" onClick={onEditar} aria-label={`Editar ${nodo.nombre}`}><Pencil className="h-5 w-5" aria-hidden="true" /></button>
               <button className="icon-button" onClick={onBaja} aria-label={`Dar de baja ${nodo.nombre}`}><Trash2 className="h-5 w-5" aria-hidden="true" /></button>
@@ -371,7 +374,7 @@ function PanelAsignar({ puesto, onCerrar, onAsignar }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-surface-900">Asignar persona a {puesto.nombre}</h2>
-          <p className="text-sm text-surface-600">Cada persona ocupa un solo puesto: si ya tenía otro, se mueve a este.</p>
+          <p className="text-sm text-surface-600">Cada puesto tiene una sola persona y cada persona ocupa un solo puesto: si ya tenía otro, se mueve a este.</p>
         </div>
         <button className="icon-button" onClick={onCerrar} aria-label="Cerrar"><X className="h-5 w-5" aria-hidden="true" /></button>
       </div>
