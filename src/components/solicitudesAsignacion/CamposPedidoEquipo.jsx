@@ -18,8 +18,9 @@ const fileClass = 'input-base file:mr-4 file:rounded-lg file:border-0 file:bg-su
  *   si no se pasa, no se muestran los adjuntos (la edición no los sube)
  * @param {boolean} [props.tipoBloqueado] - con equipo asignado no se puede cambiar el tipo
  * @param {boolean} [props.disabled]
+ * @param {Function} [props.cargarEquipos] - fuente de los equipos actuales (la autogestión usa la suya)
  */
-export default function CamposPedidoEquipo({ valores, onChange, personalId, onAdjuntoChange, tipoBloqueado = false, disabled = false }) {
+export default function CamposPedidoEquipo({ valores, onChange, personalId, onAdjuntoChange, tipoBloqueado = false, disabled = false, cargarEquipos }) {
   const { tipo_equipo: tipoEquipo, motivo } = valores
   const conAdjuntos = typeof onAdjuntoChange === 'function'
 
@@ -65,6 +66,7 @@ export default function CamposPedidoEquipo({ valores, onChange, personalId, onAd
             value={valores.inventario_anterior_id}
             onChange={(id) => onChange('inventario_anterior_id', id || '')}
             disabled={disabled}
+            {...(cargarEquipos ? { cargar: cargarEquipos } : {})}
           />
         </label>
       )}

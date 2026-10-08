@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Building2, Briefcase, LogOut, UserCheck, PackagePlus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Building2, Briefcase, CircleCheck, LogOut, UserCheck, X } from 'lucide-react'
 import MicrosoftLogo from '../components/MicrosoftLogo'
-import { autogestionAPI, sesionAutogestion } from '../services/autogestionApi'
+import FormPedido from '../components/autogestion/FormPedido'
+import MisPedidos from '../components/autogestion/MisPedidos'
+import PedidosParaAprobar from '../components/autogestion/PedidosParaAprobar'
+import { autogestionAPI, sesionAutogestion, volverDespuesDelLogin } from '../services/autogestionApi'
 
 // Errores que vuelven de Microsoft o del backend, en lenguaje del usuario
 const describirError = (codigo, descripcion) => {
@@ -21,7 +25,11 @@ function leerVuelta() {
 }
 
 export default function AutogestionPage() {
+  const navigate = useNavigate()
   const [datos, setDatos] = useState(null)
+  const [pedidos, setPedidos] = useState([])
+  const [paraAprobar, setParaAprobar] = useState([])
+  const [aviso, setAviso] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [ingresando, setIngresando] = useState(false)
@@ -30,8 +38,12 @@ export default function AutogestionPage() {
   const cargarDatos = async () => {
     setCargando(true)
     try {
-      const res = await autogestionAPI.me()
-      setDatos(res.data)
+      const [me, mios, pendientes] = await Promise.all([
+        autogestionAPI.me(), autogestionAPI.misPedidos(), autogestionAPI.pendientesDeAprobar()
+      ])
+      setDatos(me.data)
+      setPedidos(mios.data || [])
+      setParaAprobar(pendientes.data || [])
     } catch (err) {
       setDatos(null)
       setError(err.status === 401 ? 'Tu sesión venció: volvé a ingresar.' : err.message)
@@ -44,6 +56,13 @@ export default function AutogestionPage() {
     const { token, error: errorVuelta } = leerVuelta()
     if (token) sesionAutogestion.guardar(token)
     if (errorVuelta) setError(errorVuelta)
+
+    // Vuelta de Microsoft desde otra pantalla de autogestión (p. ej. el link de aprobación)
+    const volver = token ? volverDespuesDelLogin.tomar() : null
+    if (volver) {
+      navigate(volver, { replace: true })
+      return
+    }
 
     if (sesionAutogestion.token()) cargarDatos()
     else setCargando(false)
@@ -70,6 +89,8 @@ export default function AutogestionPage() {
     try {
       const res = await autogestionAPI.devLogin(email)
       sesionAutogestion.guardar(res.data.token)
+      const volver = volverDespuesDelLogin.tomar()
+      if (volver) return navigate(volver)
       await cargarDatos()
     } catch (err) {
       setError(err.message)
@@ -79,7 +100,18 @@ export default function AutogestionPage() {
   const salir = () => {
     sesionAutogestion.cerrar()
     setDatos(null)
+    setPedidos([])
+    setParaAprobar([])
     setError(null)
+    setAviso(null)
+  }
+
+  // Después de crear o cancelar: aviso arriba y datos al día
+  const alCambiar = async (mensaje, advertencia = null) => {
+    setAviso(mensaje)
+    setError(advertencia)
+    await cargarDatos()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -96,6 +128,13 @@ export default function AutogestionPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {aviso && (
+          <div className="card-base p-4 flex items-start gap-3 status-done" role="status">
+            <CircleCheck className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <p className="text-sm font-semibold flex-1">{aviso}</p>
+            <button className="icon-button -m-2" aria-label="Cerrar aviso" onClick={() => setAviso(null)}><X className="h-4 w-4" /></button>
+          </div>
+        )}
         {error && (
           <div className="card-base p-4 flex items-start gap-3 status-stop" role="alert">
             <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -109,7 +148,12 @@ export default function AutogestionPage() {
             <div className="skeleton h-32" />
           </div>
         ) : datos ? (
-          <MisDatos datos={datos} />
+          <>
+            <MisDatos datos={datos} />
+            <PedidosParaAprobar pedidos={paraAprobar} />
+            {datos.puesto && <FormPedido personalId={datos.id} onCreado={alCambiar} />}
+            <MisPedidos pedidos={pedidos} onCambio={alCambiar} />
+          </>
         ) : (
           <section className="card-base p-6 sm:p-8">
             <h1 className="page-title">Pedí tu equipo</h1>
@@ -175,13 +219,7 @@ function MisDatos({ datos }) {
         </div>
       </section>
 
-      <section className="card-base p-6 flex items-start gap-3">
-        <PackagePlus className="h-6 w-6 shrink-0 text-surface-400" aria-hidden="true" />
-        <div>
-          <h2 className="text-base font-bold text-surface-900">Pedir un equipo</h2>
-          <p className="text-sm text-surface-600 mt-1">Muy pronto vas a poder pedir tu equipo y seguir el estado de tus pedidos desde acá.</p>
-        </div>
-      </section>
+
     </>
   )
 }

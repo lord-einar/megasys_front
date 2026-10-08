@@ -38,6 +38,7 @@ const VisitasPage = lazy(() => import('./pages/VisitasPage'))
 const SolicitudPreVisitaPage = lazy(() => import('./pages/SolicitudPreVisitaPage'))
 const VisitaFeedbackPublico = lazy(() => import('./pages/VisitaFeedbackPublico'))
 const AutogestionPage = lazy(() => import('./pages/AutogestionPage'))
+const AprobarPedidoPage = lazy(() => import('./pages/AprobarPedidoPage'))
 const ReportesVisitasPage = lazy(() => import('./pages/ReportesVisitasPage'))
 const ConfiguracionVisitasPage = lazy(() => import('./pages/ConfiguracionVisitasPage'))
 const ConfiguracionRolesPage = lazy(() => import('./pages/ConfiguracionRolesPage'))
@@ -97,7 +98,8 @@ function App() {
   // /autogestion tiene su propia sesión (no la del portal)
   const publicPaths = ['/login', '/confirmar-recepcion', '/visitas/solicitar', '/preview/login-loading', '/alerta-stock', '/autogestion']
   const isFeedbackPath = window.location.pathname.startsWith('/visitas/feedback/')
-  if (publicPaths.includes(window.location.pathname) || isFeedbackPath) {
+  const isAutogestionPath = window.location.pathname.startsWith('/autogestion/')
+  if (publicPaths.includes(window.location.pathname) || isFeedbackPath || isAutogestionPath) {
     return <Suspense fallback={<CargandoPantalla />}><Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/confirmar-recepcion" element={<ConfirmacionRecepcionPage />} />
@@ -106,6 +108,7 @@ function App() {
       <Route path="/preview/login-loading" element={<LoginLoadingPreview />} />
       <Route path="/alerta-stock" element={<AlertaStockPage />} />
       <Route path="/autogestion" element={<AutogestionPage />} />
+      <Route path="/autogestion/aprobar/:id" element={<AprobarPedidoPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes></Suspense>
   }

@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { solicitudesCompraAPI } from '../../services/api'
+import { TIPO_EQUIPO_LABELS } from '../../utils/tipoEquipo'
 
 const inputClass = 'w-full px-4 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-surface-900'
 
+// Fuente por defecto (sesión del portal). La autogestión pasa la suya.
+const cargarDelPortal = (params) => solicitudesCompraAPI.lookupInventarioAsignado(params)
+
 /**
  * Lista los inventarios actualmente asignados al beneficiario, filtrados por
- * tipo (celular/notebook). Props: personalId, tipoEquipo, value, onChange, disabled
+ * tipo. Props: personalId, tipoEquipo, value, onChange, disabled y, opcional,
+ * cargar(params) => Promise<{ data: asignaciones }> para otra fuente de datos.
  */
-export default function SelectInventarioAsignado({ personalId, tipoEquipo, value, onChange, disabled }) {
+export default function SelectInventarioAsignado({ personalId, tipoEquipo, value, onChange, disabled, cargar = cargarDelPortal }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -24,7 +29,7 @@ export default function SelectInventarioAsignado({ personalId, tipoEquipo, value
     const params = { personal_id: personalId, activo: true }
     if (tipoEquipo) params.tipo_equipo = tipoEquipo
 
-    solicitudesCompraAPI.lookupInventarioAsignado(params)
+    cargar(params)
       .then(res => {
         if (cancelled) return
         const data = Array.isArray(res?.data) ? res.data : []
@@ -36,7 +41,7 @@ export default function SelectInventarioAsignado({ personalId, tipoEquipo, value
       })
       .finally(() => !cancelled && setLoading(false))
     return () => { cancelled = true }
-  }, [personalId, tipoEquipo])
+  }, [personalId, tipoEquipo, cargar])
 
   if (!personalId) {
     return (
@@ -65,7 +70,7 @@ export default function SelectInventarioAsignado({ personalId, tipoEquipo, value
   if (items.length === 0) {
     return (
       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-        El beneficiario no tiene equipos {tipoEquipo === 'celular' ? 'celulares' : 'notebooks'} asignados.
+        No hay equipos de tipo {(TIPO_EQUIPO_LABELS[tipoEquipo] || tipoEquipo || '').toLowerCase()} asignados.
         No se puede registrar reposición sin equipo previo.
       </p>
     )

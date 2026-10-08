@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { UserCheck } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { solicitudesAsignacionAPI, categoriaEquiposAsignacionAPI } from '../services/api'
 import { normalizeApiResponse } from '../utils/apiResponseNormalizer'
@@ -214,6 +215,12 @@ export default function SolicitudAsignacionDetailPage() {
           <p className="text-surface-500 mt-1 font-medium">
             {TIPO_EQUIPO_LABELS[solicitud.tipo_equipo] || solicitud.tipo_equipo} · {etiquetaMotivo(solicitud.motivo)}
           </p>
+          {solicitud.solicitante_grupo === 'autogestion' && (
+            <p className="mt-2 inline-flex items-center gap-1.5 status status-neutral">
+              <UserCheck className="h-4 w-4" aria-hidden="true" />
+              Pedida por la persona en autogestión y aprobada por su superior
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-2">
