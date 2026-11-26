@@ -552,7 +552,10 @@ export const visitasAPI = {
   enviarAviso: (id) => apiCall(`/visitas/${id}/aviso`, {
     method: 'POST'
   }),
-  getCalendario: (mes, anio, tecnicoId = '') => apiCall(`/visitas/calendario?mes=${mes}&anio=${anio}&tecnico_id=${tecnicoId}`),
+  getCalendario: (mes, anio, tecnicoId = '', soloMisSedes = false) =>
+    apiCall(`/visitas/calendario?mes=${mes}&anio=${anio}&tecnico_id=${tecnicoId}&solo_mis_sedes=${soloMisSedes}`),
+  // Sedes asignadas al usuario y si la restricción es obligatoria u opcional
+  getMiAlcance: () => apiCall('/visitas/mi-alcance'),
   getEstadisticas: (params = {}) => {
     const query = new URLSearchParams(params).toString()
     return apiCall(`/visitas/estadisticas${query ? '?' + query : ''}`)

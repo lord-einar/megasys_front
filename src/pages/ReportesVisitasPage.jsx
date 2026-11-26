@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
+import FiltroMisSedes from '../components/visitas/FiltroMisSedes';
+import { useAlcanceVisitas } from '../hooks/useAlcanceVisitas';
 import { API_BASE_URL } from '../config/api';
 import { BarChart3, CalendarDays, CheckCircle2, ClipboardList, Search, TicketCheck, Wrench } from 'lucide-react';
 
@@ -15,6 +17,7 @@ export default function ReportesVisitasPage() {
     const { user } = useAuth();
     const { hasPermission } = usePermissions();
     const navigate = useNavigate();
+    const { sedesAsignadas, forzado, puedeFiltrar, soloMisSedes, setSoloMisSedes, restringido, cargado: alcanceCargado } = useAlcanceVisitas();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
     const [filtros, setFiltros] = useState({
@@ -39,15 +42,17 @@ export default function ReportesVisitasPage() {
     // Modal de problemas causados por usuario
     const [showProblemasModal, setShowProblemasModal] = useState(false);
 
-    // Verificar permisos
-    const tieneAccesoReportes = hasPermission('admin', 'reports');
+    // Verificar permisos (los técnicos ven solo sus sedes: lo filtra el backend)
+    const tieneAccesoReportes = hasPermission('visitas', 'reportes');
 
     useEffect(() => {
-        if (user) {
-            cargarOpciones();
-            cargarDatos();
-        }
+        if (user) cargarOpciones();
     }, [user]);
+
+    useEffect(() => {
+        // Esperar el alcance para no pedir el dashboard dos veces (todas / mis sedes)
+        if (user && alcanceCargado) cargarDatos();
+    }, [user, alcanceCargado, soloMisSedes]);
 
     const cargarOpciones = async () => {
         try {
@@ -65,10 +70,11 @@ export default function ReportesVisitasPage() {
             const allSedes = sedesRes.data.data.sedes || sedesRes.data.data;
             const allPersonal = personalRes.data.data.personal || personalRes.data.data;
 
-            // Filtrar solo técnicos con rol "soporte técnico" o "sistemas"
+            // Técnicos que hacen visitas: mismos roles que el formulario de visita
             const tecnicosSoporte = allPersonal.filter(p => {
                 const rolNombre = p.rol?.nombre?.toLowerCase();
-                return rolNombre === 'soporte técnico' || rolNombre === 'soporte tecnico' || rolNombre === 'support' || rolNombre === 'sistemas';
+                return rolNombre === 'tecnico sede' || rolNombre === 'sistemas' ||
+                    rolNombre === 'soporte técnico' || rolNombre === 'soporte tecnico';
             });
 
             setSedes(allSedes);
@@ -87,6 +93,7 @@ export default function ReportesVisitasPage() {
             Object.keys(filtros).forEach(key => {
                 if (filtros[key]) params.append(key, filtros[key]);
             });
+            if (soloMisSedes) params.append('solo_mis_sedes', 'true');
 
             const response = await axios.get(`${API_BASE_URL}/visitas/reportes/dashboard?${params}`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -154,7 +161,7 @@ export default function ReportesVisitasPage() {
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">Acceso Denegado</h2>
                     <p className="text-slate-600 mb-6">
-                        No tienes permisos para acceder a los reportes. Esta sección está disponible solo para Super Administradores.
+                        No tienes permisos para acceder a los reportes de visitas.
                     </p>
                     <button
                         onClick={() => navigate('/visitas')}
@@ -185,10 +192,19 @@ export default function ReportesVisitasPage() {
 
             {/* Filtros */}
             <div className="card-base p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <Search className="h-5 w-5 text-surface-500" />
-                    Filtros
-                </h2>
+                <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <Search className="h-5 w-5 text-surface-500" />
+                        Filtros
+                    </h2>
+                    <FiltroMisSedes
+                        forzado={forzado}
+                        puedeFiltrar={puedeFiltrar}
+                        soloMisSedes={soloMisSedes}
+                        onChange={setSoloMisSedes}
+                        cantidadSedes={sedesAsignadas.length}
+                    />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Desde</label>
@@ -216,7 +232,7 @@ export default function ReportesVisitasPage() {
                             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
                         >
                             <option value="">Todas</option>
-                            {sedes.map(sede => (
+                            {(restringido ? sedesAsignadas : sedes).map(sede => (
                                 <option key={sede.id} value={sede.id}>{sede.nombre_sede}</option>
                             ))}
                         </select>

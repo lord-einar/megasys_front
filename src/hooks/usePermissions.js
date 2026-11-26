@@ -43,6 +43,8 @@ const PERMISSIONS = {
     update: ['super_admin', 'support'],
     delete: ['super_admin'],
     enviar_aviso: ['super_admin', 'support'],
+    // Reportes: el backend limita a support/helpdesk con sedes asignadas a sus sedes
+    reportes: ['super_admin', 'helpdesk', 'support'],
     completar_informe: ['super_admin', 'support'],
     config_checklist: ['super_admin'],
     config_categorias: ['super_admin']
