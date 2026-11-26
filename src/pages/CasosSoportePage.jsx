@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { crmAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 import ModalDetalleCaso from '../components/crm/ModalDetalleCaso'
 
 const ESTADO_BADGES = {
@@ -24,6 +26,8 @@ const FILTROS_ANTIGUEDAD = [
 ]
 
 export default function CasosSoportePage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [casos, setCasos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -33,6 +37,25 @@ export default function CasosSoportePage() {
   const [filtroCuenta, setFiltroCuenta] = useState('')
   const [soloConTareas, setSoloConTareas] = useState(true)
   const [casoSeleccionado, setCasoSeleccionado] = useState(null)
+  // Técnico: casos de las sedes que tiene asignadas (sede_asignaciones + cuenta CRM de cada sede)
+  const [tecnicos, setTecnicos] = useState([])
+  const [tecnicosCargados, setTecnicosCargados] = useState(false)
+  const [filtroTecnico, setFiltroTecnico] = useState('')
+
+  const tecnicoSeleccionado = tecnicos.find(t => t.id === filtroTecnico)
+  const sedesSinVincular = tecnicoSeleccionado?.sedes.filter(s => !s.crm_account_id) || []
+
+  useEffect(() => {
+    crmAPI.getTecnicos()
+      .then(res => {
+        const lista = res?.data || []
+        setTecnicos(lista)
+        // Si quien entra es responsable de sedes, arranca viendo sus casos
+        if (lista.some(t => t.id === user?.id)) setFiltroTecnico(user.id)
+      })
+      .catch(err => console.error('Error cargando técnicos:', err))
+      .finally(() => setTecnicosCargados(true))
+  }, [user?.id])
 
   // Lista única de cuentas/sedes extraída de los casos
   const cuentasUnicas = [...new Map(
@@ -42,8 +65,10 @@ export default function CasosSoportePage() {
   ).entries()].sort((a, b) => a[1].localeCompare(b[1]))
 
   useEffect(() => {
+    // Esperar la lista de técnicos para no pedir los casos dos veces (todos / los del técnico)
+    if (!tecnicosCargados) return
     cargarCasos()
-  }, [filtroEstado, filtroPrioridad, filtroAntiguedad, soloConTareas])
+  }, [filtroEstado, filtroPrioridad, filtroAntiguedad, soloConTareas, filtroTecnico, tecnicosCargados])
 
   const cargarCasos = async () => {
     try {
@@ -54,6 +79,7 @@ export default function CasosSoportePage() {
       if (filtroPrioridad) params.prioridad = filtroPrioridad
       if (filtroAntiguedad > 0) params.diasMinimos = filtroAntiguedad
       if (soloConTareas) params.soloConTareasAbiertas = 'true'
+      if (filtroTecnico) params.tecnicoId = filtroTecnico
 
       const res = await crmAPI.getCasos(params)
       const data = res?.data || res
@@ -130,6 +156,20 @@ export default function CasosSoportePage() {
           </div>
 
           <div>
+            <label className="block text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-1">Técnico</label>
+            <select
+              value={filtroTecnico}
+              onChange={e => { setFiltroTecnico(e.target.value); setFiltroCuenta('') }}
+              className="text-sm rounded-lg border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-1.5 pr-8"
+            >
+              <option value="">Todos los técnicos</option>
+              {tecnicos.map(t => (
+                <option key={t.id} value={t.id}>{t.nombre} {t.apellido} ({t.sedes.length} sedes)</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-[10px] font-bold text-surface-400 uppercase tracking-wider mb-1">Sede</label>
             <select
               value={filtroCuenta}
@@ -182,6 +222,31 @@ export default function CasosSoportePage() {
           </div>
         </div>
       </div>
+
+      {/* Sedes del técnico sin cuenta CRM: sus casos no se pueden traer */}
+      {sedesSinVincular.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-800">
+          <p className="font-medium">
+            {sedesSinVincular.length} de {tecnicoSeleccionado.sedes.length} sedes de {tecnicoSeleccionado.nombre} no están vinculadas al CRM y sus casos no aparecen:
+          </p>
+          <p className="mt-1 flex flex-wrap gap-x-1">
+            {sedesSinVincular.map((s, i) => (
+              <span key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/sedes/${s.id}`)}
+                  className="underline decoration-amber-400 hover:text-amber-950"
+                  title="Vincular desde el detalle de la sede"
+                >
+                  {s.nombre_sede}
+                </button>
+                {i < sedesSinVincular.length - 1 ? ',' : ''}
+              </span>
+            ))}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">Se vinculan desde el detalle de cada sede, en la sección CRM.</p>
+        </div>
+      )}
 
       {/* Loading */}
       {loading && casos.length === 0 && (

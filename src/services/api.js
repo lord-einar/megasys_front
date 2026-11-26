@@ -665,6 +665,8 @@ export const crmAPI = {
     return apiCall(`/crm/casos${query ? '?' + query : ''}`)
   },
   getCaso: (id) => apiCall(`/crm/casos/${id}`),
+  // Técnicos con sedes asignadas (y sus sedes, con o sin cuenta CRM vinculada)
+  getTecnicos: () => apiCall('/crm/tecnicos'),
   completarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/completar`, { method: 'PATCH' }),
   cancelarTarea: (tareaId) => apiCall(`/crm/tareas/${tareaId}/cancelar`, { method: 'PATCH' }),
   agregarNotaTarea: (tareaId, texto) => apiCall(`/crm/tareas/${tareaId}/nota`, {
