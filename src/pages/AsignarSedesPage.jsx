@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI, personalAPI, authAPI } from '../services/api'
+import { sedesAPI, personalAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function AsignarSedesPage() {
   const { id } = useParams()
@@ -14,7 +15,8 @@ export default function AsignarSedesPage() {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [currentUser, setCurrentUser] = useState(null)
+  // El rol sale de la sesión: /auth/me no lo calcula (no pasa por el middleware de roles)
+  const { user: currentUser } = useAuth()
 
   useEffect(() => {
     cargarDatos()
@@ -24,10 +26,6 @@ export default function AsignarSedesPage() {
     try {
       setLoading(true)
       setError(null)
-
-      // Load current user to verify permissions
-      const userResponse = await authAPI.getMe()
-      setCurrentUser(userResponse?.data?.user || userResponse?.user)
 
       // Load personal details
       const personalResponse = await personalAPI.getById(id)

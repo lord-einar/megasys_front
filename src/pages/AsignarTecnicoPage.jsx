@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI, authAPI } from '../services/api'
+import { sedesAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function AsignarTecnicoPage() {
   const { id } = useParams()
@@ -15,7 +16,8 @@ export default function AsignarTecnicoPage() {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [currentUser, setCurrentUser] = useState(null)
+  // El rol sale de la sesión: /auth/me no lo calcula (no pasa por el middleware de roles)
+  const { user: currentUser } = useAuth()
 
   useEffect(() => {
     cargarDatos()
@@ -25,10 +27,6 @@ export default function AsignarTecnicoPage() {
     try {
       setLoading(true)
       setError(null)
-
-      // Load current user to verify permissions
-      const userResponse = await authAPI.getMe()
-      setCurrentUser(userResponse?.data || userResponse)
 
       // Load sede details
       const sedeResponse = await sedesAPI.getById(id)
