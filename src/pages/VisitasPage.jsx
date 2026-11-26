@@ -9,6 +9,8 @@ import ModalDetalleVisita from '../components/visitas/ModalDetalleVisita';
 import FormInformeVisita from '../components/visitas/FormInformeVisita';
 import ModalVisitasDelDia from '../components/visitas/ModalVisitasDelDia';
 import LoadingOverlay from '../components/LoadingOverlay';
+import FiltroMisSedes from '../components/visitas/FiltroMisSedes';
+import { useAlcanceVisitas } from '../hooks/useAlcanceVisitas';
 
 const VisitasPage = () => {
     const [eventos, setEventos] = useState([]);
@@ -19,6 +21,7 @@ const VisitasPage = () => {
     const [vistaActual, setVistaActual] = useState('month');
     const [stats, setStats] = useState(null);
     const { canCreate, canUpdate } = usePermissions();
+    const { sedesAsignadas, forzado, puedeFiltrar, soloMisSedes, setSoloMisSedes, cargado: alcanceCargado } = useAlcanceVisitas();
 
     // Modals state
     const [showFormVisita, setShowFormVisita] = useState(false);
@@ -33,11 +36,13 @@ const VisitasPage = () => {
 
     useEffect(() => {
         cargarTecnicos();
-        cargarEstadisticas();
     }, []);
 
     useEffect(() => {
+        // Esperar el alcance para no pedir el calendario dos veces (todas / mis sedes)
+        if (!alcanceCargado) return;
         cargarEventos();
+        cargarEstadisticas();
 
         // Auto-refresh when tab becomes visible
         const handleVisibilityChange = () => {
@@ -51,7 +56,7 @@ const VisitasPage = () => {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [fechaActual, filtroTecnico]);
+    }, [fechaActual, filtroTecnico, soloMisSedes, alcanceCargado]);
 
     const cargarTecnicos = async () => {
         try {
@@ -72,7 +77,7 @@ const VisitasPage = () => {
             // Obtener estadísticas del mes actual
             const fechaInicio = getLocalDateString(new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1));
             const fechaFin = getLocalDateString(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0));
-            const response = await visitasAPI.getEstadisticas({ fecha_desde: fechaInicio, fecha_hasta: fechaFin });
+            const response = await visitasAPI.getEstadisticas({ fecha_desde: fechaInicio, fecha_hasta: fechaFin, solo_mis_sedes: soloMisSedes });
             setStats(response.data);
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
@@ -84,7 +89,7 @@ const VisitasPage = () => {
         try {
             const mes = fechaActual.getMonth() + 1;
             const anio = fechaActual.getFullYear();
-            const response = await visitasAPI.getCalendario(mes, anio, filtroTecnico);
+            const response = await visitasAPI.getCalendario(mes, anio, filtroTecnico, soloMisSedes);
 
             if (response.data) {
                 const eventosFormateados = response.data.map(e => ({
@@ -224,6 +229,13 @@ const VisitasPage = () => {
                                 </svg>
                             </div>
                         </div>
+                        <FiltroMisSedes
+                            forzado={forzado}
+                            puedeFiltrar={puedeFiltrar}
+                            soloMisSedes={soloMisSedes}
+                            onChange={setSoloMisSedes}
+                            cantidadSedes={sedesAsignadas.length}
+                        />
                     </div>
 
                     <div className="flex bg-slate-100 p-1.5 rounded-lg border border-slate-200">
@@ -287,6 +299,7 @@ const VisitasPage = () => {
                     onSave={handleSaveVisita}
                     visitaEditar={selectedVisitaObj}
                     fechaPreseleccionada={fechaSeleccionada}
+                    sedesPermitidas={forzado ? sedesAsignadas : null}
                 />
             )}
 

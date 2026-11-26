@@ -4,7 +4,8 @@ import LoadingOverlay from '../LoadingOverlay';
 import logger from '../../utils/logger';
 import Swal from 'sweetalert2';
 
-const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada = null }) => {
+// sedesPermitidas: si viene, el técnico solo puede programar en esas sedes (el backend lo exige igual)
+const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada = null, sedesPermitidas = null }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [sedes, setSedes] = useState([]);
@@ -107,7 +108,10 @@ const FormVisita = ({ onClose, onSave, visitaEditar = null, fechaPreseleccionada
                 sedesAPI.list({ limit: 100 }), // Obtener todas las sedes disponibles
                 personalAPI.list({ limit: 500 }) // Obtener usuarios con límite aumentado
             ]);
-            setSedes(sedesRes.data || []);
+            const todasLasSedes = sedesRes.data || [];
+            setSedes(sedesPermitidas
+                ? todasLasSedes.filter(s => sedesPermitidas.some(p => p.id === s.id) || s.id === visitaEditar?.sede_id)
+                : todasLasSedes);
 
             logger.debug('📊 Técnicos response:', tecnicosRes);
             logger.debug('📊 Técnicos data:', tecnicosRes.data);
