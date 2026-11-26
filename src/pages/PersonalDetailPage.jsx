@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { personalAPI, authAPI, asignacionesAPI } from '../services/api'
+import { personalAPI, asignacionesAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import HistorialEquipos from '../components/solicitudesCompra/HistorialEquipos'
 import { CATEGORIA_TIPO_LABELS, categoriaTipoDeArticulo } from '../utils/tipoEquipo'
@@ -13,7 +13,6 @@ export default function PersonalDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
-  const [currentUser, setCurrentUser] = useState(null)
   const [asignaciones, setAsignaciones] = useState([])
   // Celulares y notebooks: los equipos que acompañan a la persona
   const equiposPersonales = asignaciones.filter(a =>
@@ -31,10 +30,6 @@ export default function PersonalDetailPage() {
     try {
       setLoading(true)
       setError(null)
-
-      // Load current user
-      const userResponse = await authAPI.getMe()
-      setCurrentUser(userResponse?.data?.user || userResponse?.user)
 
       // Load personal details
       const response = await personalAPI.getById(id)
@@ -128,7 +123,7 @@ export default function PersonalDetailPage() {
               </button>
             )}
 
-            {currentUser && currentUser.role === 'super_admin' && (
+            {isSuperAdmin && (
               <button
                 onClick={() => navigate(`/personal/${id}/asignar-sedes`)}
                 className="px-4 py-2 bg-white border border-surface-200 text-surface-700 font-bold rounded-xl hover:bg-surface-50 hover:border-surface-300 transition-all text-sm shadow-sm flex items-center gap-2"

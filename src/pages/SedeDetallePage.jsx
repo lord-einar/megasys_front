@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { sedesAPI, authAPI, sedeImagenesAPI, crmAPI } from '../services/api'
+import { sedesAPI, sedeImagenesAPI, crmAPI } from '../services/api'
 import { usePermissions } from '../hooks/usePermissions'
 import { useAuth } from '../contexts/AuthContext'
 import TablaInventarioSede from '../components/TablaInventarioSede'
@@ -11,7 +11,7 @@ import Swal from 'sweetalert2'
 export default function SedeDetallePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { canUpdate, canViewSolicitudesCompra } = usePermissions()
+  const { canUpdate, canViewSolicitudesCompra, isSuperAdmin, isSupport } = usePermissions()
   const { user: authUser } = useAuth()
   const userRole = authUser?.role
   const [sede, setSede] = useState(null)
@@ -20,7 +20,6 @@ export default function SedeDetallePage() {
   const [tecnicoLoading, setTecnicoLoading] = useState(false)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('general')
-  const [currentUser, setCurrentUser] = useState(null)
   // Imágenes
   const [imagenes, setImagenes] = useState([])
   const [imagenesLoading, setImagenesLoading] = useState(false)
@@ -46,10 +45,6 @@ export default function SedeDetallePage() {
     try {
       setLoading(true)
       setError(null)
-
-      // Load current user
-      const userResponse = await authAPI.getMe()
-      setCurrentUser(userResponse?.data || userResponse)
 
       // Load sede
       const response = await sedesAPI.getById(id)
@@ -371,7 +366,7 @@ export default function SedeDetallePage() {
 
               <div className="space-y-6">
                 {/* Técnico de Soporte Asignado */}
-                {(currentUser?.roles?.some(r => r.nombre === 'super_admin') || currentUser?.roles?.some(r => r.nombre === 'support')) && (
+                {(isSuperAdmin || isSupport) && (
                   <div className="card-base p-6 border-l-4 border-l-primary-500">
                     <h3 className="text-sm font-bold text-surface-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                       <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -410,7 +405,7 @@ export default function SedeDetallePage() {
                         <div className="mt-4 pt-3 border-t border-primary-200/50">
                           <p className="text-[10px] text-surface-400 font-medium uppercase text-center">Asignado el {new Date(tecnico.fecha_asignacion).toLocaleDateString('es-AR')}</p>
                         </div>
-                        {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
+                        {isSuperAdmin && (
                           <button
                             onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
                             className="mt-3 w-full py-1.5 text-xs font-bold text-primary-700 hover:text-primary-800 hover:underline transition-all"
@@ -422,7 +417,7 @@ export default function SedeDetallePage() {
                     ) : (
                       <div className="text-center py-6 bg-surface-50 rounded-xl border border-dashed border-surface-200">
                         <p className="text-surface-500 text-sm mb-3">Sin técnico asignado</p>
-                        {currentUser?.roles?.some(r => r.nombre === 'super_admin') && (
+                        {isSuperAdmin && (
                           <button
                             onClick={() => navigate(`/sedes/${id}/asignar-tecnico`)}
                             className="btn-secondary text-xs py-1.5"
